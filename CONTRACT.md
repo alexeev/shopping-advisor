@@ -493,3 +493,64 @@ Effect of R2 on dry pasta, same records, same code path:
 The one lost protein figure is `B0D4R3N142`, a lupin-flour pasta whose only
 nutrition value is `"Protein und 9g"` scraped out of marketing copy — a
 figure that is implausibly *low* for the product it describes.
+
+## 8. Study audit contracts (T3)
+
+Study manifests now write **v2**, adding `ledger.json`, `claim-index.json`,
+`validation.json`, and `semantic-review.json`. V1 bundles remain historical
+artifacts; this build refuses to validate them as v2. Re-run their original
+brief and pinned feeds into a new directory. Brief v1, extraction schema v6
+and generic validation contract v2 are unchanged.
+
+The external ledger is **v1**. Its executable schema is
+`shopping_advisor/study/audit.py:check_ledger`; a complete JSON example is
+`tests/studies/t3/evidence.json`. Each observation has a unique ID, source ID,
+class, publisher, title, URL, publication/retrieval dates, locator, claim,
+excerpt, original units, quotation/interpretation distinction, verification,
+product identity, matching status, applicability limits, conflicts and
+supersession links. Unknown legacy dates/identity/URLs remain empty, not inferred.
+Verified sources require ISO dates and a URL/locator. A snapshot either embeds
+permitted UTF-8 text and its SHA-256 or declares unavailability and a reason.
+The digest covers the retained text, not an unavailable original document.
+
+Indexed external claims reference an observation and declare their scope:
+`historical`, `current_batch`, `vendor_declaration`, `review_sample`, or
+`access_limit`. Their statement must equal the recorded source claim (or access
+limit). A listing reference is `marketplace:ASIN`; identity matches use JSON
+Pointers into the selected feed record. Brand, model, variant and geography
+must match exactly and be known; current-batch claims additionally require the
+batch, a reference date at or after publication, independent evidence, and no
+conflicts or supersession. This conservative matching may refuse usable evidence
+that requires interpretation; a semantic reviewer cannot override a failed
+check by approving prose. Record uncertainty or historical scope instead.
+
+Source verification is an operator assertion, distinct from generic `trusted`.
+Digest and matching checks cannot prove semantic truth. Vendor text supports
+an attributed declaration; buyer samples support sampled experiences, never
+population rates. Secondary reports cannot be promoted to primary tests.
+Unverified or unavailable sources support access-limit claims only. Historical
+findings without listing claims need no guessed listing match.
+
+The claim index records the adopted single-axis method, decision/card references,
+computation names and pinned feed references. Full replay checks ranking,
+eligibility, grouping, numeric claims, every serialized card/score and exact
+report rendering. No arbitrary hand-written additions are validated. Freshness
+violations or unknown age explicitly label the report historical/incomplete.
+Basmati's score is published for inspection; **it does not order the shortlist**,
+and external claims do not silently change the adopted price ranking.
+
+The semantic review is **v1** and separately binds the report and evidence/decision
+artifact digests. Ledger content also participates in the study ID. It records reviewer, citation support, variant applicability,
+user priorities, coverage/limits, findings for each check and unresolved limits.
+`pending` is not approval. `validate-report --require-review` requires a complete
+passing review; plain `verify` checks replay without claiming semantic approval.
+
+**Basmati method v2:** three former executable test constants move to
+`shopping_advisor/evidence/basmati-legacy.json` as `legacy_unverified`, with
+explicit missing citations/snapshot and unresolved applicability. `external:`
+evidence fields resolve to these ledger observation IDs. None earns laboratory
+score credit. The health component starts neutral (0.5), without unsupported
+milling/origin/vendor-safety bonuses; existing adverse review adjustments remain
+category heuristics. Missing verified external evidence remains a reported score
+gap. This is a conservative trust correction and versioned category method,
+not a change to generic status meanings. See the measured T3 result in ROADMAP.

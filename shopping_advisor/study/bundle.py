@@ -44,12 +44,12 @@ from ..provenance import (code_identity, sha256_file, sha256_text,
 from ..analysis import report as report_module
 from ..analysis.category import is_match
 from ..run import read_jsonl
-from . import writeup
+from . import writeup, audit
 from .analysis import StudyError, analyse, brief_fault
 from .brief import BRIEF_VERSION, BriefError, load
 
 #: The bundle shape this build writes and reads.
-STUDY_MANIFEST_VERSION = 1
+STUDY_MANIFEST_VERSION = 2
 
 DEFAULT_STUDY_ROOT = 'data/studies'
 
@@ -60,7 +60,11 @@ CARDS = 'cards.jsonl'
 RANKING = 'ranking.json'
 REPORT = 'report.md'
 
-ARTIFACTS = (BRIEF, CANDIDATES, CARDS, RANKING, REPORT)
+LEDGER = 'ledger.json'
+CLAIM_INDEX = 'claim-index.json'
+VALIDATION = 'validation.json'
+REVIEW = 'semantic-review.json'
+ARTIFACTS = (BRIEF, CANDIDATES, CARDS, RANKING, REPORT, LEDGER, CLAIM_INDEX, VALIDATION, REVIEW)
 
 #: What two runs of the same brief over the same inputs may legitimately
 #: disagree about. Everything not on this list is a finding.
@@ -84,10 +88,11 @@ def input_digests(brief):
     return digests
 
 
-def study_id(brief, inputs):
+def study_id(brief, inputs, ledger=None):
     """``<brief id>-<digest>`` over everything the answer is pinned to."""
     code = code_identity()
     material = {
+        'ledger': ledger or audit.empty(),
         'manifest_version': STUDY_MANIFEST_VERSION,
         'brief_version': brief.brief_version,
         'brief_sha256': brief.source_sha256,
@@ -171,13 +176,16 @@ def load_manifest(directory):
                           f'study bundle, or the study never finished writing '
                           f'one.')
     try:
-        return json.loads(path.read_text(encoding='utf-8'))
+        data = json.loads(path.read_text(encoding='utf-8'))
+        if not isinstance(data, dict):
+            raise ValueError('manifest must be an object')
+        return data
     except ValueError as exc:
         raise BundleError(f'{path}: unreadable manifest ({exc})') from exc
 
 
 def run(brief_path, directory=None, root=DEFAULT_STUDY_ROOT, force=False,
-        started_at='', finished_at=''):
+        started_at='', finished_at='', evidence=None):
     """Validate a brief, analyse its inputs, and write the bundle.
 
     ``(directory, manifest)``. Nothing here collects: every byte it reads was
@@ -185,7 +193,16 @@ def run(brief_path, directory=None, root=DEFAULT_STUDY_ROOT, force=False,
     """
     brief = load(brief_path)
     inputs = input_digests(brief)
-    identity = study_id(brief, inputs)
+    ledger = audit.read(evidence) if evidence else audit.empty()
+    if brief.category == 'basmati_rice':
+        from ..evidence import legacy_basmati
+        existing = {o['id']: o for o in ledger['observations']}
+        for observation in legacy_basmati()['observations']:
+            if observation['id'] not in existing:
+                ledger['observations'].append(observation)
+            elif existing[observation['id']] != observation:
+                raise audit.AuditError('reserved legacy observation differs from the reviewed ledger')
+    identity = study_id(brief, inputs, ledger)
     target = pathlib.Path(directory) if directory else \
         pathlib.Path(root) / identity
     if target.exists():
@@ -201,9 +218,17 @@ def run(brief_path, directory=None, root=DEFAULT_STUDY_ROOT, force=False,
     fault = brief_fault(result)
     if fault:
         raise StudyError(f'{brief_path}: {fault} Nothing was written.')
+    records = {f'{c["marketplace"]}:{c["asin"]}': c['validated'].record
+               for c in cards}
+    audit.check_claims(ledger, records, brief.as_of)
     write(brief, result, cards, target)
+    write_json_atomically(target / LEDGER, ledger)
+    serialized = list(read_jsonl(target / CARDS))
+    write_json_atomically(target / CLAIM_INDEX, audit.index(result, serialized, ledger))
     (target / REPORT).write_text(
-        writeup.render(result, identity, inputs), encoding='utf-8')
+        writeup.render(result, identity, inputs) + audit.render(ledger), encoding='utf-8')
+    write_json_atomically(target / REVIEW, audit.review_template(target))
+    write_json_atomically(target / VALIDATION, audit.validation_result(audit.review_template(target)))
     written = manifest(brief, result, identity, inputs, started_at,
                        finished_at, target)
     write_json_atomically(target / MANIFEST, written)
@@ -305,6 +330,7 @@ def verify(directory, input_root=''):
                 'code': 'artifact_not_recorded',
                 'message': f'{name} is not in the manifest\'s artifact list, '
                            f'so nothing can be said about it'})
+            unusable.add(name)
             continue
         if not path.is_file():
             unusable.add(name)
@@ -328,7 +354,7 @@ def verify(directory, input_root=''):
     # it with its own ranking and candidates. If either of those is missing or
     # altered there is nothing left to compare against, and a "decision moved"
     # finding on top of an "artefact altered" one would only obscure it.
-    if unusable & {BRIEF, RANKING, CANDIDATES}:
+    if unusable:
         return data, findings
 
     source = data.get('brief_source') or {}
@@ -419,4 +445,25 @@ def verify(directory, input_root=''):
              findings)
     _compare(list(read_jsonl(directory / CANDIDATES)), result['candidates'],
              'a candidate decision', findings, key='asin')
+    for key in ('ranking', 'constraints', 'classification', 'freshness'):
+        _compare(stored[key], result[key], key, findings)
+    serialized = [report_module.card_json(c) for c in
+                  sorted((c for c in _cards if is_match(c)), key=lambda c: c['asin'])]
+    _compare(list(read_jsonl(directory / CARDS)), serialized, 'evidence cards and scores', findings)
+    try:
+        ledger = audit.read(directory / LEDGER)
+        records = {f'{c["marketplace"]}:{c["asin"]}': c['validated'].record for c in _cards}
+        audit.check_claims(ledger, records, brief.as_of)
+        expected_index = audit.index(result, serialized, ledger)
+        _compare(json.loads((directory / CLAIM_INDEX).read_text()), expected_index,
+                 'claim index', findings)
+        expected_report = writeup.render(result, data['study_id'], data['inputs']) + audit.render(ledger)
+        _compare((directory / REPORT).read_text(), expected_report, 'report', findings)
+        review = json.loads((directory / REVIEW).read_text())
+        audit.check_review(review, directory)
+        validation = json.loads((directory / VALIDATION).read_text())
+        if validation != audit.validation_result(review):
+            raise audit.AuditError('saved validation does not match the audit/review')
+    except (audit.AuditError, ValueError, TypeError, KeyError) as exc:
+        findings.append({'code': 'report_invalid', 'message': str(exc)})
     return data, findings

@@ -75,6 +75,9 @@ def render(result, study_id, inputs):
                            f'{item["records"]} records' for item in inputs)
              + ' |', '']
 
+    if result['freshness']['stale_ranked'] or not result['freshness']['assessed'] or result['freshness']['undated']:
+        lines.insert(2, '**Historical / incomplete comparison. Prices are stale or freshness '
+                     'is not fully established; this is not current buying advice.**\n')
     if brief['use_case']:
         lines += ['## What was asked', '', brief['use_case'], '']
     if brief['unacceptable']:
@@ -173,8 +176,8 @@ def render(result, study_id, inputs):
                          f'stale. {freshness["stale_ranked"]} ranked '
                          f'candidate(s) exceed it.')
         if freshness['undated']:
-            lines.append(f'- {freshness["undated"]} record(s) carry no fetch '
-                         f'time at all; their freshness is unknown, which is '
+            lines.append(f'- {freshness["undated"]} record(s) lack a usable observation '
+                         f'date at or before the reference; freshness is unknown, which is '
                          f'not the same as current.')
         if freshness['note']:
             lines.append(f'- {freshness["note"]}')
@@ -203,8 +206,8 @@ def render(result, study_id, inputs):
     if brief['sources']:
         lines += ['## External sources named by the brief', '',
                   '**Declared, not verified.** Nothing in this build checks '
-                  'that a source is about the product, the variant or the '
-                  'batch in front of you; that is the next stage. Read each '
+                  'that these declarations apply to the product, variant or '
+                  'batch. Use the external ledger to index checked support. Read each '
                   'one before letting it decide anything.', '']
         for item in brief['sources']:
             lines.append(f'- {item.get("title") or item["url"]} — '

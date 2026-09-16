@@ -1,0 +1,36 @@
+{
+  "review_version": 1,
+  "report_sha256": "1c0bf6c9ab7c7648a1ba75e5a699c07ba1edae5472110328d7764ec0e3bfb827",
+  "basis": {
+    "brief.json": "a388da8e5183f8d6896ddb46d63aae848b89c9613fb203da2c21be9571c6df9b",
+    "ranking.json": "8fd02dcc5a50af0fac00fbbe5ce71c3319230a45cde5ffa295f0b76e9b173dd9",
+    "candidates.jsonl": "168b6f4fb338730248d01a04e985b31d810a794357a8fad85e1c28bf4d9b3120",
+    "cards.jsonl": "3c479217b4313b75e120c775bf2f6ae0d324d077ec3f92b8e33ffb65fea21b8d",
+    "ledger.json": "2e9f49e8f3a0d1b34e8a310a1d6a970f8e18fc407152a679bea83d6a328b8d5b",
+    "claim-index.json": "c75cb8a0e1c207d6097cd1af1da388ba4bb049a1fe413bfb2f898a35464a81ce"
+  },
+  "reviewer": "Codex, separate T3 fixture semantic review, 2026-09-16",
+  "checks": {
+    "citation_support": {
+      "status": "pass",
+      "findings": "The only indexed external statement equals the retained synthetic paragraph, which says only that fixture-batch was tested. It makes no safety claim. The three legacy observations explicitly lack source access and receive no verified conclusions."
+    },
+    "variant_applicability": {
+      "status": "pass",
+      "findings": "The fixture source and B000000001 agree on Tilda, Pure Original, 5 kg, DE and fixture-batch. These are synthetic identity fields, not evidence about a real listing. No legacy finding is applied to a current batch."
+    },
+    "user_priorities": {
+      "status": "pass",
+      "findings": "The brief asks for listed EUR/kg, with delivery unknown. Prices are 3, 4 and 5 EUR/kg. The positive brief requires two candidates and selects the first; the insufficient brief requires four and selects none. Scores do not determine selection."
+    },
+    "coverage_and_limits": {
+      "status": "pass",
+      "findings": "The report limits itself to three synthetic named records, no queries or live collection. The retained source explicitly says synthetic; legacy source access and batch limits remain visible. Observations are two days old relative to the fixed fixture reference date."
+    }
+  },
+  "unresolved_limits": [
+    "No real external laboratory document was acquired or verified.",
+    "No finding here establishes safety or suitability of a real current product batch.",
+    "Delivered costs, marketplace coverage and live freshness are unmeasured."
+  ]
+}

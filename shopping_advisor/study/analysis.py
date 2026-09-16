@@ -74,7 +74,8 @@ def _age_days(fetched_at, as_of):
         reference = _dt.date.fromisoformat(as_of)
     except ValueError:
         return None
-    return (reference - observed).days
+    days = (reference - observed).days
+    return days if days >= 0 else None
 
 
 def _candidate(card, decision, **extra):
@@ -233,7 +234,7 @@ def analyse(brief):
         'oldest_ranked_days': max(
             (entry['age_days'] for entry in eligible
              if entry['age_days'] is not None), default=None),
-        'undated': sum(1 for entry in candidates if not entry['fetched_at']),
+        'undated': sum(1 for entry in candidates if entry['age_days'] is None),
     }
 
     return {

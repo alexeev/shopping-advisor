@@ -50,7 +50,7 @@ would mean ignoring a contradiction the page itself contains.
 ```text
 uv run --offline --locked python -m shopping_advisor.study check tests/studies/pasta-bronze-die.toml
 uv run --offline --locked python -m shopping_advisor.study run tests/studies/pasta-bronze-die.toml
-uv run --offline --locked python -m shopping_advisor.study verify data/studies/pasta-bronze-die-501d864a1a0c
+uv run --offline --locked python -m shopping_advisor.study verify data/studies/pasta-bronze-die-46127870314d
 ```
 
 The study id is derived from the brief, the input digests and the published
@@ -72,3 +72,6 @@ a misspelt constraint is an error rather than a constraint that silently did
 nothing. A brief names a category by its **registry key** and never by an
 import path; nothing in it is imported, evaluated or interpolated into a
 command.
+
+T3 adds [two basmati audit examples](t3/README.md) with synthetic record/source
+fixtures, complete claim checks and separate digest-bound semantic reviews.

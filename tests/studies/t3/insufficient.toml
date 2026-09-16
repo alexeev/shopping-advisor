@@ -1,0 +1,16 @@
+brief_version = 1
+id = "basmati-audit-insufficient"
+question = "Compare synthetic basmati fixtures by price per kg"
+category = "basmati_rice"
+marketplace = "www.amazon.de"
+inputs = ["records.jsonl"]
+limits = ["Synthetic regression records and source; no current purchase advice.", "Only three named fixture listings; no queries or live collection."]
+[constraints]
+axis = "price_per_base"
+unit = "EUR/kg"
+minimum_candidates = 4
+shortlist = 3
+cost_basis = "Listed price per kg; delivery unknown"
+[freshness]
+as_of = "2026-09-16"
+price_max_age_days = 7

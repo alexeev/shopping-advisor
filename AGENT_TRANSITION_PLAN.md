@@ -1,6 +1,6 @@
 # Transition to an agent-operated research repository
 
-**Status: reviewed and adopted; T0, T1 and T2 implemented, T3–T5 remain planned.**
+**Status: reviewed and adopted; T0–T3 implemented, T4–T5 remain planned.**
 
 The assessment below records the repository at commit `95b8bbd` on 2026-09-16;
 findings describe that snapshot, including documentation gaps addressed by T0
@@ -440,7 +440,7 @@ every prompt-injection attempt.
 including the measured-effect requirement, are in
 [AGENTS.md](AGENTS.md#maintenance-workflow). What remains planned here is the
 tooling that would enforce them — study bundles shipped in T2, report
-validation remains T3, automated gates T4. The text below is the reviewed
+validation shipped in T3, automated gates remain T4. The text below is the reviewed
 rationale.
 
 Use a small, explicit cycle:
@@ -563,6 +563,12 @@ material card fields survive JSON serialization. No false claim of an existing
 score-based CLI ranking remains.
 
 ### T3 — Make external evidence and recommendations auditable
+
+**Status: DONE (2026-09-16).** Ledger v1, conservative legacy migration,
+claim applicability checks, full report/card/score replay and separate semantic
+review ship with positive and insufficient-evidence basmati fixtures. See
+[the example](tests/studies/t3/README.md) and the T3 roadmap record. Source
+access limits remain explicit; no score-ordered shortlist is introduced.
 
 **Depends on:** T2 study artifacts, which now exist. A brief's `[[sources]]`
 are recorded and reproduced under a heading that says they were not verified;

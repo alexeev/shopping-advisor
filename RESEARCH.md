@@ -2,9 +2,9 @@
 
 This is the current workflow for the shipped tools. Read [AGENTS.md](AGENTS.md)
 first. T0 makes the existing workflow discoverable, T1 makes acquisition and
-replay trustworthy, and T2 makes a study persist and replay. An external-source
-ledger and automated report validation in the
-[transition plan](AGENT_TRANSITION_PLAN.md) are not implemented yet.
+replay trustworthy, T2 persists studies, and T3 adds the external-source ledger,
+claim checks and separate semantic review. Provider trials remain T4 in the
+[transition plan](AGENT_TRANSITION_PLAN.md).
 
 ## Offline walkthrough
 
@@ -139,16 +139,17 @@ command names it rather than quietly ranking without one.
 uv run --offline --locked python -m shopping_advisor.study run tests/studies/pasta-bronze-die.toml
 ```
 
-Expect study `pasta-bronze-die-501d864a1a0c` with outcome `recommendation`:
+Expect study `pasta-bronze-die-46127870314d` with outcome `recommendation`:
 22 of 25 records classified as dry pasta, 5 offers ranked, 3 excluded, 14 short
 of the required claim, 3 shortlisted. It writes
-`data/studies/pasta-bronze-die-501d864a1a0c/` and collects nothing — every byte
+`data/studies/pasta-bronze-die-46127870314d/` and collects nothing — every byte
 it read was on disk before the command started.
 
 The bundle holds `manifest.json`, the validated `brief.json`, one line per
 considered record in `candidates.jsonl`, the complete evidence card of every
 classified candidate in `cards.jsonl`, the structured decisions in
-`ranking.json`, and `report.md`. The report's *What decided it* table is the
+`ranking.json`, `report.md`, `ledger.json`, `claim-index.json`,
+`validation.json`, and `semantic-review.json`. The report's *What decided it* table is the
 part worth reading first: it says of every decision whether the brief stated it
 or the category supplied the default.
 
@@ -162,7 +163,7 @@ which is what the next command is for.
 ### 3. Verify it without collecting again
 
 ```text
-uv run --offline --locked python -m shopping_advisor.study verify data/studies/pasta-bronze-die-501d864a1a0c
+uv run --offline --locked python -m shopping_advisor.study verify data/studies/pasta-bronze-die-46127870314d
 ```
 
 Expect `verified`: every artefact matches its digest, and every decision and
@@ -458,22 +459,32 @@ identity, and limits. Preserve a permitted source/excerpt locally where useful.
 Distinguish a vendor declaration from a measured property and a historical test
 from evidence about the current batch. Unavailable sources remain unverified.
 
-Basmati's embedded external-test constants lack complete source provenance and
-applicability controls. Its cards show its seven-part score — in text and, since
-T2, in JSON — but `rank` still sorts price per kilogram and **no CLI produces a
-score-ordered shortlist**. Do not claim that the CLI reproduces a composite
-shortlist, or that an embedded `trusted` external match establishes current
-product safety. A brief's `[[sources]]` are recorded and reproduced in the
-report under a heading that says they were not checked; applicability and
-claim-to-evidence links are T3.
+Use `study run BRIEF --evidence LEDGER.json` to retain the external ledger
+and its indexed claims. The source schema, matching rules and explicit access
+limits are in [CONTRACT](CONTRACT.md#8-study-audit-contracts-t3); a complete
+[basmati example](tests/studies/t3/README.md) runs offline. Brief `[[sources]]`
+alone remain declarations. The basmati legacy ledger preserves the old findings
+as unverified, with no inferred URLs or current-batch applicability.
 
-`python -m shopping_advisor.study run BRIEF` writes the report, and it is
-generated from the decisions rather than typed beside them: it cannot state a
-figure the analysis did not produce. Follow
-[reports/README.md](reports/README.md) for anything written by hand on top of
-it, and add what only a person knows — suitability, tradeoffs, and the
-external evidence checked above. Assess freshness and delivered cost
-explicitly; absent shipping data is unknown, not zero.
+`study validate-report BUNDLE` checks schemas, source digests, claim scope,
+listing matches and full replay including cards, scores and rendered prose.
+It emits JSON and exits 1 for failed checks, 2 for unreadable input. Positive
+and insufficient-evidence outcomes both pass when correctly framed. Stale or
+unknown-age observations produce an explicit historical/incomplete label.
+
+Review `semantic-review.json` in a separate pass against the actual source,
+variant and user priorities. Fill each checklist finding, name the reviewer
+and preserve unresolved limits. Keep its report/evidence digest bindings.
+Attach it with `study review BUNDLE COMPLETED_REVIEW.json`, then run
+`study validate-report BUNDLE --require-review`. Generated pending checklists
+are not approvals. Arbitrary hand-written report additions fail exact rendering
+checks; revise the structured evidence/brief and generate a new report instead.
+
+Basmati's seven-part score remains optional category interpretation, completely
+serialized and replayed. `rank` and study shortlists still use the declared
+single axis, normally EUR/kg; no score-ordered shortlist is implemented.
+External claim annotations do not change price eligibility or promote trust.
+Assess delivered cost explicitly: absent shipping data is unknown, not zero.
 
 Before delivery, check that decisive numeric values are usable, units/currency
 agree, citations support the selected variant and claim, sample reviews are
@@ -568,9 +579,9 @@ to make a preferred product win.
 | Failure capture is bounded, and search pages are retained only on request | Read the capped counters in the manifest; re-collect with `keep_search_pages=1` when discovery itself is in question | — (by design) |
 | A quarantined page is evidence but not exportable | Re-extract it if needed; never promote it into the corpus or attach it to a report | — (by design) |
 | A study id pins the brief, the input digests and the contract versions, but not the analysis code | Run `study verify`: a decision that moved because a rule changed is a finding, not a silent difference | — (by design) |
-| A report is generated from the decisions, but nothing checks that its prose claims are supported by evidence | Read the report against the cards; a hand-written section is unchecked | T3 |
-| A brief's `[[sources]]` are recorded and reproduced, not verified for applicability, variant or date | Check each one yourself before letting it decide anything, and say so in the report | T3 |
-| Original full studies/reports and basmati source documents are not all tracked | Use the committed study examples for onboarding; request/rebuild missing evidence only when the task needs it | T3 |
+| Deterministic report checks cannot prove that source prose supports an interpretation | Complete the separate digest-bound semantic review | — (semantic judgment) |
+| A brief's `[[sources]]` are declarations | Use the external ledger and indexed claims for checked applicability | — (by design) |
+| Original full studies/reports and basmati source documents are not all tracked | Use the committed study examples for onboarding; request/rebuild missing evidence only when the task needs it; migrated citations remain unverified | — (historical access limits) |
 | A bundle replays only where the feeds its brief names are available; `data/studies/` is gitignored | Copy the bundle and its feeds together, or build the study over committed cases | — (retention policy) |
 | No two-provider acceptance trial yet | Load the same canonical instructions; do not claim proven provider handoff | T4 |
 

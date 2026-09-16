@@ -28,10 +28,11 @@ than define separate research rules. Read this file, [README.md](README.md), and
   where a constraint somebody chose stays distinguishable from a property of
   the product class. See [RESEARCH.md](RESEARCH.md#a-saved-study-end-to-end)
   and the worked examples in [tests/studies](tests/studies/README.md).
-- An external-source ledger with applicability checks, report validation and
-  provider interchangeability trials are future stages in
-  [AGENT_TRANSITION_PLAN.md](AGENT_TRANSITION_PLAN.md), not current
-  capabilities. A study's `sources` are declared and unverified.
+- T3 provides an external-source ledger, applicability checks, report validation
+  and a separate semantic-review checklist. Use `study run --evidence LEDGER`
+  and `study validate-report --require-review` before delivering an audited
+  report. A brief's `sources` alone remain declared and unverified. Provider
+  interchangeability trials remain T4 in [AGENT_TRANSITION_PLAN.md](AGENT_TRANSITION_PLAN.md).
 - The [product vision](ROADMAP.md#product-vision--the-shopping-conversation)
   records where this is going: a conversation in which building a category is
   the default rather than an offer (R11), discovery states its own coverage

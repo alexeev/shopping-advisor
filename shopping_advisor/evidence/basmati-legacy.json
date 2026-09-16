@@ -1,0 +1,110 @@
+{
+  "ledger_version": 1,
+  "observations": [
+    {
+      "id": "legacy-tilda",
+      "source_id": "legacy-tilda",
+      "source_class": "independent_test",
+      "publisher": "Stiftung Warentest 5/2026 (40 rices",
+      "title": "Stiftung Warentest 5/2026 (40 rices, 10 of them basmati)",
+      "url": "",
+      "published": "2026-05",
+      "retrieved": "",
+      "locator": "Legacy category constant; original page/table unknown",
+      "snapshot": {
+        "status": "unavailable",
+        "reason": "Original citation URL and document were not retained. Finding has not been verified."
+      },
+      "claim": "best basmati in the test, \"gut\" (2.4), singled out for particularly low contaminant levels",
+      "excerpt": "",
+      "units": "test grade",
+      "representation": "interpretation",
+      "verification": "legacy_unverified",
+      "product": {
+        "brand": "Tilda",
+        "model": "Pure Original",
+        "variant": "",
+        "batch": "",
+        "geography": ""
+      },
+      "match_status": "unresolved",
+      "limits": [
+        "Brand agreement is only a discovery hint.",
+        "Historical finding cannot establish current batch safety."
+      ],
+      "conflicts": [],
+      "supersedes": [],
+      "verdict": "good"
+    },
+    {
+      "id": "legacy-akash",
+      "source_id": "legacy-akash",
+      "source_class": "independent_test",
+      "publisher": "Stiftung Warentest 5/2026",
+      "title": "Stiftung Warentest 5/2026",
+      "url": "",
+      "published": "2026-05",
+      "retrieved": "",
+      "locator": "Legacy category constant; original page/table unknown",
+      "snapshot": {
+        "status": "unavailable",
+        "reason": "Original citation URL and document were not retained. Finding has not been verified."
+      },
+      "claim": "rated \"gut\"; the only other basmati in the test to reach it",
+      "excerpt": "",
+      "units": "test grade",
+      "representation": "interpretation",
+      "verification": "legacy_unverified",
+      "product": {
+        "brand": "Akash",
+        "model": "",
+        "variant": "",
+        "batch": "",
+        "geography": ""
+      },
+      "match_status": "unresolved",
+      "limits": [
+        "Brand agreement is only a discovery hint.",
+        "Historical finding cannot establish current batch safety."
+      ],
+      "conflicts": [],
+      "supersedes": [],
+      "verdict": "good"
+    },
+    {
+      "id": "legacy-gepa",
+      "source_id": "legacy-gepa",
+      "source_class": "independent_test",
+      "publisher": "\u00d6ko-Test",
+      "title": "\u00d6ko-Test, 13 July 2020",
+      "url": "",
+      "published": "2020-07-13",
+      "retrieved": "",
+      "locator": "Legacy category constant; original page/table unknown",
+      "snapshot": {
+        "status": "unavailable",
+        "reason": "Original citation URL and document were not retained. Finding has not been verified."
+      },
+      "claim": "\"ungen\u00fcgend\": strongly elevated mineral oil and MOAH, and DNA analysis found 20% foreign rice varieties against the Code of Practice limit of 7%",
+      "excerpt": "",
+      "units": "percent foreign varieties",
+      "representation": "interpretation",
+      "verification": "legacy_unverified",
+      "product": {
+        "brand": "Gepa",
+        "model": "",
+        "variant": "",
+        "batch": "",
+        "geography": ""
+      },
+      "match_status": "unresolved",
+      "limits": [
+        "Brand agreement is only a discovery hint.",
+        "Historical finding cannot establish current batch safety."
+      ],
+      "conflicts": [],
+      "supersedes": [],
+      "verdict": "failed"
+    }
+  ]
+}

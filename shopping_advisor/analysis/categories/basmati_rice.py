@@ -560,81 +560,28 @@ EVIDENCE_CHECKS = 7
 #: this is that word expressed as a number.
 CLAIM_CEILING = 0.80
 
-#: Independent laboratory results for products this category meets on the
-#: shelf. Kept as *data*, sourced and dated, because it is the only evidence
-#: in the whole system that Amazon did not supply -- and because a category
-#: module is exactly the right place for "what is known about this product
-#: from outside the page".
-#:
-#: Matching is by brand and product line, deliberately loosely, and a match is
-#: reported to the reader with its source so they can disagree with it.
-EXTERNAL_TESTS = (
-    {'match': r'tilda.*(?:pure|original)|pure\s+original.*basmati',
-     'brand': 'Tilda', 'verdict': 'good', 'score': 0.9,
-     'source': 'Stiftung Warentest 5/2026 (40 rices, 10 of them basmati)',
-     'finding': 'best basmati in the test, "gut" (2.4), singled out for '
-                'particularly low contaminant levels'},
-    {'match': r'\bakash\b',
-     'brand': 'Akash', 'verdict': 'good', 'score': 0.85,
-     'source': 'Stiftung Warentest 5/2026',
-     'finding': 'rated "gut"; the only other basmati in the test to reach it'},
-    {'match': r'\bgepa\b',
-     'brand': 'Gepa', 'verdict': 'failed', 'score': 0.0,
-     'source': 'Öko-Test, 13 July 2020',
-     'finding': '"ungenügend": strongly elevated mineral oil and MOAH, and '
-                'DNA analysis found 20% foreign rice varieties against the '
-                'Code of Practice limit of 7%'},
-)
-
-EXTERNAL_RE = [(re.compile(entry['match'], re.I), entry)
-               for entry in EXTERNAL_TESTS]
-
-
 def external_test(validated):
-    """An independent laboratory result for this product, if one is known.
-
-    The title is not enough to claim one, and this is the module's sharpest
-    edge. `Tilda Pure Original Basmati Reis, 1er Pack (4 x 2kg)` is filed
-    under brand **Kajal**, manufacturer **Kajal GMBH**, with the ingredient
-    declaration "Basmatireis tilda" and in a pack size Tilda does not sell.
-    It may well be genuine Tilda in a re-boxed carton, and it may not; what
-    is certain is that Stiftung Warentest bought and tested a Tilda-branded
-    bag, not this one. Matching on the title alone let any seller inherit
-    somebody else's laboratory result by typing their product name, which is
-    the single easiest way to game a score built on external evidence.
-
-    So the brand or manufacturer field has to agree. When only the title
-    matches, the result is reported -- the reader should know the test
-    exists -- as `unverified`, and the score treats it as a hint rather than
-    a measurement.
-    """
+    """Legacy citations are discovery hints, never verified batch evidence."""
+    from ...evidence import legacy_basmati
     attributes = validated.record.get('attributes') or {}
     identity = [('brand', validated.brand),
                 ('attributes.manufacturer', attributes.get('manufacturer') or '')]
-    for pattern, entry in EXTERNAL_RE:
+    for entry in legacy_basmati()['observations']:
+        brand = entry['product']['brand']
+        pattern = re.compile(r'(?<!\w)' + re.escape(brand) + r'(?!\w)', re.I)
         if not pattern.search(f'{validated.brand} {validated.title}'):
             continue
-        brand = re.compile(r'(?<!\w)' + re.escape(entry['brand']) + r'(?!\w)', re.I)
-        identity_evidence = [Evidence(field, text) for field, text in identity
-                             if brand.search(text)]
-        if identity_evidence:
-            return Value(entry['verdict'], TRUSTED, source='published',
-                         evidence=[Evidence(entry['source'], entry['finding']),
-                                   *identity_evidence],
-                         notes=[f'{entry["source"]}: {entry["finding"]}'])
+        evidence = [Evidence(field, text) for field, text in identity
+                    if pattern.search(text)]
         return Value(entry['verdict'], UNVERIFIED, source='published',
-                     evidence=[Evidence(entry['source'], entry['finding'])],
-                     notes=[f'{entry["source"]}: {entry["finding"]} — but this '
-                            f'listing names {entry["brand"]} only in its '
-                            f'title: it is filed under brand '
-                            f'"{validated.brand}" / manufacturer '
-                            f'"{attributes.get("manufacturer") or "unstated"}", '
-                            f'so the tested bag and this bag are not '
-                            f'demonstrably the same'])
-    return Value(None, UNKNOWN,
-                 notes=['no independent laboratory result is known for this '
-                        'product. That is the normal case and is not a mark '
-                        'against it'])
+                     evidence=[Evidence('external:' + entry['id'], entry['claim']),
+                               *evidence],
+                     notes=[entry['title'] + ': ' + entry['claim'],
+                            'legacy_unverified: source unavailable; tested variant '
+                            'and current batch are not demonstrably the same. '
+                            'No external score credit is assigned.'])
+    return Value(None, UNKNOWN, notes=['No external observation in the ledger '
+                                      'matches this brand; coverage is limited.'])
 
 
 def _found(value):
@@ -733,38 +680,8 @@ def score(validated, found, signals, grain, variety, external):
     # -- health and safety --------------------------------------------------
     # The component the brief cares most about and the page answers least.
     # An independent measurement dominates it; everything else is a proxy.
-    if external.status == TRUSTED:
-        value = 0.05 if external.value == 'failed' else 0.5
-        for entry in EXTERNAL_TESTS:
-            if entry['verdict'] == external.value:
-                value = entry['score']
-                break
-    elif external.known:
-        # The test exists but names a brand this listing only claims in its
-        # title. Worth half the distance to what the result would be worth,
-        # and no more.
-        matched = next((e['score'] for e in EXTERNAL_TESTS
-                        if e['verdict'] == external.value), 0.5)
-        value = 0.5 + (matched - 0.5) * 0.5
-    else:
-        # No measurement. Fall back to what is actually predictive of
-        # inorganic arsenic, which is milling degree and rice type, not Bio.
-        value = {'white': 0.62, 'brown': 0.40, 'parboiled': 0.42}.get(
-            grain.value, 0.5)
-        if origin and re.search(r'indien|india|pakistan', origin, re.I):
-            # Basmati from the subcontinent measures lowest for inorganic
-            # arsenic across every survey consulted; that is a real, if
-            # population-level, reason for mild confidence.
-            value = min(1.0, value + 0.08)
-        # A vendor saying it tests is worth something and it is worth very
-        # little: the two listings on this crawl that name arsenic both state
-        # results no reader can obtain. "Arsen unter der Nachweisgrenze"
-        # without a report is a sentence, and the component it feeds is the
-        # one where a sentence is least adequate.
-        if _found(found.get('lab_tested')):
-            value = min(1.0, value + 0.03)
-        if _found(found.get('arsenic_tested')):
-            value = min(1.0, value + 0.03)
+    # Method v2: legacy tests and vendor assertions do not measure this bag.
+    value = 0.5
     if _found(signals.get('odd_smell')):
         value = max(0.0, value - 0.20)
     if _found(signals.get('insects')) or _found(signals.get('rancid')):
@@ -829,7 +746,7 @@ def score(validated, found, signals, grain, variety, external):
     ignorance = len(unknown) / EVIDENCE_CHECKS
     total = NEUTRAL_SCORE + (raw - NEUTRAL_SCORE) * (1 - SHRINK * ignorance)
 
-    return {'parts': parts, 'weights': dict(WEIGHTS),
+    return {'method': 'basmati-score-v2', 'parts': parts, 'weights': dict(WEIGHTS),
             'raw': round(raw, 1), 'total': round(total, 1),
             'evidence': round(1 - ignorance, 2), 'unknown': unknown}
 
@@ -837,7 +754,7 @@ def score(validated, found, signals, grain, variety, external):
 def _unknown_components(found, signals, grain, variety, external, validated):
     """Which inputs the score had to fall back to neutral on."""
     gaps = []
-    if not external.known:
+    if external.status != TRUSTED:
         gaps.append('no independent laboratory result')
     if not any(_found(signals.get(k)) for k, _, _ in POSITIVE_SIGNALS) and \
             not any(_found(signals.get(k)) for k, _, _ in NEGATIVE_SIGNALS):

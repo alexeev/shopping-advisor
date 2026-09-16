@@ -1482,3 +1482,53 @@ Kept for the reasoning, not as a plan.
 | P4 product variations / twisters | **SPLIT** | R1 (raw capture) / R3 (family modelling) | The twister blob is validation evidence first and a grouping feature second. |
 | P5 validate / complete Amazon.com | **DEFER** | R4 | No product need; `.de` has produced no user-facing output yet, and the unvalidated `.co.uk`/`.it` profiles are already the debt this creates. |
 | P6 optional enrichment (OCR, reviews) | **SPLIT** | OCR dropped / reviews R5 | A+ content contributes zero unique evidence for V1's top claims. |
+
+### T3 — DONE (2026-09-16): external evidence and recommendation audits
+
+- Ledger v1 retains source metadata, permitted text/digests or explicit access
+  limits, product/batch identity, matching evidence, conflicts and supersession.
+  Indexed claims enforce historical/current-batch/vendor/sample/access scopes.
+  Three basmati executable constants are now `legacy_unverified` ledger entries;
+  missing original URLs/documents remain missing. No real source was newly
+  accessed or verified in this maintenance change.
+- Study manifest v2 adds ledger, claim index, deterministic validation and a
+  separately completed semantic review. Full replay now checks ranking order,
+  exclusions, constraints, freshness, every card/score and exact report bytes.
+  Reviews bind both report and evidence/decision digests, record findings and
+  unresolved limits, and distinguish pending from approval. `validate-report`
+  emits JSON; `--require-review` additionally requires semantic approval.
+- Adopted method: existing single-axis ranking, normally EUR/kg. No score-based
+  shortlist or external-evidence-driven price eligibility is introduced.
+  Basmati score method v2 removes unverified laboratory credit and unsupported
+  safety bonuses from milling/origin/vendor assertions. Its starting health
+  value is neutral, and existing adverse review adjustments remain heuristics.
+- Measured effect on the three synthetic basmati fixtures (same pinned product
+  inputs evaluated with HEAD before T3 and the new module):
+
+  | Fixture brand | External status before → after | Total score before → after | Health before → after |
+  |---|---|---|---|
+  | Tilda | trusted → unverified | 60.5 → 54.5 | 0.9 → 0.5 |
+  | Akash | trusted → unverified | 60.0 → 54.1 | 0.9 → 0.5 |
+  | Gepa | trusted → unverified | 40.2 → 53.7 | 0.0 → 0.5 |
+
+  The old health lookup also assigned Akash Tilda's 0.9 by selecting the first
+  matching verdict. Removing unverifiable credit removes that false precision.
+  These are software fixture measurements, not product ratings or buying advice.
+  Price order remains 3, 4, 5 EUR/kg. A separate regression changes the third
+  price to 2.5 EUR/kg and reproduces its move to first place.
+- Two complete [basmati examples](tests/studies/t3/README.md) include sanitized
+  synthetic records, retained synthetic source text and separate semantic review
+  findings. The positive example selects B000000001, 33.3% ahead on listed
+  EUR/kg; the second requires four candidates, finds three and recommends none.
+  Both pass `validate-report --require-review`. Existing pasta examples retain
+  their decisions; manifest v2 gives the positive example the new ID
+  `pasta-bronze-die-46127870314d` (the T2 IDs above are historical).
+- Verification: locked setup, **460 offline tests passed** (27 added for T3),
+  no extraction/generic validation snapshot updates. Covered wrong reseller,
+  variant, marketplace and batch; conflicts, supersession, absent/fabricated
+  support, stale/future dates, vendor overreach, sampled-review population claims,
+  digest tampering, rehashed score/rank/claim changes and semantic-review binding.
+- Limits: automated checks establish reproducibility and declared applicability,
+  not semantic truth. The real legacy sources remain access-limited. Real buying
+  advice requires fresh acquisition and source review. Provider interchangeability
+  trials and automated maintenance gates remain T4.

@@ -6,7 +6,7 @@ analysis, and a saved study whose decisions can be replayed. The product vision
 is a shopping conversation that returns a recommendation, alternatives, and
 what would change the answer.
 
-Amazon.de acquisition through Scrapy is the current source integration. Its
+Data collection from Amazon.de through Scrapy is the current source integration. Its
 **`amazon_product`** spider handles search, pagination, and direct ASIN fetches.
 The supported scope below distinguishes shipped tools from the product vision.
 
@@ -18,8 +18,8 @@ The supported scope below distinguishes shipped tools from the product vision.
 | Research a product or try the offline example | [RESEARCH.md](RESEARCH.md) — current runbook and commands |
 | Understand fields and trust semantics | [CONTRACT.md](CONTRACT.md) — extraction schema **6**, validation contract **2** |
 | Understand priorities and previous decisions | [ROADMAP.md](ROADMAP.md) |
-| Run or replay a saved study | [RESEARCH.md](RESEARCH.md#a-saved-study-end-to-end) — two worked examples under [tests/studies](tests/studies/README.md) |
-| Understand the agent transition | [AGENT_TRANSITION_PLAN.md](AGENT_TRANSITION_PLAN.md) — T0, T1 and T2 delivered; T3–T5 planned |
+| Run or replay a saved study | [RESEARCH.md](RESEARCH.md#a-saved-study-end-to-end) — worked examples under [tests/studies](tests/studies/README.md) |
+| Understand the agent transition | [AGENT_TRANSITION_PLAN.md](AGENT_TRANSITION_PLAN.md) — T0–T3 delivered; T4–T5 planned |
 
 `CLAUDE.md` is a thin entry point to the same instructions. If an agent does
 not automatically discover repository instructions, tell it to read
@@ -38,9 +38,9 @@ credential required for crawling, analysis, or tests.
 - Three category analyzers ship: `dry_pasta`, `tyre_mounting_paste`, and
   `basmati_rice`. Their defaults reflect particular use cases; a ranking alone
   does not establish suitability for a new question.
-- These commands produce analysis, not an automatically verified purchase
-  report. The researcher still establishes requirements, checks external
-  sources, writes the report, and records the limits of the evidence.
+- Study reports now have deterministic evidence checks and a separate semantic
+  review. The researcher still establishes requirements, verifies sources and
+  their meaning, and records the limits. Automated checks do not establish truth.
 
 ### Where this is going
 
@@ -203,6 +203,7 @@ still covers one marketplace: feeds spanning several stop the command until
 | `python -m shopping_advisor.run inspect RUN_DIR` | What a run did, which code and settings produced it, how it ended, what it retained |
 | `python -m shopping_advisor.study check BRIEF` | Whether a brief is usable, and every default it will fall back to |
 | `python -m shopping_advisor.study run BRIEF` | Analyses the feeds the brief names and writes a study bundle; collects nothing |
+| `python -m shopping_advisor.study validate-report BUNDLE --require-review` | Validate indexed claims, replay decisions and require a separate completed semantic review |
 | `python -m shopping_advisor.study verify BUNDLE` | Re-derives the decisions from the bundle's own inputs and reports what moved |
 
 Run these with `uv run --offline --locked`. The analysis commands accept
@@ -340,7 +341,12 @@ the request path.
 
 ## License and origin
 
-See [LICENSE](LICENSE). Based on the Amazon scraper from
+See [LICENSE](LICENSE). Partially inspired by the Amazon scraper from
 `python-scrapy-playbook/amazon-python-scrapy-scraper`, with optional ScrapeOps
 integrations retained. Dependency source of truth is `pyproject.toml` plus
 `uv.lock`; no separate requirements file is maintained.
+
+T3 external-evidence schema and a complete basmati audit example are documented
+in [CONTRACT](CONTRACT.md#8-study-audit-contracts-t3) and
+[the audit examples](tests/studies/t3/README.md). Basmati legacy findings are
+unverified access-limited citations and receive no laboratory score credit.

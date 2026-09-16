@@ -379,12 +379,8 @@ class Scoring(unittest.TestCase):
     def score(self, **kwargs):
         return B.evaluate(record(**kwargs))['score']
 
-    def test_an_unevidenced_listing_cannot_beat_a_measured_one(self):
-        """The bug this term was added for, as a test.
-
-        A claim-stuffed listing with five ratings used to outrank the winner
-        of an independent laboratory test.
-        """
+    def test_legacy_test_is_not_a_measurement(self):
+        """Both listings lack applicable independent measurements."""
         stuffed = self.score(
             title='Premium Basmati Reis 10kg Extra Langkorn 1121 Aromatisch',
             bullets=['100% reiner Basmati aus dem Punjab am Himalaya',
@@ -394,7 +390,8 @@ class Scoring(unittest.TestCase):
                               brand='Tilda', count=400,
                               bullets=['Tilda Pure Basmati Reis wird am Fusse '
                                        'des Himalaya angebaut.'])
-        self.assertLess(stuffed['total'], measured['total'])
+        self.assertEqual(stuffed['parts']['health'], measured['parts']['health'])
+        self.assertIn('no independent laboratory result', measured['unknown'])
 
     def test_the_shrink_pulls_toward_neutral_and_never_below(self):
         bare = self.score(title='Basmati Reis 1 kg', origin=None,
@@ -405,8 +402,8 @@ class Scoring(unittest.TestCase):
         self.assertLess(abs(bare['total'] - B.NEUTRAL_SCORE),
                         abs(bare['raw'] - B.NEUTRAL_SCORE))
 
-    def test_an_external_failure_dominates_every_vendor_claim(self):
-        """Gepa: Bio, Fairtrade, and 20% foreign varieties by DNA."""
+    def test_legacy_failure_does_not_establish_current_batch_failure(self):
+        """The legacy DNA claim is unverified and cannot override this listing."""
         card = B.evaluate(record(
             title='Gepa Bio Basmati Reis fair gehandelt 500 g',
             brand='Gepa',
@@ -414,8 +411,9 @@ class Scoring(unittest.TestCase):
                      'Aus dem Himalaya-Vorgebirge'],
             grams=500.0, price=3.5))
         self.assertEqual(card['external_test'].value, 'failed')
-        self.assertLessEqual(card['score']['parts']['authenticity'], 0.2)
-        self.assertLessEqual(card['score']['parts']['health'], 0.1)
+        self.assertEqual(card['external_test'].status, UNVERIFIED)
+        self.assertGreater(card['score']['parts']['authenticity'], 0.2)
+        self.assertEqual(card['score']['parts']['health'], 0.5)
 
     def test_a_reseller_cannot_inherit_a_lab_result_from_a_title(self):
         """The easiest way to game a score built on external evidence.
@@ -424,7 +422,7 @@ class Scoring(unittest.TestCase):
         2kg)", filed under brand Kajal, manufacturer Kajal GMBH, in a pack
         size Tilda does not sell. Stiftung Warentest tested a Tilda-branded
         bag. The test is still reported -- the reader should know it exists --
-        but as `unverified`, and worth half as much.
+        as `unverified`, with no laboratory score credit.
         """
         genuine = B.evaluate(record(
             title='Tilda Pure Original Basmati Rice, 1er Pack (1x10kg)',
@@ -436,9 +434,9 @@ class Scoring(unittest.TestCase):
             brand='Kajal', grams=8000.0, price=41.11,
             attributes={'country_of_origin': 'Indien',
                         'manufacturer': 'Kajal GMBH'}))
-        self.assertEqual(genuine['external_test'].status, TRUSTED)
+        self.assertEqual(genuine['external_test'].status, UNVERIFIED)
         self.assertEqual(reseller['external_test'].status, UNVERIFIED)
-        self.assertGreater(genuine['score']['parts']['health'],
+        self.assertEqual(genuine['score']['parts']['health'],
                            reseller['score']['parts']['health'])
         self.assertIn('not demonstrably the same',
                       ' '.join(reseller['external_test'].notes))
@@ -465,13 +463,13 @@ class Scoring(unittest.TestCase):
         self.assertEqual(plain['parts']['health'],
                          organic['parts']['health'])
 
-    def test_parboiled_scores_lower_on_health_than_white(self):
-        """Öko-Test measured its highest arsenic in parboiled and brown."""
+    def test_milling_degree_does_not_establish_batch_safety(self):
+        """Milling is not a retained measurement of this batch."""
         white = self.score(title='Basmati Reis weiß 5 kg')
         sella = self.score(title='Basmati Reis Golden Sella 5 kg')
         brown = self.score(title='Basmati Vollkorn Reis 5 kg')
-        self.assertGreater(white['parts']['health'], sella['parts']['health'])
-        self.assertGreater(white['parts']['health'], brown['parts']['health'])
+        self.assertEqual(white['parts']['health'], sella['parts']['health'])
+        self.assertEqual(white['parts']['health'], brown['parts']['health'])
 
     def test_every_component_is_reported_with_the_total(self):
         detail = self.score()
@@ -508,13 +506,13 @@ class ExternalAttribution(unittest.TestCase):
 
     def test_exact_brand_and_manufacturer_carry_their_source_fields(self):
         result = self.result(brand='Tilda', attributes={'manufacturer': 'TILDA Ltd.'})
-        self.assertEqual(result.status, TRUSTED)
+        self.assertEqual(result.status, UNVERIFIED)
         self.assertEqual([(e.field, e.quote) for e in result.evidence[1:]],
                          [('brand', 'Tilda'), ('attributes.manufacturer', 'TILDA Ltd.')])
 
     def test_manufacturer_can_supply_missing_brand_identity(self):
         result = self.result(brand='', attributes={'manufacturer': 'TILDA Ltd.'})
-        self.assertEqual(result.status, TRUSTED)
+        self.assertEqual(result.status, UNVERIFIED)
         self.assertEqual(result.evidence[1].field, 'attributes.manufacturer')
 
 

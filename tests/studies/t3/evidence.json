@@ -1,0 +1,55 @@
+{
+  "ledger_version": 1,
+  "observations": [
+    {
+      "id": "fixture-test",
+      "source_id": "fixture-lab",
+      "source_class": "independent_test",
+      "publisher": "Synthetic fixture laboratory",
+      "title": "Synthetic basmati audit test",
+      "url": "https://example.org/synthetic-basmati",
+      "published": "2026-09-14",
+      "retrieved": "2026-09-16",
+      "locator": "Fixture paragraph 1",
+      "snapshot": {
+        "status": "retained",
+        "text": "Synthetic test observation: fixture-batch was tested. This is test data, not a real laboratory finding.",
+        "sha256": "21b913cab6d7500afc6376f5c40d8415b52d894f96c6204b7ff6c275b0ceb46c"
+      },
+      "claim": "Synthetic test observation: fixture-batch was tested. This is test data, not a real laboratory finding.",
+      "excerpt": "Synthetic test observation: fixture-batch was tested. This is test data, not a real laboratory finding.",
+      "units": "qualitative",
+      "representation": "quotation",
+      "verification": "verified",
+      "product": {
+        "brand": "Tilda",
+        "model": "Pure Original",
+        "variant": "5 kg",
+        "batch": "fixture-batch",
+        "geography": "DE"
+      },
+      "match_status": "checked",
+      "limits": [
+        "Synthetic evidence for software testing, not buying advice."
+      ],
+      "conflicts": [],
+      "supersedes": []
+    }
+  ],
+  "claims": [
+    {
+      "id": "fixture-claim",
+      "observation": "fixture-test",
+      "scope": "current_batch",
+      "statement": "Synthetic test observation: fixture-batch was tested. This is test data, not a real laboratory finding.",
+      "listing": "www.amazon.de:B000000001",
+      "match": {
+        "brand": "/brand",
+        "model": "/model",
+        "variant": "/variant",
+        "batch": "/batch",
+        "geography": "/geography"
+      }
+    }
+  ]
+}

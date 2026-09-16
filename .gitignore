@@ -62,3 +62,8 @@ tests/studies/.tmp-*
 # the reports are not. See reports/README.md.
 reports/*
 !reports/README.md
+
+# Versioned external evidence, including explicit unavailable legacy citations.
+!shopping_advisor/evidence/*.json
+!tests/studies/t3/*.json
+!tests/studies/t3/*.jsonl
