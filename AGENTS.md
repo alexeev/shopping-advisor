@@ -28,14 +28,20 @@ than define separate research rules. Read this file, [README.md](README.md), and
   where a constraint somebody chose stays distinguishable from a property of
   the product class. See [RESEARCH.md](RESEARCH.md#a-saved-study-end-to-end)
   and the worked examples in [tests/studies](tests/studies/README.md).
-- T3 provides an external-source ledger, applicability checks, report validation
-  and a separate semantic-review checklist. Use `study run --evidence LEDGER`
-  and `study validate-report --require-review` before delivering an audited
-  report. A brief's `sources` alone remain declared and unverified.
-- T4 provides the one local maintenance gate under **Environment and checks**
-  below. Cross-platform and provider-interchangeability trials are
-  [deferred from T4](AGENT_TRANSITION_PLAN.md#deferred-from-t4): keep the work
-  provider-neutral, and do not claim portability that nothing has measured.
+- External evidence has a ledger, applicability checks, report validation and a
+  separate semantic-review checklist. Use `study run --evidence LEDGER` and
+  `study validate-report --require-review` before delivering an audited report.
+  A brief's `sources` alone remain declared and unverified.
+- One local maintenance gate stands behind every change; it is under
+  **Environment and checks** below.
+- The repository is provider-neutral **by design, not by measurement**. It has
+  run on one platform and one provider stack. Keep the work provider-neutral —
+  repository files and ordinary CLIs, no provider SDK in the core, no hidden
+  per-provider memory — and record provider, model and tool configuration as
+  execution metadata only: it must never change a status, a band or a decision.
+  Do not claim portability or provider interchangeability that nothing has
+  measured; the trials that would establish it are
+  [R17](ROADMAP.md#r17--portability-evidence).
 - The [product vision](ROADMAP.md#product-vision--the-shopping-conversation)
   is a permanently extensible research harness operated through a coding-agent
   conversation. Task-driven adaptation covers categories, sources, extraction

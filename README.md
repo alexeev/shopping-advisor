@@ -18,13 +18,12 @@ The supported scope below distinguishes shipped tools from the product vision.
 
 | Need | Read |
 |---|---|
-| Operate or maintain the repository as an agent | [AGENTS.md](AGENTS.md) — canonical instructions for either provider stack |
+| Operate or maintain the repository as an agent | [AGENTS.md](AGENTS.md) — canonical, provider-neutral instructions |
 | Research a product or try the offline example | [RESEARCH.md](RESEARCH.md) — current runbook and commands |
 | Understand fields and trust semantics | [CONTRACT.md](CONTRACT.md) — extraction schema **6**, validation contract **2** |
-| Understand priorities and previous decisions | [ROADMAP.md](ROADMAP.md) |
+| Understand priorities and previous decisions | [ROADMAP.md](ROADMAP.md) — the one plan of record |
 | Run or replay a saved study | [RESEARCH.md](RESEARCH.md#a-saved-study-end-to-end) — worked examples under [tests/studies](tests/studies/README.md) |
 | Verify the repository before finishing a change | [AGENTS.md](AGENTS.md#environment-and-checks) — one local gate, `maintenance check` |
-| Understand the agent transition | [AGENT_TRANSITION_PLAN.md](AGENT_TRANSITION_PLAN.md) — T0–T4 delivered, T4 at reduced scope; T5 is an ongoing policy |
 
 `CLAUDE.md` is a thin entry point to the same instructions. If an agent does
 not automatically discover repository instructions, tell it to read
@@ -58,12 +57,13 @@ Engineering is visible to the user when it affects cost, confidence or the decis
 
 The [product vision and roadmap assessment](ROADMAP.md#product-vision--the-shopping-conversation)
 define the minimum operating model, architectural safeguards and delivery order.
-T4's local maintenance gate has shipped. R13 intake comes next, then R15
+The local maintenance gate has shipped. R13 intake comes next, then R15
 controlled adaptation, R11 category synthesis, R12 coverage, R16 lifecycle and
 R14 unseen-problem trials. The supported scope above remains the operational
 limit until those gates ship. Cross-platform and provider-interchangeability
-trials are [deferred](AGENT_TRANSITION_PLAN.md#deferred-from-t4) and block only
-the claim that either provider stack can operate this repository.
+trials are [deferred to R17](ROADMAP.md#r17--portability-evidence) and block
+only the claim that either provider stack can operate this repository; the
+repository is provider-neutral by design, and that has not been measured.
 
 ## Setup and first check
 

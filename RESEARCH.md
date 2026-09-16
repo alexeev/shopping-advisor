@@ -1,12 +1,13 @@
 # Product research runbook
 
 This is the current workflow for the shipped tools. Read [AGENTS.md](AGENTS.md)
-first. T0 makes the existing workflow discoverable, T1 makes acquisition and
-replay trustworthy, T2 persists studies, T3 adds the external-source ledger,
-claim checks and separate semantic review, and T4 puts every automated check
-behind [one local command](AGENTS.md#environment-and-checks). Provider and
-cross-platform trials are
-[deferred from T4](AGENT_TRANSITION_PLAN.md#deferred-from-t4).
+first. Acquisition and replay are provenance-bound, studies persist and replay,
+external sources go through a ledger with claim checks and a separate semantic
+review, and every automated check sits behind
+[one local command](AGENTS.md#environment-and-checks). The stages that built
+this are recorded in the
+[roadmap](ROADMAP.md#agent-operation-transition); provider and cross-platform
+trials are [deferred to R17](ROADMAP.md#r17--portability-evidence).
 
 The permanent product interface is the coding-agent conversation. The
 [revised product vision](ROADMAP.md#product-vision--the-shopping-conversation)
@@ -585,7 +586,7 @@ to make a preferred product win.
 
 | Limitation | What to do now | Planned stage |
 |---|---|---|
-| One analysis covers one marketplace; cross-marketplace comparison is unsupported | Name the marketplace with `--marketplace` and report only that shelf | R4/T5 |
+| One analysis covers one marketplace; cross-marketplace comparison is unsupported | Name the marketplace with `--marketplace` and report only that shelf | R4, on demand |
 | Evidence collected before T1 has no page digests, recorded fetch times or feed bindings | `inspect` reports such a run as `legacy`; label its freshness unknown rather than inferring it | — (historical data) |
 | Feeds are bound by the run id on their records, not by a digest taken at close | Keep original feeds unchanged and record their paths; a merged multi-run feed reports `mixed` lineage. A study bundle does digest the feeds it read, so replay detects one that changed | — (acquisition ordering) |
 | Failure capture is bounded, and search pages are retained only on request | Read the capped counters in the manifest; re-collect with `keep_search_pages=1` when discovery itself is in question | — (by design) |
@@ -595,7 +596,7 @@ to make a preferred product win.
 | A brief's `[[sources]]` are declarations | Use the external ledger and indexed claims for checked applicability | — (by design) |
 | Original full studies/reports and basmati source documents are not all tracked | Use the committed study examples for onboarding; request/rebuild missing evidence only when the task needs it; migrated citations remain unverified | — (historical access limits) |
 | A bundle replays only where the feeds its brief names are available; `data/studies/` is gitignored | Copy the bundle and its feeds together, or build the study over committed cases | — (retention policy) |
-| No two-provider acceptance trial, and no run on a second platform | Load the same canonical instructions; keep the work provider-neutral; do not claim proven provider handoff or cross-platform behaviour | [deferred from T4](AGENT_TRANSITION_PLAN.md#deferred-from-t4) |
+| No two-provider acceptance trial, and no run on a second platform | Load the same canonical instructions; keep the work provider-neutral; do not claim proven provider handoff or cross-platform behaviour | [R17](ROADMAP.md#r17--portability-evidence) |
 | The maintenance gate establishes that the repository still does what it says, not that what it says is true of any marketplace | Use it to finish a change; it replaces no part of source review or freshness judgement | — (by design) |
 
 ## Failure diagnosis

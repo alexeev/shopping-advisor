@@ -36,7 +36,7 @@ stale prices, vendor assertions, review-sample misuse, digest tampering,
 rehashed score/rank/claim tampering and semantic-review binding. A source's
 embedded instructions remain inert text. These tests do not establish that an
 LLM will always resist prompt injection; provider trials are
-[deferred from T4](../../../AGENT_TRANSITION_PLAN.md#deferred-from-t4).
+[deferred to R17](../../../ROADMAP.md#r17--portability-evidence).
 
 Both examples are replayed by the
 [maintenance gate](../../../AGENTS.md#environment-and-checks) through exactly

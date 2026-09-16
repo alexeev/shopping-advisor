@@ -23,7 +23,6 @@
   },
   "documentation": [
     "AGENTS.md",
-    "AGENT_TRANSITION_PLAN.md",
     "BASELINE.md",
     "CLAUDE.md",
     "CONTRACT.md",

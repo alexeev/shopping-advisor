@@ -6,9 +6,9 @@
 > replay and multi-feed analysis; R7 and R8 are shipped. The historical claim
 > that `rank` also replaces the composite shortlist script was too broad:
 > basmati `rank` uses price per kg, and its JSON card omits material extras.
-> The original complete study inputs/report are not all committed. T0 documents
-> these limits; T2/T3 in the [transition plan](AGENT_TRANSITION_PLAN.md) address
-> complete analysis exports and report reproducibility.
+> The original complete study inputs/report are not all committed. Complete
+> analysis exports, study bundles and report audits have since shipped; see the
+> [delivery record](ROADMAP.md#agent-operation-transition).
 
 Written immediately after answering one: *"find the best dry basmati rice on
 Amazon.de for regular home use"*, start to finish, on a repository that had

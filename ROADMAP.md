@@ -27,6 +27,7 @@ measurements as history.
 | **R14** | A recommendation in a category nobody validated | PLANNED (R11–R13, R15, R16 gates) |
 | **R15** | Controlled task-driven capability adaptation | PLANNED (after R13; T4's local maintenance gate has shipped) |
 | **R16** | Capability lifecycle and architectural review | PLANNED (minimum lifecycle before R14) |
+| **R17** | Portability evidence: a second platform and a second provider | **DEFERRED** — gates the portability claim only |
 
 ## Product vision — the shopping conversation
 
@@ -112,8 +113,9 @@ recognised unseen categories, but omitted a general adaptation lifecycle,
 placed conversation late, and made R14 depend on deferred R10 while calling
 R14 its justification. This revision removes that circular dependency.
 
-The assessment uses the complete R0–R14, T0–T5, deferred-work and E1–E4 plans,
-the current runbook and contracts, and these implementation seams:
+The assessment uses the complete R0–R14 and transition-stage plans, the
+deferred work, E1–E4, the current runbook and contracts, and these
+implementation seams:
 [category registration](shopping_advisor/analysis/categories/__init__.py),
 [category interface](shopping_advisor/analysis/category.py),
 [brief](shopping_advisor/study/brief.py),
@@ -137,7 +139,7 @@ verified marketplace facts or buying advice.
 | Evidence-based promotion | Runbook requires scope, counterexamples and measured effect | R16 separates retention, maintained local capability and shared abstraction promotion |
 | Lessons without uncontrolled growth | Durable homes already defined; promotion/disposal outcomes not tracked | R16 records reuse, rejection, expiry and supersession beside existing homes |
 | Architectural review / debt | Deferral principles exist; no review cadence or accountable output | R16 adds a recurring review gate with measured simplification decisions |
-| Provider independence | Canonical instructions, ordinary CLIs and a gate needing no model API exist; portability is not demonstrated | Keep the design provider-neutral; the two-provider study, repair and handoff trials are **deferred from T4** and gate only the portability claim, not R15 |
+| Provider independence | Canonical instructions, ordinary CLIs and a gate needing no model API exist; portability is not demonstrated | Keep the design provider-neutral; the two-provider study, repair and handoff trials are **[deferred to R17](#r17--portability-evidence)** and gate only the portability claim, not R15 |
 | Traceability of research and changes | T1–T3 bind evidence and reports; code revision/dirty flag do not preserve an exact uncommitted patch | R15 binds base, patch, method, checks and resulting study revision |
 | Insufficient evidence | T2 refusal and T3 audits exist; extension-budget failure is not integrated | R12/R15/R14 distinguish missing evidence, failed adaptation and a valid qualified result |
 
@@ -152,21 +154,22 @@ another boundary to test, not a reason to design a universal schema now.
 ### Priorities and true dependencies
 
 Identifiers retain their historical meaning; their numeric order is not the
-execution order. T0–T3 and completed R milestones remain delivered, not work to
-repeat. T5 is the demand-driven expansion policy, not a final catalogue phase.
+execution order. T0–T4 and completed R milestones remain delivered, not work to
+repeat. Demand-driven expansion is a standing rule rather than a final
+catalogue phase — see [decision principle 9](#decision-principles).
 
 | Order | Deliverable | Dependency and reason |
 |---|---|---|
 | 1 — next | R13 intake/evidence/gap planning | Builds on shipped T2/T3. T4's maintenance gate has shipped and now protects existing behavior; R13 establishes what to change |
 | 2 | R15 bounded adaptation, with R11 as the first category case | Needs R13's recorded gap. T4's executable baseline is in place. Prove isolation, validation, traceability and rollback before making adaptation routine |
 | 3 | R12 coverage and R16 minimum lifecycle/index | Evidence planning can start with R13; integrate after R15 artifacts exist. Coverage and deliberate retention are necessary before claiming the full loop works |
-| 4 | R14 unseen-problem and reuse acceptance trials | Needs R11–R13, R15 and R16's minimum lifecycle, on top of the shipped maintenance gate. The trials deferred from T4 — cross-platform paths, provider interchangeability and handoff — test these same artifacts afterwards, and gate only the portability claim |
-| Ongoing | R16 architectural reviews; T5 study-driven expansion | Use measurements from completed studies to simplify or extend; there is no final supported-category count |
+| 4 | R14 unseen-problem and reuse acceptance trials | Needs R11–R13, R15 and R16's minimum lifecycle, on top of the shipped maintenance gate. [R17](#r17--portability-evidence)'s trials — cross-platform paths, provider interchangeability and handoff — test these same artifacts afterwards, and gate only the portability claim |
+| Ongoing | R16 architectural reviews; study-driven expansion | Use measurements from completed studies to simplify or extend; there is no final supported-category count |
 
-R12 design can proceed earlier and need not wait for synthesis. The provider
-and cross-platform trials deferred from T4 are a release gate for the
-portability claim only: they do not block R15, and they are not a reason to
-postpone the first local extension experiment. Nothing in this sequence needs
+R12 design can proceed earlier and need not wait for synthesis.
+[R17](#r17--portability-evidence)'s provider and cross-platform trials are a
+release gate for the portability claim only: they do not block R15, and they
+are not a reason to postpone the first local extension experiment. Nothing in this sequence needs
 remote CI; the local gate is the authority, and no current constraint argues
 for a second one.
 R10 is **not** a prerequisite for any of the above: a local comparison method
@@ -224,6 +227,24 @@ new operating-model outcomes remain unmeasured until the planned trials.
 
 ## Agent-operation transition
 
+**Delivered, and its plan retired (2026-09-16).** This section is the history
+of how the repository became agent-operable, not a plan anything still follows.
+T0–T4 shipped; the dated records below carry their measurements and their
+stated limits, and they are why "since T1" or "since T2" is readable elsewhere
+in these documents. The separate transition plan is retired to version control
+— the [closing record](#documentation-review--2026-09-16-one-plan-of-record)
+says what moved and what was dropped. Current operating rules are in
+[AGENTS.md](AGENTS.md), with the research workflow in
+[RESEARCH.md](RESEARCH.md) and a thin `CLAUDE.md` entry point.
+
+| Stage | What it delivered | Where it lives now |
+|---|---|---|
+| **T0** | Canonical instructions, the thin provider adapter, the runbook and a no-network walkthrough; `amazon_search` removed | [AGENTS.md](AGENTS.md), [RESEARCH.md](RESEARCH.md), [README.md](README.md) |
+| **T1** | Run identity, manifest state and provenance, per-page digests, failure capture, redaction, marketplace-scoped identity | `run.py`, `provenance.py`, `redaction.py` |
+| **T2** | The validated brief, structured ranking and exclusions, complete category JSON, the replayable study bundle, refusal as a result | `study/`, [CONTRACT.md](CONTRACT.md) |
+| **T3** | External-evidence ledger, applicability and claim checks, full report replay, separate semantic review | `study/audit.py`, [CONTRACT.md](CONTRACT.md#8-study-audit-contracts-t3) |
+| **T4** | One local maintenance gate over all of it, with a tracked baseline that has to be argued with | `maintenance/`, [AGENTS.md](AGENTS.md#environment-and-checks) |
+
 ### Product identity — 2026-09-16
 
 The crawler-era name `amazon-scrapy-scraper` described acquisition but omitted
@@ -244,10 +265,6 @@ project name changed in the lockfile; dependency versions remain pinned.
 Schema, validation and study contract versions are unchanged because their
 data and decision semantics did not move. R11–R14 remain planned.
 
-The reviewed [transition plan](AGENT_TRANSITION_PLAN.md) adds T0–T5 without
-replacing the R0–R10 history. Current operating rules are in
-[AGENTS.md](AGENTS.md), with a shared research workflow in
-[RESEARCH.md](RESEARCH.md) and a thin `CLAUDE.md` entry point.
 
 **T0 — DONE (2026-09-16): make the current system navigable.**
 
@@ -268,7 +285,8 @@ replacing the R0–R10 history. Current operating rules are in
   checks passed. No extractor or trust-rule behavior changed.
 - Verification limits: used the existing Windows environment, not a fresh
   Linux installation; no live crawl or model-provider acceptance trial was run.
-  Provider interchangeability trials remain T4. T1–T5 are not implemented.
+  Provider interchangeability trials were deferred, and now live in
+  [R17](#r17--portability-evidence). T1–T4 were not yet implemented.
 
 **T1 — DONE (2026-09-16): make acquisition and replay safe to build upon.**
 
@@ -334,7 +352,7 @@ replacing the R0–R10 history. Current operating rules are in
   and by the declared feed path, not by a digest taken at close — the feed
   exporter and the run both close on `spider_closed` and nothing orders them.
   Cross-marketplace comparison stays unsupported by decision, not by
-  limitation. T2–T5 are not implemented.
+  limitation. T2–T4 were not yet implemented.
 
 **T2 — DONE (2026-09-16): persist and replay a complete offline study.**
 
@@ -420,7 +438,7 @@ replacing the R0–R10 history. Current operating rules are in
   report's *prose* claims are supported by evidence, and a brief's declared
   `[[sources]]` are reproduced with a heading saying they were not verified —
   both are T3. `report.md` is generated, so a hand-written section on top of
-  it is unchecked. T3–T5 are not implemented.
+  it is unchecked. T3 and T4 were not yet implemented.
 
 **Runbook — requirement elicitation and the improvement loop (2026-09-16).**
 Audit of the documents against the actual end-to-end flow found two gaps that
@@ -455,8 +473,8 @@ CI workflow, Windows and Linux command paths, a research-evaluation set and
 two-provider interchangeability trials into one stage. Only the first
 question — *can a clean checkout establish, in one command, that this
 repository still does what it says?* — blocks R15. The rest is
-[deferred from T4](AGENT_TRANSITION_PLAN.md#deferred-from-t4) and gates the
-portability claim alone.
+[deferred to R17](#r17--portability-evidence) and gates the portability claim
+alone.
 
 - **One entry point.** `python -m shopping_advisor maintenance check` runs the
   locked-runtime check, the offline suite, the published contract and schema
@@ -508,6 +526,45 @@ portability claim alone.
   cannot check that what it says is true of any marketplace. `uv sync --locked`
   is still a separate bootstrap step and is the only one that uses the network.
 
+### Documentation review — 2026-09-16: one plan of record
+
+The transition plan was retired to version control, and the repository now
+presents a single current product model: the [product vision](#product-vision--the-shopping-conversation),
+the [priorities](#priorities-and-true-dependencies), the delivered history
+above, the [decision principles](#decision-principles), and the deferred work
+with the evidence each item still owes. Nothing an agent must read in order to
+operate or extend this repository describes a migration any more.
+
+- **Retired:** 739 lines of second plan. Its current-state assessment described
+  one snapshot (`95b8bbd`) that T0–T4 has since answered, and the residue it
+  could not close — untracked original basmati inputs and reports — is already
+  carried in [RESEARCH's limitations](RESEARCH.md#current-limitations). Its
+  target operating model and improvement cycle had moved into `AGENTS.md` and
+  `RESEARCH.md`; its architecture sections are built and published in
+  `CONTRACT.md`; its sequencing this file had already superseded in writing.
+  Keeping it meant every future agent had to read a migration framework to find
+  out what the system is.
+- **Preserved, in homes that outlive the migration:** the deferred portability
+  trials and the rule against claiming portability nothing has measured, now
+  [R17](#r17--portability-evidence) with its own scope, acceptance conditions
+  and out-of-scope decisions; and expand-on-demand, now
+  [decision principle 9](#decision-principles) rather than a stage that could
+  never complete. The retired stage's per-capability guidance was already
+  stated by R4, R9, R10, R16 and the deferred-work table, and was not copied a
+  second time.
+- **Dropped deliberately:** the snapshot assessment, the gap-and-risk table,
+  the target operating model, the architecture proposals, the first
+  implementation priorities and the definition of done — the last of these
+  because every clause it tested is either delivered above or is now R17's.
+  Version control holds them; documentation does not owe them a second copy.
+- **Measured effect:** the gate passes. The tracked documentation index went
+  from 16 documents, 128 local links and 247 anchors to **15 documents, 123
+  links and 221 anchors**, with no broken link or anchor and no reference left
+  pointing at the retired file. **491 offline tests**, unchanged and green. No
+  code, contract version, snapshot or example decision moved. The only baseline
+  change is the document removed from its index, which is the reviewable claim
+  that this repository no longer publishes it.
+
 ---
 
 ## Decision principles
@@ -531,6 +588,15 @@ principle wins unless new measurement overrides it.
    is observed; adapt where structural difference is measured.
 8. **Traceability matters.** Every value and every recommendation must be
    traceable to the source text it came from.
+9. **Capability grows on demand.** A named research need earns a capability; an
+   anticipated one does not. Categories, sources, extraction techniques and
+   comparison methods accumulate as evidence of demand, never as a coverage
+   target, and no count of them completes the product. A first bounded
+   experiment needs no second consumer to justify it, and neither does a
+   reproducible correctness fix; promotion into maintained or shared capability
+   does — see [R16](#r16--capability-lifecycle-and-architectural-review). What
+   this roadmap defers, it defers against a measured workload, so
+   [a named task may reopen it](#deferred-and-rejected-work).
 
 ---
 
@@ -1548,8 +1614,8 @@ hard requirement must remain missing regardless of any score.
   promotion based on actual reuse, not the fact that code was generated twice.
 - The trial records the measures in the product vision. Repeating research,
   scoped repair and artifact handoff across both provider environments is
-  [deferred from T4](AGENT_TRANSITION_PLAN.md#deferred-from-t4) and is required
-  only before claiming provider interchangeability, not before R14 itself.
+  [deferred to R17](#r17--portability-evidence) and is required only before
+  claiming provider interchangeability, not before R14 itself.
 
 ---
 
@@ -1652,6 +1718,71 @@ abstraction, not to retaining useful evidence.
   semantic diffs and rollback; a reasoned no-change decision is acceptable.
 - Shared scoring, storage and adapter frameworks are reconsidered from these
   measurements, not from an ambition to make the system complete.
+
+---
+
+## R17 — Portability evidence
+
+**Status: DEFERRED, not cancelled. It gates one claim and nothing else.**
+
+The design is provider-neutral and stays that way: the interface is repository
+files and ordinary CLI commands, no provider SDK sits in the core, and the
+maintenance gate needs no model API and no credential. None of that has been
+*measured*. The gate has run on one machine, one shell and one interpreter,
+driven from one provider stack. Nothing establishes that the same command paths
+behave the same way on Windows or on Linux, or that two provider environments
+reach the same decisions and can hand a study to each other.
+
+So, until these trials run: **no claim of proven portability or provider
+interchangeability may be made** — not in this repository's documentation, not
+in a study report, not in a report's stated limits. "Provider-neutral by design,
+unmeasured" is accurate. "Operable by agents using either provider stack" is
+not; it is the one sentence the delivered transition could not support, and it
+is the reason this milestone exists rather than quietly disappearing with the
+plan that held it.
+
+### Scope when it starts
+
+- The documented command paths on Windows and on Linux: setup, the maintenance
+  gate, the offline walkthrough and a study replay — recording the environment,
+  the failures and every manual intervention each one needed.
+- Two provider environments, for example a Claude CLI and a Codex CLI, each
+  loading the same canonical instructions: run a study from the same brief,
+  make one scoped repair through the maintenance workflow, then hand the
+  artifacts to the other to continue without the originating conversation.
+- A research-evaluation set spanning the three shipped categories, so that the
+  comparison between environments is made against stated expectations rather
+  than against an impression of two transcripts.
+- Prompt-injection fixtures: source text carrying instructions stays content in
+  both environments. Passing is regression evidence, never a guarantee.
+
+### Done when
+
+- Both environments complete the research and the maintenance exercise, and
+  each resumes the other's study from the bundle alone. The result records the
+  tested scope, the method versions, the failures and the human interventions.
+- Provider, model and tool configuration appear only as execution metadata. A
+  status, a plausibility band or a decision that moved because of the
+  environment it ran in fails this milestone; it is not a finding about a
+  product.
+- The gate reports the same findings on each platform, or a difference is
+  recorded as known platform behaviour with its reason.
+
+### Explicitly out of scope
+
+Remote CI and a Git hook as the authority, for the reasons recorded in the T4
+delivery note: a hosted runner becomes a second definition of the gate that can
+drift from this one, and a hook is per-clone state, invisible in review and
+skippable with `--no-verify`. Multi-marketplace support, multi-agent roles and
+a hosted platform are out of scope too — two-provider operation needs none of
+them.
+
+### Not a dependency
+
+R13, R15, R16 and R14 do not wait for this. What they needed from the
+transition was one executable local gate, and it shipped. Reopen R17 when a
+second platform or a second provider is actually in use: these trials are worth
+running against real use, not against an imagined one.
 
 ---
 
@@ -1826,4 +1957,4 @@ Kept for the reasoning, not as a plan.
   not semantic truth. The real legacy sources remain access-limited. Real buying
   advice requires fresh acquisition and source review. T4 has since automated
   these checks into one local gate; provider interchangeability trials remain
-  [deferred from T4](AGENT_TRANSITION_PLAN.md#deferred-from-t4).
+  [deferred to R17](#r17--portability-evidence).
