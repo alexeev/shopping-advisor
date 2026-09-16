@@ -22,6 +22,7 @@ The supported scope below distinguishes shipped tools from the product vision.
 | Research a product or try the offline example | [RESEARCH.md](RESEARCH.md) — current runbook and commands |
 | Understand fields and trust semantics | [CONTRACT.md](CONTRACT.md) — extraction schema **6**, validation contract **2** |
 | Understand priorities and previous decisions | [ROADMAP.md](ROADMAP.md) — the one plan of record |
+| Design the conversational entry point | [INTAKE.md](INTAKE.md) — what intake must preserve, assessed before R13 |
 | Run or replay a saved study | [RESEARCH.md](RESEARCH.md#a-saved-study-end-to-end) — worked examples under [tests/studies](tests/studies/README.md) |
 | Verify the repository before finishing a change | [AGENTS.md](AGENTS.md#environment-and-checks) — one local gate, `maintenance check` |
 

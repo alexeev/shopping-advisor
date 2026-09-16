@@ -1569,6 +1569,12 @@ validated brief once the capability and inputs are ready. Do not bypass the
 brief's registry or introduce arbitrary import paths. Any new persisted shape
 needs a tested contract before becoming part of the executable workflow.
 
+[INTAKE.md](INTAKE.md) is the pre-implementation assessment for this milestone:
+requirement semantics, stage effects, conclusion rendering, the two identities,
+review phases, retention and the worked cases. It is a design assessment, not an
+adopted contract — implementing any of it is separate work under the maintenance
+workflow.
+
 ### Done when
 
 - A user who has read no project documentation can initiate a supported study
