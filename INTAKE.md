@@ -873,6 +873,153 @@ those and priced against the layer that actually moved.
 
 ---
 
+## 16. Implementation sequence
+
+### Two migration costs, and they are coupled
+
+The order of the work is dictated by what this repository charges for a change,
+not by the order the sections above are written in.
+
+**Report bytes move** and both committed semantic reviews die. `check_review`
+compares `report_sha256`, and a completed review needs a reviewer and non-empty
+findings rather than a bare approval, so each break costs two *human* review acts
+and cannot be regenerated.
+
+**`study_id` moves** and all four baseline examples' pinned ids change across six
+files. Because the report renders `study_id` into its own header, this cost always
+triggers the first one.
+
+The surface is exact:
+
+| File | What moves |
+|---|---|
+| `shopping_advisor/maintenance/baseline.json` | four pinned `study_id` values, `contracts`, `tests` |
+| [RESEARCH.md](RESEARCH.md#offline-walkthrough) | three occurrences in the offline walkthrough |
+| [tests/studies/README.md](tests/studies/README.md) | one occurrence |
+| [ROADMAP.md](ROADMAP.md) | the current-identity list and the T3 correction; earlier ids are already marked historical and stay as written |
+| `tests/studies/t3/positive-review.json`, `tests/studies/t3/insufficient-review.json` | `report_sha256`, `basis`, `review_version` — reissued by a reviewer |
+
+Therefore everything that can be inert on the existing four examples lands first,
+and **one** explicitly named migration commit pays both costs once. What makes that
+possible is a single decision: **the plan is an optional input to `run()` and
+`analyse()`, exactly as the evidence ledger is today.** Absent a plan, behaviour is
+byte-identical, so stages 1–9 cannot move a committed example.
+
+### The stages
+
+| # | Stage | Moves ids | Moves report bytes | Weight |
+|---|---|---|---|---|
+| 1 | Worked cases and characterisation tests | no | no | M |
+| 2 | Operating-text pass (§13) | no | no | S |
+| 3 | Split `audit.VERSION` into three contracts | no | no | S |
+| 4 | Controls catalogue from the live category interface | no | no | M |
+| 5 | Intake plan contract and the plan-to-brief refusal | no | no | L |
+| 6 | Stage gates: intake, comparison support, conclusion | no | new fixtures only | L |
+| 7 | Declared study scope, delivery record, freshness block | no | new fixtures only | M |
+| 8 | Session resource ledger and resumption | no | no | M |
+| 9 | Intake review artifact | no | no | M |
+| 10 | **Migration**: manifest v3, identity projection, review v2 | **once** | **once** | L |
+
+**1 — Worked cases and characterisation tests.** The referent, written before any
+field name. The cases in §14 become committed fixtures with their intent and
+acceptable outcomes stated independently of any produced plan, together with tests
+pinning the three failure patterns in §1 so none of them is repaired by accident:
+two briefs differing only in `cost_basis`, `unacceptable` or `limits` decide
+identically; a purchase budget routed through `max_axis_value` caps unit price and
+routed through `unacceptable` changes nothing; and the bronze-die study at a
+reference date thirty days on yields stale ranked candidates with an unchanged
+shortlist and outcome. Assert eligibility, ordering and outcome — never report
+bytes or ids, which legitimately differ. *Measured effect:* three known-inert
+qualifications become regressions, and every case has a written expectation before
+any code exists.
+
+**2 — Operating-text pass.** The replacements in §13, with no code dependency.
+*Measured effect:* the blocking quantifier falsified by its own first example is
+gone.
+
+**3 — Split `audit.VERSION`.** One constant currently serves three contracts —
+`ledger_version`, `audit_version` and `review_version`. Review v2 cannot ship
+without separating them, because the bump would invalidate every committed ledger
+for no reason. Three constants, all at 1, each registered in the maintenance
+gate's contract discovery and in `baseline.contracts`, since a published version
+absent from the baseline is itself a finding. No artifact bytes change.
+*Measured effect:* three independently movable contracts where there was one.
+
+**4 — Controls catalogue.** A resolver over the live category interface rather
+than a list maintained beside it, covering all five mechanisms in §4 and not only
+the two brief fields, with regression cases chosen to be sensitive to each
+control's meaning. *Measured effect:* a catalogue for three categories, and cases
+that fail when a control's semantics change while these examples' outputs do not.
+
+**5 — Intake plan contract and the plan-to-brief refusal.** The requirement model
+of §3, user evidence captured by the provenance rule of §12, the read-back and its
+response status, and resolved control mappings — landing together with the
+transition check that refuses when a decisive requirement fails to reach the brief
+with the same meaning and role. The refusal is what makes the artifact pass R16's
+test on the day it arrives: a plan the boundary never reads is `cost_basis` with
+more fields. *Measured effect:* the dropped-requirement case refuses at the
+affected transition.
+
+**6 — Stage gates.** The refusal matrix of §3 at the stages of §5, including the
+decisive-preference row, without which the delivered-cost case escapes the rule
+this document is built around. Inert without a plan. *Measured effect:* the
+delivered-cost recommendation is withheld while the bounded item-price finding
+survives.
+
+**7 — Declared study scope, delivery record and the freshness block.** A delivery
+check that compares against the execution clock would make the gate
+**clock-dependent**: the committed examples would go stale the day after they were
+recorded, and the gate would begin failing with the passage of time rather than
+with a change. The check therefore keys off a declared study scope — current advice
+or historical — which the committed examples already assert in prose and would now
+assert as data. The delivery reference is frozen in the delivery record and does
+not enter `study_id` (§8). *Measured effect:* a stale decisive input blocks current
+advice, and the frozen regression fixtures remain deliverable as historical.
+
+**8 — Session resource ledger and resumption.** Declared limits, action records,
+reconciliation and the next-action check, in the units the environment observes.
+*Measured effect:* a study resumes from retained artifacts without the originating
+conversation.
+
+**9 — Intake review artifact.** A new artifact with its own contract, binding the
+plan snapshot, mappings and control metadata, deliberately not touching the final
+review or its version so that no committed review is invalidated yet.
+
+**10 — Migration.** One commit, argued as one claim: manifest v3 for the artifacts
+the bundle gains, `review_basis` as a contract with a test that a new artifact
+cannot enter the bundle without a deliberate binding decision, the phase-aware
+final review at v2 requiring valid intake findings, and the frozen
+operative-requirement projection entering `study_id`. Then four ids re-recorded,
+two reviews reissued, ids updated in the files listed above, and the baseline
+re-recorded as a separately explained part of the same change. **Ids move;
+decisions must not** — eligibility, ordering and outcome on all four examples are
+shown unchanged in the diff.
+
+### Decided, and one that is not
+
+Decided here: optional-plan inertness; one migration rather than three;
+scope-declared rather than clock-driven freshness; the intake review as a separate
+artifact.
+
+Open: **where a plan lives before a study exists.** §12 settles that the snapshot
+travels inside the bundle, but a plan for a request that never becomes a study has
+no bundle, and the default location is gitignored — not diffed, not distributed and
+not protected from loss, which is the wrong home for the artifact that owns intent
+and holds the reviewer's referent. The choice is a tracked plan directory or
+untracked working plans with a mandatory bundle-internal snapshot at study time.
+Stage 5 is where it binds.
+
+### On estimating this
+
+No effort figure is offered, for the reason given in §8's closing: the components
+have to be scoped against the cases first. Relative weight is stated per stage, and
+the two carrying the most unknown are stage 5, where the requirement dimensions
+meet real language, and stage 10, where three version bumps and a reissued review
+land together. Stages 1 to 4 are the ones that no later design choice can
+invalidate.
+
+---
+
 ## Evidence checked
 
 This assessment inspected AGENTS, README, RESEARCH, CONTRACT, the R9–R17 roadmap
