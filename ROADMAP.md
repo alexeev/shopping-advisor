@@ -465,6 +465,13 @@ instruction.
   was corrected against the measurement.
 - Documentation change only: no code, no snapshots, 381 tests unchanged and
   green. Links, anchors and the CLI defaults were verified.
+- **Superseded in part (2026-09-17, R13 stage 2.)** The blocking test is now
+  "could invalidate the decision *and* existing context offers no defensible
+  default"; the answered-but-unused pruning rule and the hindsight promotion
+  beside it were replaced by an expectation recorded when the question is asked;
+  and the unsupported-category conversation is no longer an implementation
+  choice put to the user. See
+  [INTAKE.md §13](INTAKE.md#13-replacement-operating-text).
 
 **T4 — DONE (2026-09-16): one local maintenance gate, at reduced scope.**
 
@@ -1581,8 +1588,11 @@ workflow.
   in the coding interface and receive a saved, auditable outcome.
 - An unsupported problem produces a useful evidence/gap plan without asking
   the user to select a module or understand implementation details.
-- Questions/defaults and subsequent material revisions persist; a review counts
-  which questions affected the decision and removes unused questionnaire steps.
+- Questions/defaults and subsequent material revisions persist. A question
+  records the uncertainty it resolves and its expected effect when it is asked,
+  and the close reviews observables against that record rather than inferring
+  necessity from the outcome; questions that repeated evidence shows add no
+  material value are removed.
 - The plan distinguishes software gaps from unavailable evidence and has a
   stopping rule for each. The final report explains decision-relevant limits.
 

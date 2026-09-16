@@ -91,18 +91,26 @@ convenience, never the authority.
   class; once both are in a category module nobody can tell them apart. The
   brief is where they stay apart, and the study report says of every decision
   whether the brief stated it or the category supplied the default.
-- Inspect before asking, then ask in one batched round. Block only on what would
-  make the work wrong or useless under every plausible answer — marketplace and
-  delivery region, a requirement that eliminates most of the shelf, the cost
-  basis of a "cheapest" question. Everything else becomes a stated assumption
-  with a default, including an absent budget. "You decide" is an answer: record
-  the default and show what would change if it were wrong. Follow the user's
-  existing authorization; confirming a brief is not a new permission ritual.
+- Inspect before asking, then ask in one batched round. Ask before dependent work
+  when unresolved information could invalidate the purchase decision or cause
+  substantial avoidable work **and** existing context provides no defensible
+  default; weigh the consequence, its likelihood, the budget and the cost of
+  asking. Marketplace and delivery region, a requirement that eliminates most of
+  the shelf and the cost basis of a "cheapest" question are the usual ones.
+  Everything else gets a stated default and what changes if it is wrong,
+  including an absent budget. "You decide" permits a reasoned choice within the
+  delegated scope; silence is not confirmation, and a result reached on a default
+  is not reported as one the user confirmed. Follow the user's existing
+  authorization; confirming a brief is not a new permission ritual.
   [RESEARCH.md](RESEARCH.md#agree-the-brief) has the procedure and an example.
 - Say when a category is not supported instead of working around it. Only
-  `dry_pasta`, `tyre_mounting_paste` and `basmati_rice` ship. Offer to build and
-  test a module, or answer within stated generic limits; do not present either
-  as a suitability judgement it is not.
+  `dry_pasta`, `tyre_mounting_paste` and `basmati_rice` ship. Explain what is
+  missing and what it costs in time, confidence or the answer, and give the
+  evidence and gap plan; do not make the user choose an implementation module.
+  Answering within stated generic limits stays available, and is not a
+  suitability judgement. Planning authorizes no engineering: building a module
+  is scoped maintenance under the workflow below, on the authorization that
+  already exists, and needs no separate permission ritual.
 - Name `--category` on every command; it defaults to `dry_pasta`. A wrong
   category is loud in `rank`/`summary`/`card` (the classifier rejects the
   records) and quiet in `validated`, which applies the profile's bands whatever

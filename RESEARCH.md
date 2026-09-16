@@ -234,15 +234,24 @@ the tools actually decide. Ask nothing that inspection would have answered.
 
 | Kind | Test | What to do |
 |---|---|---|
-| **Blocking** | Under *every* plausible answer the work would be wrong or useless | Ask, and wait. Do not collect. |
-| **Assumable** | A wrong guess costs a paragraph, not the study | Choose the safer default, state it as an assumption, continue |
+| **Blocking** | It could invalidate the purchase decision or cause substantial avoidable work, **and** existing context offers no defensible default | Ask before dependent work, collection included; meanwhile continue whatever does not depend on the answer |
+| **Assumable** | A defensible default exists, and a wrong guess costs a paragraph rather than the study | State the default and what changes if it is wrong, then proceed |
 | **Not worth asking** | The evidence will answer it, or the tools decide it deterministically | Do not ask |
 
-Blocking in practice: the marketplace and delivery region (an Amazon.de answer
-is useless to someone buying elsewhere); a hard requirement that eliminates
-most of the shelf; the cost basis when the question is "cheapest"; and whether
-an unsupported category should be built at all — see below. Nearly everything
-else is assumable, including budget: absent one, assume no cap, say so, and let
+Weigh the magnitude and likelihood of the consequence, the available budget and
+the cost of asking. A question does not block because it is important; it blocks
+because nothing in the existing context settles it. "You decide" permits a
+reasoned choice within the delegated scope, and silence is not confirmation:
+proceed on the default, and do not describe what follows as confirmed.
+
+The marketplace and delivery region, a requirement that eliminates most of the
+shelf, and the cost basis of a "cheapest" question are the common sources of
+material divergence — worth checking every time, but not a fixed questionnaire
+to read out. Each passes the test on its own. Nothing in a request settles which
+marketplace a stranger buys on, and an Amazon.de ranking is useless to someone
+buying elsewhere — the answer there is that only
+[Amazon.de is validated](README.md#supported-scope), not a `.de` ranking handed
+over anyway. An absent budget goes the other way: assume no cap, say so, and let
 the ranking show prices.
 
 #### How to ask
@@ -261,23 +270,30 @@ chose, and make the report show what would change if that default were wrong.
 Three categories ship: `dry_pasta`, `tyre_mounting_paste`, `basmati_rice`. For
 anything else — a vacuum cleaner, a display — the generic layer still works
 (price, pack quantity, contradictions between the vendor's own statements) but
-nothing in the repository knows what makes one *good*. Surface that as a choice
-rather than working around it:
+nothing in the repository knows what makes one *good*.
 
-- build and test a category module first, as a scoped maintenance change, and
-  then research; or
-- answer within stated limits, using only what the generic layer can check, and
-  label it as not a suitability judgement.
+Say that, and say what it costs in time, confidence or the answer. Then produce
+the evidence and gap plan: what each decisive requirement would need, whether
+each gap wants a source, fresh acquisition, a parser, a category interpretation
+or a comparison method, and what the next step is. Answering within stated
+generic limits stays available where it helps, labelled as not a suitability
+judgement. What does not belong in the conversation is an implementation menu —
+choosing between building a module and doing without is not the buyer's decision
+to make, and it is the step the
+[product vision](ROADMAP.md#product-vision--the-shopping-conversation) removes.
 
-This is the step the [product vision](ROADMAP.md#product-vision--the-shopping-conversation)
-intends to change: building the category should become the **default**, not a
-choice the user has to accept, and that is R11. It is not the default today,
-and the reason is worth carrying into the conversation either way. Every
-shipped category was built against real records, and `tests/cases/` asserts
-its false-positive guards as loudly as its true positives — five pasta records
-are committed *only* because an earlier reconciler disputed them wrongly. A
-category written in one sitting has none of that behind it. Until a
-provisional status exists to say so in the report, offer the choice.
+Planning authorizes no engineering, and removing the question does not remove
+the boundary. Building a category module is a scoped maintenance change under
+the [maintenance workflow](AGENTS.md#maintenance-workflow) and the authorization
+that already exists; it is not a new permission to ask for. R15's execution
+gates will make that boundary explicit.
+
+The plan carries why a category written in one sitting is weaker than a shipped
+one. Every shipped category was built against real records, and `tests/cases/`
+asserts its false-positive guards as loudly as its true positives — five pasta
+records are committed *only* because an earlier reconciler disputed them
+wrongly. Making category synthesis the default step, with the evidence behind
+it, is [R11](ROADMAP.md#r11--category-synthesis-as-a-default-step).
 
 Name the category on **every** command: `--category` defaults to `dry_pasta`.
 The two ways that goes wrong are not equally visible.
@@ -320,6 +336,21 @@ carries:
   unanswered, and the external sources named — declared, not verified.
 - `limits` and `unacceptable`: what the study does not establish, and what was
   ruled out before it started.
+
+Three of those fields are **recorded and rendered, not enforced**. `cost_basis`,
+`unacceptable` and `limits` are prose: they reach the report and change no
+decision. Two briefs differing only in them produce identical eligibility,
+ordering and outcome — measured, and pinned by
+[tests/test_intake.py](tests/test_intake.py). A brief whose `cost_basis` says
+*delivered cost* still ranks on the listed price, and a budget written into
+`unacceptable` excludes nobody.
+
+`max_axis_value` **is** enforced, and caps the axis being ranked rather than
+anything else. On a `EUR/kg` axis, a limit of 100 is a hundred euros per
+kilogram — which excludes nothing from a shelf priced in single figures — and an
+exclusion it does produce names `EUR/kg` in its reason. There is no control for
+a purchase budget; [INTAKE.md](INTAKE.md#4-current-capability-boundaries) is
+where that gap is being worked.
 
 Check it before running anything: `python -m shopping_advisor.study check BRIEF`
 prints every default it will fall back to. Unknown keys are refused rather
@@ -563,15 +594,28 @@ separate memory store that competes with these files.
 
 #### Improve the questions, not only the code
 
-At close, check the brief against what actually decided the answer:
+Record, **when asking**, the uncertainty a question is meant to resolve and its
+expected effect on the next action or decision. Expected value is the right test
+for whether to ask and is not observable afterwards, which is why it is written
+down first — the same reason the two stopping criteria are.
 
-- Which questions changed the recommendation? Those belong in the blocking list
-  in [Agree the brief](#agree-the-brief).
-- Which were answered and then never used? Those are noise — stop asking them.
+At close, review the observables against that record:
+
+- What action depended on the answer? Did it establish eligibility, change scope
+  or ordering, prevent avoidable work, or confirm a named load-bearing
+  assumption? A question need not change the winner to be useful.
+- What did asking cost — a round trip, a delay, four questions where one would
+  have done?
 - Which assumptions turned out to be load-bearing? Those should have been
   questions, and the report should have said what would change if they were wrong.
-- Which defaults did the user silently accept every time? Those can become
-  stated defaults rather than questions.
+- Which defaults did the user accept every time? Those can become stated
+  defaults rather than questions.
+
+Remove or simplify a question when repeated evidence across studies shows it
+adds no material value, and promote one to the blocking list in
+[Agree the brief](#agree-the-brief) on the same footing. Do not infer necessity
+from a single outcome observed afterwards — retrospectively almost any question
+can be justified — and do not read explicit agreement out of silence.
 
 This is the part of the loop that is easy to skip, because nothing fails when
 it is skipped. A study that took four rounds of clarification and a study that

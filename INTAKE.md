@@ -530,10 +530,11 @@ that limit rather than claiming self-certification has been eliminated.
   choice recorded as unresolved. Disclosure does not make an indefensible default
   acceptable, whoever or whatever is running the conversation.
 
-**The blocking rule is falsified by its own first example.** Blocking is defined as
-wrong or useless under *every* plausible answer, while the marketplace question it
-then lists as blocking is wrong under *some* answers and right under others — which
-is exactly why it blocks. The replacement text is in §13.
+**The blocking rule was falsified by its own first example.** Blocking had been
+defined as wrong or useless under *every* plausible answer, while the marketplace
+question the same passage listed as blocking is wrong under *some* answers and
+right under others — which is exactly why it blocks. The replacement, now in
+force, is in §13.
 
 **Question review, made falsifiable.** Expected value is the right test when
 deciding whether to ask, and is not observable afterwards — retrospectively almost
@@ -719,11 +720,12 @@ instruction is never acceptable and is testable.
 
 ## 13. Replacement operating text
 
-Proposed exact replacements for the implementation documentation pass, with the
-edit inventory. Nothing below has been applied.
+These replacements are in force. They are recorded here with where each landed,
+so the wording and the reason for it stay together: the runbook and AGENTS state
+the rule, and this says what was wrong with the rule they replaced.
 
-**Blocking rule** — replaces the blocking test and action in the RESEARCH table and
-the corresponding AGENTS bullet:
+**Blocking rule** — replaced the blocking test and action in the RESEARCH table
+and the corresponding AGENTS bullet:
 
 > Ask before dependent work when unresolved information could invalidate the
 > purchase decision or cause substantial avoidable work, and existing context
@@ -738,9 +740,10 @@ Revise the adjacent examples consistently. Marketplace, delivery region and cost
 basis are common sources of material divergence, not an unconditional fixed
 questionnaire; an absent budget may still default to no cap.
 
-**Question review** — replaces the automatic answered-but-unused rule in the
-RESEARCH close-out list, *and* the matching clause in R13's Done-when, which
-currently reads "removes unused questionnaire steps":
+**Question review** — replaced the automatic answered-but-unused rule in the
+RESEARCH close-out list, the hindsight-based promotion rule beside it, and the
+matching clause in R13's Done-when, which had read "removes unused questionnaire
+steps":
 
 > When asking a question, record the uncertainty it is intended to resolve and the
 > expected effect on the next action or decision. At close, review whether the
@@ -751,8 +754,8 @@ currently reads "removes unused questionnaire steps":
 > not infer necessity solely from an outcome observed afterwards, or explicit
 > agreement from silence.
 
-**Unsupported requests and authorisation** — aligns AGENTS, RESEARCH and the
-roadmap:
+**Unsupported requests and authorisation** — aligned the AGENTS bullet, the
+runbook's unsupported-category section and R13's Done-when:
 
 > An unsupported request may produce an evidence and gap plan without asking the
 > user to choose an implementation module. Explain missing capability when it
@@ -764,14 +767,16 @@ roadmap:
 Removing an implementation choice from the user's experience must not silently
 remove the engineering boundary.
 
-**Non-operative fields** — document the retained-but-unenforced nature of
-`cost_basis`, `unacceptable` and `limits` beside their brief-authoring guidance. A
-characterisation test may preserve that description of legacy behaviour by
-asserting that two briefs differing only in those fields produce identical
-**eligibility, ordering and outcome** — not identical report bytes or study ids,
-which legitimately differ and would be the wrong invariant. A separate negative
-test must ensure the new conclusion controls do not mistake those fields for
-enforcement.
+**Non-operative fields** — the retained-but-unenforced nature of `cost_basis`,
+`unacceptable` and `limits` is now stated beside their brief-authoring guidance,
+together with the fact that `max_axis_value` caps the ranked axis and is not a
+purchase budget. The characterisation test holding that description is
+`tests/test_intake.py`: it asserts that two briefs differing only in those fields
+produce identical **eligibility, ordering and outcome**, and deliberately not
+identical report bytes or study ids, which legitimately differ and would be the
+wrong invariant to freeze. The negative test that keeps the new conclusion
+controls from mistaking those fields for enforcement belongs to stage 6, where
+those controls arrive.
 
 ---
 
