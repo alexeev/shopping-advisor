@@ -115,6 +115,92 @@ replacing the R0–R10 history. Current operating rules are in
   Cross-marketplace comparison stays unsupported by decision, not by
   limitation. T2–T5 are not implemented.
 
+**T2 — DONE (2026-09-16): persist and replay a complete offline study.**
+
+- **The brief.** A study now starts from a TOML or JSON brief with a validated
+  schema (`amazon_scraper/study/brief.py`, `brief_version = 1`): question,
+  category, marketplace, feeds, constraints, freshness policy, assumptions,
+  questions, declared sources and limits. Unknown keys are **refused**, not
+  ignored — a misspelt constraint that silently does nothing was the failure
+  mode this exists to prevent. The brief is data: it names a category by its
+  registry key and never by an import path, and a brief naming
+  `amazon_scraper.analysis.categories.dry_pasta` gets the same refusal as a
+  typo. Feed paths resolve against the brief's own directory, so a brief and
+  its feeds travel together and no absolute path enters a committed file.
+- **Constraints kept apart from category defaults.** The failure this repays
+  is recorded in this file: tyre mounting paste ranks the smallest pack first
+  because one reader was fitting one scooter tyre, and that is now
+  indistinguishable from a fact about the product class. `report.ranking()`
+  reports `axis.stated` and `axis.unit_stated`, and the study report's *What
+  decided it* table says of every decision whether the brief chose it or the
+  category supplied it.
+- **Structured ranking and exclusions.** `rank_text` was the only place a
+  ranking existed; it prints twenty rows and **ten** exclusions, and a
+  requirement filter removed records with no mention at all. `ranking()` now
+  returns the rows, the complete exclusions with a stable `reason_code` each,
+  and the requirement-filtered records separately. Measured on the committed
+  pasta cases with `--require bronze_die`: 5 rows, 3 exclusions, and **14
+  records the text view never named**. `rank --json` exposes it; `rank_text`
+  renders it and its output is byte-identical to before.
+- **Complete category JSON.** `card_json` named `drying` and `suitability` by
+  hand, so basmati's JSON card omitted the whole of what that category knows.
+  A category now declares its card keys in `Category.extras`; basmati
+  publishes **6** more sections — grain type, cultivar, declaration conflict,
+  review signals, external test, and the seven-part score — taking its JSON
+  card from 5,483 to 9,974 bytes on the module's own test record. A key a
+  category adds and does not declare is not published.
+- **The bundle.** `data/studies/<study_id>/` holds `manifest.json`,
+  `brief.json`, `candidates.jsonl` (one line per considered record, with the
+  reason for its fate), `cards.jsonl` (the complete card of every classified
+  candidate), `ranking.json` and a generated `report.md`. On the worked
+  example that is 25 candidates and 22 cards, against a text ranking that
+  showed 14 rows and truncated its exclusions.
+- **A derived identity.** Unlike a crawl id, which must carry random bytes
+  because two identical crawls are two observations, a study is a pure
+  function of a brief and some pinned bytes. The id is a digest of the brief,
+  the input digests and the published schema/contract versions:
+  `pasta-bronze-die-501d864a1a0c` is what any checkout produces. It
+  deliberately does **not** cover the analysis code, and `verify` is what
+  catches a decision that moved because a rule changed.
+- **Determinism.** Every artefact except the manifest is byte-identical
+  between two runs, and between two directories: the report carries no
+  timestamp and no hostname, and the persisted brief carries the file's name
+  rather than the path it was invoked by. The manifest declares its own
+  variation in a `volatile` list (`started_at`, `finished_at`, `code`,
+  `directory`, `brief_source`), and a test asserts that nothing else moves.
+- **Refusal as a result.** `minimum_candidates` and `decisive_margin` are
+  declared in the brief before the data is seen, so `insufficient_evidence`
+  and `no_decisive_winner` are criteria that were met rather than judgements
+  improvised at the end. A refusing study puts nobody forward and still
+  accounts for all 25 records. Two refusals are instead *errors* that write
+  nothing: a brief naming a unit nothing is measured in while other units
+  are, and a brief leaving the unit open where several are measured. Filing
+  an operator's slip as insufficient evidence would record it as a fact about
+  the shelf.
+- **`verify`.** Re-derives the decisions from the bundle's own brief and
+  inputs and reports, in order: an unsupported manifest or brief version, a
+  missing or altered artefact, an input whose digest moved, a code revision
+  that changed, and finally the decision or numeric claim that no longer
+  reproduces — named, not counted. `--input-root` is authoritative when given.
+- **Two worked examples**, both offline over `tests/cases/pasta_v1.jsonl.gz`.
+  `pasta-bronze-die` recommends `B0DQ2N5HRW` at 2.96 EUR/kg, 9.1% ahead of the
+  runner-up. `pasta-low-temperature-drying` refuses: two listings state the
+  requirement and **both** have a disputed price per kilogram, because Amazon
+  quotes a unit price per piece and the pack size contradicts it.
+- Verification: **428 tests passed** (381 before), locked environment, no
+  network. Both bundles reproduce byte-identically across two directories.
+  Every failure path was exercised — tampered input, missing artefact,
+  unsupported manifest and brief versions, seven kinds of invalid brief, an
+  absent unit — and each names what to change. The seven documented offline
+  walkthrough commands still reproduce their stated counts, and `rank`'s text
+  output is unchanged.
+- Verification limits: no live crawl and no second provider stack. The study
+  id does not cover the analysis code, by design. Nothing checks that the
+  report's *prose* claims are supported by evidence, and a brief's declared
+  `[[sources]]` are reproduced with a heading saying they were not verified —
+  both are T3. `report.md` is generated, so a hand-written section on top of
+  it is unchecked. T3–T5 are not implemented.
+
 **Runbook — requirement elicitation and the improvement loop (2026-09-16).**
 Audit of the documents against the actual end-to-end flow found two gaps that
 T0 and T1 had left: elicitation was one policy sentence in each of `AGENTS.md`

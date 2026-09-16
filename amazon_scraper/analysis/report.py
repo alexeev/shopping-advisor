@@ -338,6 +338,192 @@ def axis_units(cards, axis):
     return dict(sorted(units.items(), key=lambda item: (-item[1], item[0])))
 
 
+# ---------------------------------------------------------------------------
+# Ranking: the data, and then the text
+# ---------------------------------------------------------------------------
+
+#: Why a candidate is not a row in the ranking. The *code* is the stable part
+#: and a consumer keys on it; the sentence beside it is written for a reader
+#: and may be reworded.
+NO_VALUE = 'no_value'
+NOT_USABLE = 'not_usable'
+UNIT_MISMATCH = 'unit_mismatch'
+REQUIREMENT_NOT_MET = 'requirement_not_met'
+
+#: Why there is no ranking at all. Each one is a refusal rather than an
+#: ordering nobody asked for; see :func:`rank_text` for what each replaced.
+UNKNOWN_AXIS = 'unknown_axis'
+NO_DIRECTION = 'no_direction'
+AMBIGUOUS_UNIT = 'ambiguous_unit'
+UNIT_ABSENT = 'unit_absent'
+NO_RECORDS = 'no_records'
+
+
+def _identity(card):
+    return {'asin': card['asin'], 'marketplace': card.get('marketplace') or '',
+            'brand': card['brand'] or '', 'title': card['title'] or ''}
+
+
+def ranking(cards, axis_key=None, require=(), unit=None):
+    """The ranking as data: the rows, every exclusion, and the reason for each.
+
+    :func:`rank_text` renders this and nothing else, and so does the study
+    bundle, which is the point: an exclusion that exists only inside a
+    formatted string cannot be counted, audited or replayed. The text view
+    also truncates the exclusion list at ten, and a study must not.
+
+    Two fields say where the *decision* came from rather than what it was.
+    ``axis['stated']`` is true when the caller named the axis and false when
+    it fell back to the category's default, and ``axis['unit_stated']`` does
+    the same for the unit. A category default is a property of the product
+    class; a named axis is a constraint somebody chose for this question, and
+    a report that cannot tell them apart is the failure this repository
+    already paid for once -- see the mounting-paste pack-size axis.
+
+    ``refusal`` is set, and ``rows`` empty, when there is no ordering that
+    would not be a guess. The reasons are the same ones :func:`rank_text`
+    explains at length.
+    """
+    if not cards:
+        return {'category': '', 'category_label': '', 'axis': None,
+                'require': list(require), 'units': {},
+                'refusal': {'code': NO_RECORDS, 'message': 'No records.'},
+                'counts': {'cards': 0, 'matched': 0, 'filtered': 0,
+                           'offers': 0, 'folded': 0, 'excluded': 0,
+                           'filtered_out': 0},
+                'rows': [], 'excluded': [], 'filtered_out': []}
+
+    category = category_of(cards[0])
+    axis = category.axis(axis_key or category.default_axis)
+    out = {'category': category.key, 'category_label': category.label,
+           'axis': ({'key': axis.key, 'label': axis.label,
+                     'better': axis.better, 'unit': None,
+                     'stated': bool(axis_key), 'unit_stated': unit is not None}
+                    if axis is not None else None),
+           'require': list(require), 'units': {}, 'refusal': None,
+           'counts': {'cards': len(cards), 'matched': 0, 'filtered': 0,
+                      'offers': 0, 'folded': 0, 'excluded': 0,
+                      'filtered_out': 0},
+           'rows': [], 'excluded': [], 'filtered_out': []}
+
+    def refuse(code, message):
+        out['refusal'] = {'code': code, 'message': message}
+        return out
+
+    if axis is None:
+        return refuse(UNKNOWN_AXIS,
+                      f'{axis_key}: not an axis of {category.label}. '
+                      f'Known: {", ".join(category.axis_keys)}')
+    if not axis.better:
+        rankable = [other.key for other in category.axes if other.better]
+        return refuse(
+            NO_DIRECTION,
+            f'{axis.label} declares no better direction for {category.label}, '
+            f'so there is no ranking to produce'
+            + (f': {axis.caveat}' if axis.caveat else '') + '. '
+            + (f'Rankable axes: {", ".join(rankable)}.' if rankable else
+               'This category declares no rankable axis.'))
+
+    matched = [card for card in cards if is_match(card)]
+    wanted, filtered_out = [], []
+    for card in matched:
+        missing = [key for key in require
+                   if card['claims'].get(key) is None
+                   or card['claims'][key].status != TRUSTED]
+        if missing:
+            filtered_out.append(dict(
+                _identity(card), reason_code=REQUIREMENT_NOT_MET,
+                missing=missing,
+                reason=f'does not state {", ".join(missing)}'))
+        else:
+            wanted.append(card)
+
+    out['counts'].update(matched=len(matched), filtered=len(wanted),
+                         filtered_out=len(filtered_out))
+    out['filtered_out'] = filtered_out
+
+    units = axis_units(wanted, axis)
+    out['units'] = units
+    if unit is not None and unit not in units:
+        # Refused, and then computed anyway. There is no ordering to produce,
+        # but every candidate still has an individual reason for not being in
+        # it -- "its price per kilogram is disputed" is the answer somebody
+        # asked for, and stopping here would replace it with silence.
+        refuse(UNIT_ABSENT,
+               f'{unit}: no {category.label}'
+               + (f' that states {", ".join(require)}' if require else '')
+               + f' has a trusted {axis.key} in it. '
+               + (f'Measured units here: {", ".join(units)}.' if units else
+                  f'No record has a trusted {axis.key} at all.'))
+    if unit is None and len(units) > 1:
+        seen = ', '.join(f'{count} in {name or "no unit"}'
+                         for name, count in units.items())
+        return refuse(
+            AMBIGUOUS_UNIT,
+            f'{category.label}: {axis.label.lower()} is measured in more '
+            f'than one unit here ({seen}). One ordering over both would '
+            f'rank values that need a conversion nobody supplied. Name '
+            f'the unit to rank on, e.g. --unit {next(iter(units))}.')
+    ranking_unit = unit if unit is not None else next(iter(units), None)
+    out['axis']['unit'] = ranking_unit
+
+    def ranked_value(card):
+        """The value this card may be ranked on, or None with the reason."""
+        value = card['axes'].get(axis.key)
+        if value is None:
+            return None, NO_VALUE, 'no value for this axis'
+        if not value.usable:
+            return None, NOT_USABLE, (value.notes[0] if value.notes
+                                      else value.status)
+        if (value.unit or '') != ranking_unit:
+            return None, UNIT_MISMATCH, (
+                f'measured in {value.unit or "no unit"}, which is '
+                f'not comparable with {ranking_unit or "no unit"}')
+        return value, '', ''
+
+    groups = variation.group_offers(wanted)
+    reverse = axis.better == 'higher'
+    ranked, dropped = [], []
+    for _, members in groups:
+        usable = [card for card in members if ranked_value(card)[0] is not None]
+        if usable:
+            # ASIN breaks a tie rather than the order the feeds happened to
+            # arrive in, for the same reason the merge declares its own
+            # tie-break: argument order is not a decision anybody made.
+            usable.sort(key=lambda card: (card['axes'][axis.key].value,
+                                          card['asin']), reverse=reverse)
+            ranked.append(usable)
+            # Identity, not equality: two cards of one offer differ, but
+            # comparing them field by field would walk both whole records.
+            dropped.extend(card for card in members
+                           if not any(card is kept for kept in usable))
+        else:
+            dropped.extend(members)
+
+    ranked.sort(key=lambda members: (members[0]['axes'][axis.key].value,
+                                     members[0]['asin']), reverse=reverse)
+
+    for position, members in enumerate(ranked, start=1):
+        best = members[0]
+        out['rows'].append(dict(
+            _identity(best), rank=position,
+            value=best['axes'][axis.key].value,
+            unit=ranking_unit, shown=_shown(best['axes'][axis.key], axis),
+            pack_size=pack_size(best),
+            variants=[dict(_identity(other), value=other['axes'][axis.key].value,
+                           shown=_shown(other['axes'][axis.key], axis),
+                           pack_size=pack_size(other))
+                      for other in members[1:]]))
+    for card in dropped:
+        _, code, reason = ranked_value(card)
+        out['excluded'].append(dict(_identity(card), reason_code=code,
+                                    reason=reason))
+
+    out['counts'].update(offers=len(ranked), excluded=len(dropped),
+                         folded=sum(len(members) - 1 for members in ranked))
+    return out
+
+
 def rank_text(cards, axis_key=None, require=(), limit=20, unit=None):
     """Best-first on one axis the user names, one row per offer.
 
@@ -363,100 +549,46 @@ def rank_text(cards, axis_key=None, require=(), limit=20, unit=None):
     case feed, 12 of the 15 rankable pack sizes are in grams and 3 are in
     millilitres. Sorted together, a 50 ml tin sits among the tubs as though a
     density had been supplied. The caller names the unit instead.
+
+    The numbers come from :func:`ranking`; this renders them. The exclusion
+    list is truncated here and complete there.
     """
-    if not cards:
-        return 'No records.'
-    category = category_of(cards[0])
-    axis = category.axis(axis_key or category.default_axis)
-    if axis is None:
-        return (f'{axis_key}: not an axis of {category.label}. '
-                f'Known: {", ".join(category.axis_keys)}')
-    if not axis.better:
-        rankable = [other.key for other in category.axes if other.better]
-        return (f'{axis.label} declares no better direction for '
-                f'{category.label}, so there is no ranking to produce'
-                + (f': {axis.caveat}' if axis.caveat else '') + '. '
-                + (f'Rankable axes: {", ".join(rankable)}.' if rankable else
-                   'This category declares no rankable axis.'))
+    result = ranking(cards, axis_key, require, unit)
+    if result['refusal']:
+        return result['refusal']['message']
 
-    matched = [card for card in cards if is_match(card)]
-    wanted = [card for card in matched
-              if all(card['claims'].get(key) is not None
-                     and card['claims'][key].status == TRUSTED for key in require)]
-
-    units = axis_units(wanted, axis)
-    if unit is not None and unit not in units:
-        return (f'{unit}: no {category.label} has a trusted {axis.key} in it. '
-                + (f'Measured units here: {", ".join(units)}.' if units else
-                   f'No record has a trusted {axis.key} at all.'))
-    if unit is None and len(units) > 1:
-        seen = ', '.join(f'{count} in {name or "no unit"}'
-                         for name, count in units.items())
-        return (f'{category.label}: {axis.label.lower()} is measured in more '
-                f'than one unit here ({seen}). One ordering over both would '
-                f'rank values that need a conversion nobody supplied. Name '
-                f'the unit to rank on, e.g. --unit {next(iter(units))}.')
-    ranking_unit = unit if unit is not None else next(iter(units), None)
-
-    def ranked_value(card):
-        """The value this card may be ranked on, or None with the reason."""
-        value = card['axes'].get(axis.key)
-        if value is None:
-            return None, 'no value for this axis'
-        if not value.usable:
-            return None, (value.notes[0] if value.notes else value.status)
-        if (value.unit or '') != ranking_unit:
-            return None, (f'measured in {value.unit or "no unit"}, which is '
-                          f'not comparable with {ranking_unit or "no unit"}')
-        return value, ''
-
-    groups = variation.group_offers(wanted)
-    reverse = axis.better == 'higher'
-    ranked, dropped = [], []
-    for _, members in groups:
-        usable = [card for card in members if ranked_value(card)[0] is not None]
-        if usable:
-            usable.sort(key=lambda card: card['axes'][axis.key].value,
-                        reverse=reverse)
-            ranked.append(usable)
-            # Identity, not equality: two cards of one offer differ, but
-            # comparing them field by field would walk both whole records.
-            dropped.extend(card for card in members
-                           if not any(card is kept for kept in usable))
-        else:
-            dropped.extend(members)
-
-    ranked.sort(key=lambda members: members[0]['axes'][axis.key].value,
-                reverse=reverse)
-    collapsed = sum(len(members) - 1 for members in ranked)
+    category = get(result['category'])
+    axis = category.axis(result['axis']['key'])
+    counts, ranking_unit = result['counts'], result['axis']['unit']
 
     lines = [f'{category.label}: ranked by {axis.label.lower()}'
-             + (f' in {ranking_unit}' if len(units) > 1 else '')
+             + (f' in {ranking_unit}' if len(result['units']) > 1 else '')
              + (f' ({axis.better} first)' if axis.better else '')
              + (f', requiring {", ".join(require)}' if require else ''),
-             f'{len(matched)} {category.label} · {len(wanted)} match the filter · '
-             f'{len(ranked)} offers with a trusted {axis.key}'
-             + (f' · {collapsed} pack-size variants folded in'
-                if collapsed else ''), '']
+             f'{counts["matched"]} {category.label} · '
+             f'{counts["filtered"]} match the filter · '
+             f'{counts["offers"]} offers with a trusted {axis.key}'
+             + (f' · {counts["folded"]} pack-size variants folded in'
+                if counts['folded'] else ''), '']
     if category.blurb:
         lines = lines[:1] + _wrap(category.blurb, indent='  ') + lines[1:]
 
-    for position, members in enumerate(ranked[:limit], start=1):
-        best = members[0]
-        lines.append(f'{position:>3}. {_shown(best["axes"][axis.key], axis):<16}'
-                     f'{(best["brand"] or "?")[:20]:<22}'
-                     f'{(best["title"] or "")[:30]:<32}'
-                     f'{best["asin"]}  {pack_size(best)}')
-        for other in members[1:]:
-            lines.append(f'     {_shown(other["axes"][axis.key], axis):<16}'
+    for row in result['rows'][:limit]:
+        lines.append(f'{row["rank"]:>3}. {row["shown"]:<16}'
+                     f'{(row["brand"] or "?")[:20]:<22}'
+                     f'{row["title"][:30]:<32}'
+                     f'{row["asin"]}  {row["pack_size"]}')
+        for other in row['variants']:
+            lines.append(f'     {other["shown"]:<16}'
                          f'{"same product, other pack":<54}'
-                         f'{other["asin"]}  {pack_size(other)}')
+                         f'{other["asin"]}  {other["pack_size"]}')
 
+    dropped = result['excluded']
     if dropped:
         lines += ['', f'  Excluded from the ranking ({len(dropped)}), '
                       f'because ranking them would be guessing:']
         for card in dropped[:10]:
-            lines += _wrap(f'{card["asin"]} — {ranked_value(card)[1]}',
+            lines += _wrap(f'{card["asin"]} — {card["reason"]}',
                            indent=' ' * 4)
         if len(dropped) > 10:
             lines.append(f'    … and {len(dropped) - 10} more')
@@ -522,8 +654,32 @@ def summary_text(cards):
     return '\n'.join(lines)
 
 
+def _jsonable(value):
+    """Anything a category hangs on a card, as plain data.
+
+    One function rather than a branch per category: a ``Value`` knows how to
+    serialise itself, and everything else a card carries is a container of
+    those or already plain.
+    """
+    if hasattr(value, 'as_dict'):
+        return value.as_dict()
+    if isinstance(value, dict):
+        return {key: _jsonable(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_jsonable(item) for item in value]
+    return value
+
+
 def card_json(card):
-    """The card as plain data, for a downstream consumer or an AI reader."""
+    """The card as plain data, for a downstream consumer or an AI reader.
+
+    Everything the text card shows is here, including the sections only one
+    category has -- which was not true before T2. The category declares them
+    in ``Category.extras``; a key it declares is written even when its value
+    is ``None``, because "this card has no contradiction on it" and "this
+    category does not look for one" are different statements and a reader
+    that sees neither cannot tell which it got.
+    """
     out = {key: card[key] for key in ('category_key', 'asin', 'marketplace',
                                       'title', 'brand', 'url', 'query')}
     out['category'] = card['category'].as_dict()
@@ -532,9 +688,7 @@ def card_json(card):
     out['claims'] = {key: value.as_dict()
                      for key, value in sorted(card['claims'].items())}
     out['validated'] = card['validated'].as_dict()
-    if card.get('drying'):
-        out['drying'] = {key: value.as_dict()
-                         for key, value in card['drying'].items()}
-    if card.get('suitability'):
-        out['suitability'] = card['suitability']
+    for key in category_of(card).extras:
+        if key in card:
+            out[key] = _jsonable(card[key])
     return out

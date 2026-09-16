@@ -293,6 +293,7 @@ CATEGORY = cat.register(cat.Category(
     claims=CLAIMS,
     evaluate=evaluate,
     default_axis='price_per_base',
+    extras=('drying',),
     blurb='Price per kilogram is the axis this category rests on, so the pack '
           'size behind it is checked against every other statement of it on '
           'the page before any ranking happens.',

@@ -1,0 +1,59 @@
+# A complete study that reaches a recommendation, over committed evidence and
+# with no network. See tests/studies/README.md for why this brief exists and
+# what it is not.
+
+brief_version = 1
+id = "pasta-bronze-die"
+question = "Among the committed dry-pasta case records, which bronze-die pasta has the lowest defensible price per kilogram?"
+use_case = """A household buying dry pasta for regular weekday cooking, who has
+decided that bronze-die extrusion is worth paying for, and wants the cheapest
+of those by weight rather than by pack. The point of this study is to show what
+a defensible comparison looks like end to end: it answers a question about a
+selected set of regression fixtures, not about today's shelf."""
+category = "dry_pasta"
+marketplace = "www.amazon.de"
+delivery_region = "DE"
+
+inputs = ["../cases/pasta_v1.jsonl.gz"]
+
+unacceptable = [
+  "Fresh pasta — the category classifier excludes it, and it is a different product.",
+]
+limits = [
+  "A vendor's bronze-die statement is a claim the page makes, quoted on the evidence card. It is not an independently verified property of the pasta.",
+  "Search does not enumerate a shelf. These twenty-five records were selected because they exercise particular validation rules, so the cheapest bronze-die pasta on Amazon.de is very probably not among them.",
+  "No nutritional or taste judgement is made: the axis is price per kilogram and nothing else.",
+]
+
+[constraints]
+axis = "price_per_base"
+unit = "EUR/kg"
+cost_basis = "The listed price of the pack, divided by its validated net weight. Delivery is not included: these records carry no shipping data, and absent shipping is unknown rather than zero."
+require_claims = ["bronze_die"]
+shortlist = 3
+minimum_candidates = 3
+decisive_margin = 0.05
+
+[freshness]
+as_of = "2026-09-16"
+price_max_age_days = 7
+note = "The records are a committed regression case set, not a fresh crawl. Their prices were current when the case set was built and are kept fixed so that this study reproduces; they are not an offer anyone can accept."
+
+[[questions]]
+question = "Amazon.de with delivery in Germany?"
+answer = "Yes — the only marketplace this repository validates."
+blocking = true
+
+[[questions]]
+question = "Is there a budget per kilogram?"
+default_used = "No cap; the ranking shows the prices instead."
+
+[[assumptions]]
+statement = "Bronze-die extrusion is worth requiring, and a listing that does not mention it does not have it."
+default = "Require the claim, and count the listings that are silent about it separately from those that are ranked."
+if_wrong = "Eight of the twenty-two classified records state it; requiring it removes fourteen that may well be bronze-die and simply do not say so. Drop require_claims to rank the whole shelf."
+
+[[assumptions]]
+statement = "Any pack size is acceptable."
+default = "Rank on price per kilogram regardless of pack size."
+if_wrong = "The leader is a nine-kilogram case of eighteen packs. A household that cannot store that wants a pack-size limit, which would change the order."

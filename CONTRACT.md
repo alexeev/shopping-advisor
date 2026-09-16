@@ -353,6 +353,14 @@ which of the vendor's statements matter, and which direction is better — and
 returns a card. `tests/test_mounting_paste.py` asserts mechanically that it
 imports no rule and settles no numeric value of its own.
 
+A card key a category adds beyond the common shape — basmati's cultivar,
+grain type, external test, review signals and score — is **declared** in
+`Category.extras`, and that declaration is what publishes it in
+`card --json`. It is a rendering statement rather than a contract change: the
+values themselves are `Value`s that serialise as they always did, and until
+T2 the JSON view named two such keys by hand and silently dropped basmati's
+six. A key a category adds and does not declare is not published.
+
 ---
 
 ## 6. Compatibility policy

@@ -132,7 +132,8 @@ def main(argv=None):
                         help='the unit to rank on, when the axis is measured '
                              'in more than one (e.g. g or ml)')
     parser.add_argument('--json', action='store_true',
-                        help='emit cards as JSON instead of text')
+                        help='emit cards, or the whole ranking with its '
+                             'exclusions, as JSON instead of text')
     args = parser.parse_args(argv)
 
     try:
@@ -173,8 +174,16 @@ def main(argv=None):
     if args.command == 'summary':
         print(report.summary_text(cards))
     elif args.command == 'rank':
-        print(report.rank_text(cards, args.axis, require, args.limit,
-                               unit=args.unit or None))
+        if args.json:
+            # The complete ranking, including every exclusion and its reason
+            # code -- the text view stops at ten of those, and a consumer
+            # counting them would be counting the terminal's patience.
+            print(json.dumps(report.ranking(cards, args.axis or None, require,
+                                            unit=args.unit or None),
+                             ensure_ascii=False, indent=2))
+        else:
+            print(report.rank_text(cards, args.axis, require, args.limit,
+                                   unit=args.unit or None))
     elif args.command == 'card':
         if not asins:
             sys.exit('card needs an ASIN')

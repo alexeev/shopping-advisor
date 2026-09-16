@@ -475,6 +475,7 @@ CATEGORY = cat.register(cat.Category(
     claims=CLAIMS,
     evaluate=evaluate,
     default_axis='quantity',
+    extras=('suitability',),
     blurb='Ranked by pack size, smallest first: a scooter tyre needs a few '
           'grams and the shelf is five-kilogram workshop tubs. Price per '
           'kilogram is shown and deliberately not ranked on.',

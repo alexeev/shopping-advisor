@@ -87,6 +87,14 @@ class Category:
     blurb: str = ''
     #: ``card -> [line]``, for a section only this category has. Optional.
     render_extra: object = None
+    #: The card keys this category adds beyond the shape :func:`card` returns.
+    #: Declared rather than discovered because the JSON view has to serialise
+    #: them, and until T2 it named two of them in ``report.py`` by hand -- so
+    #: basmati's grain, cultivar, external test, review signals and score,
+    #: which are the whole of what that category knows, were rendered on the
+    #: text card and silently absent from the JSON one. A category that adds
+    #: a key and does not list it here is not published.
+    extras: tuple = ()
 
     def axis(self, key):
         for axis in self.axes:

@@ -1,6 +1,6 @@
 # Transition to an agent-operated research repository
 
-**Status: reviewed and adopted; T0 and T1 implemented, T2–T5 remain planned.**
+**Status: reviewed and adopted; T0, T1 and T2 implemented, T3–T5 remain planned.**
 
 The assessment below records the repository at commit `95b8bbd` on 2026-09-16;
 findings describe that snapshot, including documentation gaps addressed by T0
@@ -125,8 +125,8 @@ when to stop, how to produce the final narrative, and how to archive its inputs.
    answer; do independent inspection while waiting. A missing budget can be an
    explicit assumption, not an invented user requirement. The elicitation
    procedure this describes is now written down in
-   [RESEARCH.md](RESEARCH.md#agree-the-brief); the persisted brief artifact
-   remains T2.
+   [RESEARCH.md](RESEARCH.md#agree-the-brief), and T2 shipped the persisted
+   brief artifact with a validated schema.
 2. **Choose a declared method and inspect existing evidence.** Select a supported
    category/method version and compatible saved feeds. Separate a historical
    replay from current buying advice. If a category is missing, build and test
@@ -439,8 +439,9 @@ every prompt-injection attempt.
 [RESEARCH.md](RESEARCH.md#the-improvement-cycle), and the maintenance rules,
 including the measured-effect requirement, are in
 [AGENTS.md](AGENTS.md#maintenance-workflow). What remains planned here is the
-tooling that would enforce them — study bundles and report validation (T2/T3),
-automated gates (T4). The text below is the reviewed rationale.
+tooling that would enforce them — study bundles shipped in T2, report
+validation remains T3, automated gates T4. The text below is the reviewed
+rationale.
 
 Use a small, explicit cycle:
 
@@ -538,6 +539,12 @@ Existing snapshots change only where separately explained and versioned.
 
 ### T2 — Persist and replay a complete offline study
 
+**Status: DONE (2026-09-16).** The validated brief, the study bundle with every
+candidate and its reason, structured ranking/exclusions, complete category JSON,
+a derived study identity, byte-identical replay and `verify` are shipped, with
+two worked examples — one recommendation and one refusal. See the
+[roadmap verification record](ROADMAP.md#agent-operation-transition).
+
 **Depends on:** T1 identity/provenance; brief design can proceed after T0.
 
 **Changes:** Add the brief, study manifest, candidate decisions, schemas, and a
@@ -557,7 +564,9 @@ score-based CLI ranking remains.
 
 ### T3 — Make external evidence and recommendations auditable
 
-**Depends on:** T2 study artifacts.
+**Depends on:** T2 study artifacts, which now exist. A brief's `[[sources]]`
+are recorded and reproduced under a heading that says they were not verified;
+turning that into applicability and claim-to-evidence checks is this stage.
 
 **Changes:** Introduce the external-source ledger and migrate the basmati test
 constants with explicit legacy status. Add applicability/matching checks,
@@ -614,7 +623,7 @@ changes, not the whole target architecture:
 2. **Identity and replay fixes** (first slice of T1): run collisions, marketplace
    keys, trustworthy timestamps, and feed/page lineage are prerequisites for
    reliable study archives.
-3. **Complete JSON analysis plus a minimal study envelope** (first slice of T2):
+3. **Complete JSON analysis plus a minimal study envelope** (T2, done):
    reuse the existing evidence cards; make one existing category answer a saved
    brief and expose every considered candidate and exclusion.
 4. **Source applicability and report checks** (T3): turn the existing basmati

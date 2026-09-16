@@ -1031,6 +1031,8 @@ CATEGORY = cat.register(cat.Category(
     evaluate=evaluate,
     default_axis='price_per_base',
     render_extra=render_extra,
+    extras=('grain_type', 'cultivar', 'declaration_conflict',
+            'review_signals', 'external_test', 'score'),
     blurb='Judged on three things the page answers with three different '
           'kinds of evidence: whether it is really basmati (a register '
           'exists, and almost nobody cites it), whether it tastes like it '

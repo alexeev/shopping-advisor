@@ -17,14 +17,21 @@ than define separate research rules. Read this file, [README.md](README.md), and
 - `spiders/amazon_product.py` acquires; `run.py` preserves crawl evidence with
   `provenance.py` (code/settings identity, digests) and `redaction.py`;
   `extraction/` parses; `validation/` decides generic trust; `analysis/categories/`
-  supplies category interpretation; `analysis/report.py` formats the results.
+  supplies category interpretation; `analysis/report.py` formats the results;
+  `study/` holds the brief, the candidates, the decisions and the replay.
   These paths are under `amazon_scraper/`.
 - Use the existing CLIs and JSONL feeds. Do not recreate deterministic
   extraction, arithmetic, merging, or trust rules in prompts or scratch scripts.
-- `RESEARCH.md` describes today's manual research/report workflow. Structured
-  study manifests, complete category JSON, report validation, and provider
-  interchangeability trials are future stages in
-  [AGENT_TRANSITION_PLAN.md](AGENT_TRANSITION_PLAN.md), not current capabilities.
+- A research question gets a **brief** and a saved study:
+  `python -m amazon_scraper.study check|run|verify`. The brief is data — it
+  names a category by its registry key, never by an import path — and it is
+  where a constraint somebody chose stays distinguishable from a property of
+  the product class. See [RESEARCH.md](RESEARCH.md#a-saved-study-end-to-end)
+  and the worked examples in [tests/studies](tests/studies/README.md).
+- An external-source ledger with applicability checks, report validation and
+  provider interchangeability trials are future stages in
+  [AGENT_TRANSITION_PLAN.md](AGENT_TRANSITION_PLAN.md), not current
+  capabilities. A study's `sources` are declared and unverified.
 
 ## Environment and checks
 
@@ -43,9 +50,11 @@ research. Keep a runtime upgrade separate from product behavior changes.
 ## Research rules
 
 - Write down the question, use case, required constraints, preferences, source
-  scope, freshness needs, and collection limits before collecting, in a note
+  scope, freshness needs, and collection limits before collecting, in a brief
   separate from the code. A user's constraint is not a fact about the product
-  class; once both are in a category module nobody can tell them apart.
+  class; once both are in a category module nobody can tell them apart. The
+  brief is where they stay apart, and the study report says of every decision
+  whether the brief stated it or the category supplied the default.
 - Inspect before asking, then ask in one batched round. Block only on what would
   make the work wrong or useless under every plausible answer — marketplace and
   delivery region, a requirement that eliminates most of the shelf, the cost
@@ -77,14 +86,16 @@ research. Keep a runtime upgrade separate from product behavior changes.
   `not_claimed` distinct. Never promote a status merely to obtain a ranking.
 - Review cards are a selected sample: presence can support a quoted experience,
   absence is unknown, and sample counts cannot support population rates.
-- Basmati `rank` defaults to price per kg, not its composite score. Its JSON
-  cards omit material category extras; review text cards too. Independently
+- Basmati `rank` defaults to price per kg, not its composite score, and no CLI
+  produces a score-ordered shortlist. Its JSON cards now carry every section
+  its text cards do, the score included. Independently
   verify the relevance/date/identity of embedded external findings before using
   them in advice. Brand agreement alone does not establish current-batch safety.
 - State the search/source coverage and missing evidence. Prefer a conditional
   recommendation or an insufficient-evidence answer to an unsupported winner.
 - Save the report, input locations, commands, crawl IDs, assumptions and unresolved
-  limits as described in RESEARCH. Do not leave the only account in chat.
+  limits as described in RESEARCH. Do not leave the only account in chat. A
+  study bundle holds all of it; `verify` is what says it still holds.
 
 ## Untrusted content and artifacts
 
@@ -100,7 +111,8 @@ an allowlist of acquisition settings and never a key. Working `data/` and
 redaction failed is quarantined and counted rather than silently stored as raw
 HTML; it must not be exported or promoted. Read
 [tests/corpus/README.md](tests/corpus/README.md) and
-[tests/cases/README.md](tests/cases/README.md) before adding fixtures.
+[tests/cases/README.md](tests/cases/README.md) before adding fixtures, and
+[tests/studies/README.md](tests/studies/README.md) before adding a brief.
 
 ## Maintenance workflow
 

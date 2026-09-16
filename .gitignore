@@ -51,6 +51,11 @@ data/evidence/*
 !data/evidence/*.md
 *.jsonl
 
+# Scratch briefs a study test writes beside the committed ones, because a
+# brief's feeds are relative to the brief. Cleaned up by the test; ignored so
+# that a crashed run cannot leave one staged.
+tests/studies/.tmp-*
+
 # Purchase advice reports. Output, not source: each one is a snapshot of one
 # marketplace on one day, and a stale recommendation that still looks
 # authoritative is worse than none. The README stating the convention is kept;

@@ -12,7 +12,8 @@ is **`amazon_product`**; it handles search, pagination, and direct ASIN fetches.
 | Research a product or try the offline example | [RESEARCH.md](RESEARCH.md) — current runbook and commands |
 | Understand fields and trust semantics | [CONTRACT.md](CONTRACT.md) — extraction schema **6**, validation contract **2** |
 | Understand priorities and previous decisions | [ROADMAP.md](ROADMAP.md) |
-| Understand the agent transition | [AGENT_TRANSITION_PLAN.md](AGENT_TRANSITION_PLAN.md) — T0 and T1 delivered; T2–T5 planned |
+| Run or replay a saved study | [RESEARCH.md](RESEARCH.md#a-saved-study-end-to-end) — two worked examples under [tests/studies](tests/studies/README.md) |
+| Understand the agent transition | [AGENT_TRANSITION_PLAN.md](AGENT_TRANSITION_PLAN.md) — T0, T1 and T2 delivered; T3–T5 planned |
 
 `CLAUDE.md` is a thin entry point to the same instructions. If an agent does
 not automatically discover repository instructions, tell it to read
@@ -91,6 +92,7 @@ comparison and a disputed value that must not decide a purchase.
 | Validation | `amazon_scraper/validation/` | Quantity, pricing, nutrition, review and variation checks; evidence-bearing values |
 | Category analysis | `amazon_scraper/analysis/categories/` | Classification, meaningful claims and comparison axes; category plausibility profiles |
 | Analysis CLI | `amazon_scraper/analysis/__main__.py`, `report.py`, `feeds.py` | Feed merging, evidence cards, rankings, comparisons and summaries |
+| Study | `amazon_scraper/study/` | The written brief, its stated constraints, every candidate and its fate, the outcome, the report, and replay |
 
 `items.py`, `pipelines.py`, and `middlewares.py` are inherited scaffolding;
 they are not the research data model. The product spider emits dictionaries.
@@ -116,11 +118,14 @@ as ranking values.
 |---|---|---|
 | `dry_pasta` | Price per kilogram, lower first | Ingredients, processing claims, nutrition plausibility |
 | `tyre_mounting_paste` | Pack quantity, lower first | Drying, material compatibility, adverse lubricant claims |
-| `basmati_rice` | Price per kilogram, lower first | Cultivar, review signals, historical external findings, a seven-component score on text cards |
+| `basmati_rice` | Price per kilogram, lower first | Cultivar, review signals, historical external findings, a seven-component score |
 
-`rank` sorts one axis. **It does not rank by basmati's composite score**.
-Basmati's JSON card currently omits the score and several category-specific
-evidence sections; consult the text card and module when researching it.
+`rank` sorts one axis. **It does not rank by basmati's composite score**, and
+no CLI produces a score-ordered shortlist. The score is a category method that
+basmati's cards show — in text and, since T2, in JSON — beside the inputs it
+had to guess at. Every section a category renders is now published in
+`card --json`: a category declares the card keys it adds in `Category.extras`,
+and one it does not declare is not published.
 `--require` filters on an observed trusted claim, not independent certification.
 Use explicit `--category`; the CLI otherwise defaults to `dry_pasta`.
 
@@ -141,13 +146,16 @@ still covers one marketplace: feeds spanning several stop the command until
 | Command | Output |
 |---|---|
 | `python -m amazon_scraper.analysis summary FEED --category CATEGORY` | Classification decisions, evidence availability and trust statuses; not classifier accuracy |
-| `... rank FEED --category CATEGORY --limit 10` | One-axis ranking, pack variants and exclusions |
+| `... rank FEED --category CATEGORY --limit 10` | One-axis ranking, pack variants and exclusions; `--json` emits the whole ranking with every exclusion and its reason code |
 | `... card FEED ASIN [ASIN ...] --category CATEGORY` | Text evidence cards; `--json` emits one pretty-printed object per ASIN |
-| `... cards FEED --category CATEGORY --json` | JSONL cards for category matches; category extras are not yet complete |
+| `... cards FEED --category CATEGORY --json` | JSONL cards for category matches, including every section the category declares |
 | `... compare FEED ASIN ASIN --category CATEGORY` | Differences supported by comparable values and reasons for refusal |
 | `... validated FEED --category CATEGORY` | JSONL validation using that category's plausibility profile; no category claim evaluation |
 | `python -m amazon_scraper.run reextract RUN_DIR --feed ORIGINAL_FEED -o NEW_FEED` | Offline extraction from retained pages; refuses a feed belonging to another crawl or marketplace |
 | `python -m amazon_scraper.run inspect RUN_DIR` | What a run did, which code and settings produced it, how it ended, what it retained |
+| `python -m amazon_scraper.study check BRIEF` | Whether a brief is usable, and every default it will fall back to |
+| `python -m amazon_scraper.study run BRIEF` | Analyses the feeds the brief names and writes a study bundle; collects nothing |
+| `python -m amazon_scraper.study verify BUNDLE` | Re-derives the decisions from the bundle's own inputs and reports what moved |
 
 Run these with `uv run --offline --locked`. The analysis commands accept
 multiple JSONL or `.jsonl.gz` feeds. They merge by marketplace and ASIN and
@@ -156,7 +164,18 @@ then a later re-extraction of the same bytes, then run id and a record digest),
 so the argument order never decides. Feeds from several marketplaces stop the
 command until `--marketplace` names one. JSON output puts the provenance
 summary on stderr; do not combine stderr with the data stream. `--json`
-formats cards, not a structured ranking or summary.
+formats cards and the ranking; `summary` remains text only.
+
+A **study** is the envelope around those commands: a brief that states the
+question and its constraints, and a bundle holding every candidate considered
+with the reason for its fate, the decisions, and a generated report. The study
+id is derived from the brief, the input digests and the published contract
+versions, so the same inputs produce the same bundle on any machine; `verify`
+re-derives it and reports a tampered input, a missing artefact, an unsupported
+version, or a decision that moved. `run` exits non-zero only when the brief or
+the bundle cannot be used — an insufficient-evidence outcome is a result, not
+a failure. Two worked examples, one of each outcome, are in
+[tests/studies](tests/studies/README.md).
 
 The `validated` CLI always supplies a category profile (default `dry_pasta`).
 For neutral validation, the Python API is `validate(record)` with no profile;
@@ -210,8 +229,9 @@ evidence.
 actually stored. That digest is over the **redacted** text, not over Amazon's
 reply. Because fetch time is recorded rather than read from the filesystem,
 copying a run directory no longer makes its pages look freshly fetched.
-Portable study manifests remain T2 work; see the
-[runbook limitations](RESEARCH.md#current-limitations).
+A study bundle records the digest of every feed it read, so replay detects a
+feed that changed underneath it. It does not bind a feed to a run by a digest
+taken at close; see the [runbook limitations](RESEARCH.md#current-limitations).
 
 ## Maintenance and reference material
 

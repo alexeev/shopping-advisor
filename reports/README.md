@@ -20,12 +20,16 @@ reproducibility from a report name in the table below. The self-contained
 [offline walkthrough](../RESEARCH.md#offline-walkthrough) uses committed cases.
 
 Use [RESEARCH.md](../RESEARCH.md) for the current research and verification
-workflow. Until portable study bundles are implemented (T2/T3), keep a working
-note alongside a report with the question/constraints, assumptions, feed paths,
-run IDs, commands/options, code revision, source URLs and dates, verification
-results and unresolved limits. Ignored local output is not automatically backed
-up. Keep dated notes/revisions when refreshing a report so its old evidence is
-not silently overwritten.
+workflow. Since T2 the question, constraints, assumptions, feed paths and
+digests, candidates, decisions, code revision and a generated report live in a
+**study bundle** under `data/studies/`, produced by
+`python -m amazon_scraper.study run BRIEF`. Write a report here only for what
+the bundle cannot generate — suitability, tradeoffs, and external evidence
+someone checked — and name the study id it rests on. `data/studies/` is
+gitignored too: a bundle is not backed up by existing, and a study that has to
+survive is copied somewhere it will, together with the feeds its brief names.
+Keep dated notes/revisions when refreshing a report so its old evidence is not
+silently overwritten.
 
 ## Convention
 

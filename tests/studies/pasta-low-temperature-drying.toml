@@ -1,0 +1,44 @@
+# The same evidence, a requirement two listings meet, and no answer. This
+# brief exists so that the refusal path is exercised, documented and tested
+# rather than described. See tests/studies/README.md.
+
+brief_version = 1
+id = "pasta-low-temperature-drying"
+question = "Among the committed dry-pasta case records, which low-temperature-dried pasta has the lowest defensible price per kilogram?"
+use_case = """Someone who believes slow drying below about 60 °C is what
+separates good durum pasta from the rest, and will pay for it. The requirement
+is real and two listings in the case set state it; neither has a price per
+kilogram that survived validation, and the honest answer is therefore that
+this evidence cannot choose."""
+category = "dry_pasta"
+marketplace = "www.amazon.de"
+delivery_region = "DE"
+
+inputs = ["../cases/pasta_v1.jsonl.gz"]
+
+limits = [
+  "Both listings that state low-temperature drying have a disputed price per kilogram: Amazon quotes a unit price per piece rather than per weight, and the pack size on the page contradicts it. A disputed value is shown on the evidence card and is never ranked on.",
+  "Removing the contradiction to force a comparison would be a research error, not a fix. The correct outcome here is that the question cannot be answered from this evidence.",
+]
+
+[constraints]
+axis = "price_per_base"
+unit = "EUR/kg"
+cost_basis = "The listed price of the pack, divided by its validated net weight."
+require_claims = ["low_temperature_drying"]
+shortlist = 3
+minimum_candidates = 2
+
+[freshness]
+as_of = "2026-09-16"
+price_max_age_days = 7
+
+[[questions]]
+question = "Amazon.de with delivery in Germany?"
+answer = "Yes."
+blocking = true
+
+[[assumptions]]
+statement = "A listing that does not mention its drying temperature does not dry at a low one."
+default = "Require the stated claim."
+if_wrong = "Twenty of the twenty-two classified records say nothing about drying temperature. Most vendors simply do not publish it, so this requirement is closer to 'says so on the page' than to a property of the pasta."

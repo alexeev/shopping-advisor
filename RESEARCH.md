@@ -1,9 +1,10 @@
 # Product research runbook
 
 This is the current workflow for the shipped tools. Read [AGENTS.md](AGENTS.md)
-first. T0 makes the existing workflow discoverable and T1 makes acquisition and
-replay trustworthy; structured study artifacts and automated report validation
-in the [transition plan](AGENT_TRANSITION_PLAN.md) are not implemented yet.
+first. T0 makes the existing workflow discoverable, T1 makes acquisition and
+replay trustworthy, and T2 makes a study persist and replay. An external-source
+ledger and automated report validation in the
+[transition plan](AGENT_TRANSITION_PLAN.md) are not implemented yet.
 
 ## Offline walkthrough
 
@@ -56,7 +57,11 @@ uv run --offline --locked python -m amazon_scraper.analysis card tests/cases/pas
 
 The provenance summary goes to stderr and JSON goes to stdout. A single
 `card --json` is a pretty-printed object; use `cards --json` for JSONL across
-category matches. Do not generalize this example's JSON completeness to basmati.
+category matches. Since T2 a card's JSON carries every section its text card
+does, basmati's score and cultivar included: a category declares the card keys
+it adds, and one it does not declare is not published. `rank --json` likewise
+emits the whole ranking — every row, and every exclusion with its reason code,
+where the text view stops at ten.
 
 ### 4. Compare two usable products
 
@@ -105,6 +110,93 @@ A defensible example conclusion distinguishes the lowest usable historical
 price from a suitability recommendation, explains the disputed pack exclusion,
 and labels the dataset as selected regression cases. No fresh crawl is needed
 to answer this offline question.
+
+## A saved study end to end
+
+The walkthrough above is a sequence of commands somebody has to remember
+having run. A **study** is the same work with the question, the constraints and
+the outcome written down beside the evidence, so that it survives the terminal.
+Two briefs ship, both over the same committed feed and both offline:
+[tests/studies](tests/studies/README.md) explains why there are two.
+
+### 1. Check the brief before spending anything on it
+
+```text
+uv run --offline --locked python -m amazon_scraper.study check tests/studies/pasta-bronze-die.toml
+```
+
+Expect a valid `pasta-bronze-die` brief for `dry_pasta` on `www.amazon.de`,
+ranking `price_per_base` in `EUR/kg`, requiring `bronze_die`, needing at least
+three candidates that are 5.0% apart, as of 2026-09-16. Every line it prints
+that says *(the category default)* is a decision the brief did not make.
+
+Unknown keys are refused, not ignored: change `shortlist` to `shortlst` and the
+command names it rather than quietly ranking without one.
+
+### 2. Run it
+
+```text
+uv run --offline --locked python -m amazon_scraper.study run tests/studies/pasta-bronze-die.toml
+```
+
+Expect study `pasta-bronze-die-501d864a1a0c` with outcome `recommendation`:
+22 of 25 records classified as dry pasta, 5 offers ranked, 3 excluded, 14 short
+of the required claim, 3 shortlisted. It writes
+`data/studies/pasta-bronze-die-501d864a1a0c/` and collects nothing — every byte
+it read was on disk before the command started.
+
+The bundle holds `manifest.json`, the validated `brief.json`, one line per
+considered record in `candidates.jsonl`, the complete evidence card of every
+classified candidate in `cards.jsonl`, the structured decisions in
+`ranking.json`, and `report.md`. The report's *What decided it* table is the
+part worth reading first: it says of every decision whether the brief stated it
+or the category supplied the default.
+
+The study id is derived from the brief, the input digests and the published
+schema/contract versions — not from the clock — so the id above is what a clean
+checkout produces, and running it again in another directory writes
+byte-identical artefacts. What the id deliberately does **not** cover is the
+analysis code: a category rule can change a decision without changing the id,
+which is what the next command is for.
+
+### 3. Verify it without collecting again
+
+```text
+uv run --offline --locked python -m amazon_scraper.study verify data/studies/pasta-bronze-die-501d864a1a0c
+```
+
+Expect `verified`: every artefact matches its digest, and every decision and
+numeric claim re-derives from the declared inputs. This is also how another
+environment picks a study up — `--input-root` says where the feeds are if the
+bundle has been moved away from them.
+
+`verify` reports, in this order and with the ones that invalidate everything
+below them first: an unsupported manifest or brief version, a missing or
+altered artefact, an input whose bytes are not the ones the study read, a code
+revision that has moved, and finally a decision or numeric claim that no longer
+reproduces. Any finding exits non-zero.
+
+### 4. Read the refusal
+
+```text
+uv run --offline --locked python -m amazon_scraper.study run tests/studies/pasta-low-temperature-drying.toml
+```
+
+Expect outcome `insufficient_evidence` and an empty shortlist. Two listings
+state low-temperature drying; both have a **disputed** price per kilogram,
+because Amazon quotes a unit price per piece rather than per weight and the
+pack size on the page contradicts it. The report names both with their
+contradictions and puts nobody forward.
+
+That is the outcome to imitate. Nothing fails when a thin result is written up
+as a confident one, which is exactly why the refusal path ships as a worked
+example with its own assertions.
+
+Two refusals are *not* results, and stop the command without writing anything:
+a brief naming a unit nothing is measured in while other units are, and a brief
+that leaves the unit open where the evidence is measured in several. Both are
+slips in the brief, and filing one as insufficient evidence would record it as
+a fact about the shelf.
 
 ## Live research workflow
 
@@ -191,16 +283,36 @@ permission ritual.
 
 #### The brief itself
 
-Create a dated working note under `reports/`. There is no enforced brief
-schema yet — that is T2 — so a note with these headings is the current form:
+Write it as a **brief file** — TOML or JSON — next to the feeds it will read.
+`amazon_scraper/study/brief.py` holds the schema; the two committed examples
+in [tests/studies](tests/studies/README.md) are the shape to copy. It
+carries:
 
-- Question/use case, category, marketplace and delivery region.
-- Hard requirements versus preferences, budget/cost basis, and unacceptable
-  alternatives. Record what evidence would establish each decisive requirement.
-- Freshness needed for price, availability, and other time-sensitive claims.
-- Known ASINs, planned generic/brand queries, external sources, and why chosen.
-- Query/page/product/time limits, assumptions, and material unresolved questions.
-- Which questions were asked, which were answered, and which defaults were used.
+- Question, use case, category, marketplace and delivery region.
+- `[constraints]`: the ranking axis and unit, the claims a candidate must
+  state, a limit on the axis, the cost basis, the shortlist length, and the
+  two stopping criteria — `minimum_candidates` and `decisive_margin`.
+- `[freshness]`: an `as_of` date and how old a price may be. Age is measured
+  against `as_of` and never against today, so the same study decides the same
+  way tomorrow.
+- `[[assumptions]]`, `[[questions]]` and `[[sources]]`: the defaults taken and
+  what changes if each is wrong, which questions were asked and which went
+  unanswered, and the external sources named — declared, not verified.
+- `limits` and `unacceptable`: what the study does not establish, and what was
+  ruled out before it started.
+
+Check it before running anything: `python -m amazon_scraper.study check BRIEF`
+prints every default it will fall back to. Unknown keys are refused rather
+than ignored, because a misspelt constraint that silently does nothing
+produces a study with no sign anything was asked. The brief is **data**: it
+names a category by its registry key, never by an import path, and nothing in
+it is imported, evaluated or interpolated into a command.
+
+The two stopping criteria are the part worth writing before looking at the
+data. `minimum_candidates = 3` says how many usable candidates it takes to
+choose at all, and `decisive_margin = 0.05` says how far apart the top two
+have to be. Written afterwards, they are a rationalisation of whatever the
+evidence happened to support.
 
 If a requirement changes after collection has started, do not quietly re-rank.
 Either finish under the recorded brief and report the change, or record a new
@@ -337,17 +449,21 @@ Distinguish a vendor declaration from a measured property and a historical test
 from evidence about the current batch. Unavailable sources remain unverified.
 
 Basmati's embedded external-test constants lack complete source provenance and
-applicability controls. Its text cards show its seven-part score, but `rank`
-still sorts price per kilogram and JSON omits material basmati extras. Do not
-claim that the CLI reproduces a composite shortlist or that an embedded
-`trusted` external match establishes current product safety.
+applicability controls. Its cards show its seven-part score — in text and, since
+T2, in JSON — but `rank` still sorts price per kilogram and **no CLI produces a
+score-ordered shortlist**. Do not claim that the CLI reproduces a composite
+shortlist, or that an embedded `trusted` external match establishes current
+product safety. A brief's `[[sources]]` are recorded and reproduced in the
+report under a heading that says they were not checked; applicability and
+claim-to-evidence links are T3.
 
-Follow [reports/README.md](reports/README.md) for output conventions. Include the
-question, as-of dates, recommendation/alternatives, suitability and tradeoffs,
-comparison values, exclusions, sources per material claim, and unresolved gaps.
-Record exact feed paths, run IDs, commands/options and relevant code revision in
-the working note. Assess freshness and delivered cost explicitly; absent
-shipping data is unknown, not zero.
+`python -m amazon_scraper.study run BRIEF` writes the report, and it is
+generated from the decisions rather than typed beside them: it cannot state a
+figure the analysis did not produce. Follow
+[reports/README.md](reports/README.md) for anything written by hand on top of
+it, and add what only a person knows — suitability, tradeoffs, and the
+external evidence checked above. Assess freshness and delivered cost
+explicitly; absent shipping data is unknown, not zero.
 
 Before delivery, check that decisive numeric values are usable, units/currency
 agree, citations support the selected variant and claim, sample reviews are
@@ -358,10 +474,12 @@ answer is a valid result.
 
 ### Close and capture improvements
 
-Keep working notes and reports at explicit locations and tell the user where
-they are. `reports/` and most of `data/` are gitignored; this is not a backup or
-portable study archive. Do not claim that another checkout can reproduce a
-report unless its inputs are available there.
+Keep the study bundle and any hand-written report at explicit locations and
+tell the user where they are. `data/studies/` and `reports/` are gitignored, so
+a bundle is not backed up by existing: a study that has to survive is copied
+somewhere it will, together with the feeds its brief names. A bundle replays
+in another checkout only if those feeds are available there — the committed
+examples are, and a study over a private crawl is not. Do not claim otherwise.
 
 A study does not end at the report. Every study so far has produced at least
 one finding about the *tooling* — R5's reviews, R7's claim attribution, R8's
@@ -436,11 +554,14 @@ to make a preferred product win.
 |---|---|---|
 | One analysis covers one marketplace; cross-marketplace comparison is unsupported | Name the marketplace with `--marketplace` and report only that shelf | R4/T5 |
 | Evidence collected before T1 has no page digests, recorded fetch times or feed bindings | `inspect` reports such a run as `legacy`; label its freshness unknown rather than inferring it | — (historical data) |
-| Feeds are bound by the run id on their records, not by a digest taken at close | Keep original feeds unchanged and record their paths; a merged multi-run feed reports `mixed` lineage | T2 |
+| Feeds are bound by the run id on their records, not by a digest taken at close | Keep original feeds unchanged and record their paths; a merged multi-run feed reports `mixed` lineage. A study bundle does digest the feeds it read, so replay detects one that changed | — (acquisition ordering) |
 | Failure capture is bounded, and search pages are retained only on request | Read the capped counters in the manifest; re-collect with `keep_search_pages=1` when discovery itself is in question | — (by design) |
 | A quarantined page is evidence but not exportable | Re-extract it if needed; never promote it into the corpus or attach it to a report | — (by design) |
-| No structured study brief, complete category JSON, or report checks | Keep explicit working notes and perform documented manual verification | T2/T3 |
-| Original full studies/reports and basmati source documents are not all tracked | Use the committed walkthrough for onboarding; request/rebuild missing evidence only when the task needs it | T2/T3 |
+| A study id pins the brief, the input digests and the contract versions, but not the analysis code | Run `study verify`: a decision that moved because a rule changed is a finding, not a silent difference | — (by design) |
+| A report is generated from the decisions, but nothing checks that its prose claims are supported by evidence | Read the report against the cards; a hand-written section is unchecked | T3 |
+| A brief's `[[sources]]` are recorded and reproduced, not verified for applicability, variant or date | Check each one yourself before letting it decide anything, and say so in the report | T3 |
+| Original full studies/reports and basmati source documents are not all tracked | Use the committed study examples for onboarding; request/rebuild missing evidence only when the task needs it | T3 |
+| A bundle replays only where the feeds its brief names are available; `data/studies/` is gitignored | Copy the bundle and its feeds together, or build the study over committed cases | — (retention policy) |
 | No two-provider acceptance trial yet | Load the same canonical instructions; do not claim proven provider handoff | T4 |
 
 ## Failure diagnosis
@@ -455,6 +576,8 @@ to make a preferred product win.
 | Disputed number | Evidence card and source fields, quantity/price units, category profile |
 | Expected product classified out | Title, ingredients/body, the category classifier and existing cases |
 | Test snapshot mismatch | Field-level diff and saved page; explain the change before updating any expected output |
+| A brief that will not load | The message names the field and lists what is allowed; `study check` is the cheap way to see it |
+| A study that will not verify | The finding codes, in order: version, then artefact, then input, then code revision, then the decision that moved |
 
 Do not recrawl just to reproduce a parser error whose page is already retained.
 If the required evidence was never retained, record that limitation explicitly.
