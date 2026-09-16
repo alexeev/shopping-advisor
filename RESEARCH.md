@@ -108,10 +108,91 @@ to answer this offline question.
 
 ## Live research workflow
 
-### Record the brief and working notes
+### Agree the brief
 
-Create a dated working note under `reports/` before collection. There is no
-enforced brief schema yet; include:
+A request arrives underspecified and that is normal: "I need a new vacuum
+cleaner" is a real starting point, not a defective one. The job of this step is
+to end with a written brief, not to interrogate.
+
+Write the brief down **separately from the code**. This repository has already
+paid for not doing that: tyre mounting paste ranks the *smallest* pack first
+because one reader was fitting one scooter tyre, and basmati's score weights
+come from one particular question. Both are now facts about a category module,
+where a later reader cannot tell a user's constraint from a property of the
+product class. A constraint belongs in the brief; only what is true for every
+buyer of that product belongs in a category.
+
+#### Look before you ask
+
+Two minutes of inspection changes which questions are worth asking, so do it
+first: is the category supported, what evidence is already on disk, what can
+the tools actually decide. Ask nothing that inspection would have answered.
+
+#### Three kinds of missing information
+
+| Kind | Test | What to do |
+|---|---|---|
+| **Blocking** | Under *every* plausible answer the work would be wrong or useless | Ask, and wait. Do not collect. |
+| **Assumable** | A wrong guess costs a paragraph, not the study | Choose the safer default, state it as an assumption, continue |
+| **Not worth asking** | The evidence will answer it, or the tools decide it deterministically | Do not ask |
+
+Blocking in practice: the marketplace and delivery region (an Amazon.de answer
+is useless to someone buying elsewhere); a hard requirement that eliminates
+most of the shelf; the cost basis when the question is "cheapest"; and whether
+an unsupported category should be built at all — see below. Nearly everything
+else is assumable, including budget: absent one, assume no cap, say so, and let
+the ranking show prices.
+
+#### How to ask
+
+One batched round, at most about four questions, each stating **why it changes
+the answer** and **what happens if it goes unanswered**. Not a questionnaire,
+and not one question per turn. While waiting, do the work that does not depend
+on the answer: inspect retained evidence, check what the category module knows,
+read the existing cases.
+
+"You decide" is an answer. Record it as an assumption with the default you
+chose, and make the report show what would change if that default were wrong.
+
+#### Say so when the category is not supported
+
+Three categories ship: `dry_pasta`, `tyre_mounting_paste`, `basmati_rice`. For
+anything else — a vacuum cleaner, a display — the generic layer still works
+(price, pack quantity, contradictions between the vendor's own statements) but
+nothing in the repository knows what makes one *good*. Surface that as a choice
+rather than working around it:
+
+- build and test a category module first, as a scoped maintenance change, and
+  then research; or
+- answer within stated limits, using only what the generic layer can check, and
+  label it as not a suitability judgement.
+
+Name the category on **every** command: `--category` defaults to `dry_pasta`.
+The two ways that goes wrong are not equally visible.
+
+- `summary`, `rank`, `card` and `compare` run the category's classifier first,
+  so a wrong category usually produces an empty or nearly empty result. The
+  committed mounting-paste cases come out as `0 dry pasta · 0 offers`, which is
+  hard to mistake for an answer.
+- `validated` applies the category's **plausibility profile regardless of
+  classification**, and that failure is quiet. Running the same 34
+  mounting-paste records under dry pasta's bands moves **14 values**, mostly
+  `trusted` → `disputed`, with notes like *"252 EUR/kg is outside the 0.8-40
+  range dry pasta sells in"*. The values were right; the bands were the wrong
+  product's.
+
+#### Read it back before spending
+
+Collection is the only step that touches Amazon, cannot be undone and costs
+real requests. Before it, restate the brief in a few lines — question, hard
+requirements, assumptions, limits — and get agreement. Keep existing user
+authorization: this is a confirmation of *what* is being researched, not a new
+permission ritual.
+
+#### The brief itself
+
+Create a dated working note under `reports/`. There is no enforced brief
+schema yet — that is T2 — so a note with these headings is the current form:
 
 - Question/use case, category, marketplace and delivery region.
 - Hard requirements versus preferences, budget/cost basis, and unacceptable
@@ -119,11 +200,37 @@ enforced brief schema yet; include:
 - Freshness needed for price, availability, and other time-sensitive claims.
 - Known ASINs, planned generic/brand queries, external sources, and why chosen.
 - Query/page/product/time limits, assumptions, and material unresolved questions.
+- Which questions were asked, which were answered, and which defaults were used.
 
-Ask for missing information when it materially changes the recommendation.
-Keep existing user authorization; do not ask again merely because this runbook
-exists. An unsupported category requires scoped category development and tests
-before its judgments become a supported method.
+If a requirement changes after collection has started, do not quietly re-rank.
+Either finish under the recorded brief and report the change, or record a new
+brief revision and show which decisions moved. An unrecorded requirement change
+is indistinguishable from a result.
+
+#### Worked example
+
+> **User:** I need a new vacuum cleaner.
+>
+> **Agent:** Before I collect anything: this repository has category knowledge
+> for dry pasta, tyre mounting paste and basmati rice only. For vacuum cleaners
+> I can check prices, pack/unit quantities and contradictions in the vendors'
+> own statements, but nothing here knows what makes a vacuum cleaner good, so I
+> cannot rank suitability yet. Two options: I build and test a vacuum-cleaner
+> category first, or I give you a deliberately limited price/claims overview
+> and say what it does not establish.
+>
+> Either way, two things change the answer and I cannot guess them:
+> (1) Are you buying on Amazon.de for delivery in Germany? Everything here is
+> validated for that one marketplace. (2) Is there a hard requirement that
+> rules most models out — pet hair, mostly carpet, stairs, or a noise limit?
+>
+> Unless you say otherwise I will assume: no budget cap (prices shown in the
+> ranking), corded or cordless both acceptable, and current listings rather
+> than historical ones.
+
+Three properties make this effective: it names what the tools cannot do before
+asking for anything, it asks two questions instead of ten, and it states the
+defaults so silence is still a usable answer.
 
 ### Live collection
 
@@ -256,12 +363,72 @@ they are. `reports/` and most of `data/` are gitignored; this is not a backup or
 portable study archive. Do not claim that another checkout can reproduce a
 report unless its inputs are available there.
 
-Record discoveries with source/run/ASIN, observed versus expected behavior,
-reproduction command, affected layer and proposed next action. Follow
-[the maintenance workflow](AGENTS.md#maintenance-workflow) for a code change.
-Promote verified behavior to code/tests and useful procedure to the runbook;
-leave speculative improvements as dated proposals. Keep the study's original
-evidence and explain any changed analysis after a fix.
+A study does not end at the report. Every study so far has produced at least
+one finding about the *tooling* — R5's reviews, R7's claim attribution, R8's
+German compounds, T1's identity and replay gaps — and those are only worth
+anything if they leave the conversation.
+
+#### The improvement cycle
+
+```text
+observation → reproducible case → proposed change → review → versioned adoption
+     ↑                                                                    │
+     └──────────────────── measured effect ───────────────────────────────┘
+```
+
+1. **Observation.** Log it with the originating study, run ID and ASIN or
+   source, observed versus expected behaviour, the affected layer, and a
+   reproduction command. A plausible idea with no evidence stays a hypothesis
+   and is recorded as one. **The log itself never changes live behaviour.**
+2. **Reproducible case.** Reproduce it offline from retained evidence before
+   proposing anything. If the evidence was never retained, that is itself the
+   finding — record it and say what would have to be kept next time.
+3. **Proposed change.** Scope it to the narrowest responsible layer, following
+   [the maintenance workflow](AGENTS.md#maintenance-workflow).
+4. **Review and versioned adoption.** Tests, a readable diff, `CONTRACT.md`'s
+   version rules when a published meaning moves, and a dated roadmap entry for
+   anything that changes policy rather than fixing a defect.
+5. **Measured effect.** State what actually changed: a count, a snapshot diff,
+   a failing case that now passes. "Contract v2 moved exactly `contract_version`
+   on 39 records and `offer[0]` on the 27 with a family" is a measured effect;
+   "improved provenance" is not. A change with no measurable effect was
+   cosmetic, and recording that is also useful.
+
+#### Where each learning goes
+
+| Learning | Durable home |
+|---|---|
+| A parser, quantity, attribution or classifier defect | Code, plus a regression test and a sanitized corpus/case input |
+| Category reasoning or a new preference method | The category module and its cases, with applicability limits |
+| A time-sensitive external product finding | Dated evidence with its source and applicability — never a permanent instruction |
+| A repeatable operator procedure | This runbook or `AGENTS.md`, with the commands verified against the committed example |
+| An architectural or collection-policy decision | A dated entry in `ROADMAP.md`, linked to the measurement that argues for it |
+| An unproven improvement | A roadmap candidate with an experiment **and a stopping criterion** — R9 and R10 are the precedent |
+
+Promote to the narrowest home that holds. Every promoted rule needs its scope
+and a counterexample, not just the product that suggested it. Do not create a
+separate memory store that competes with these files.
+
+#### Improve the questions, not only the code
+
+At close, check the brief against what actually decided the answer:
+
+- Which questions changed the recommendation? Those belong in the blocking list
+  in [Agree the brief](#agree-the-brief).
+- Which were answered and then never used? Those are noise — stop asking them.
+- Which assumptions turned out to be load-bearing? Those should have been
+  questions, and the report should have said what would change if they were wrong.
+- Which defaults did the user silently accept every time? Those can become
+  stated defaults rather than questions.
+
+This is the part of the loop that is easy to skip, because nothing fails when
+it is skipped. A study that took four rounds of clarification and a study that
+took one produce the same report; only this step tells the next agent which
+one to imitate.
+
+Keep the study's original evidence and explain any changed analysis after a
+fix. Do not weaken a trust rule, a plausibility band or an elicitation default
+to make a preferred product win.
 
 ## Current limitations
 

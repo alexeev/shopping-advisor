@@ -123,7 +123,10 @@ when to stop, how to produce the final narrative, and how to archive its inputs.
    request/time budget, and desired report language. Record assumptions and
    unresolved questions. Ask only for decisions that materially affect the
    answer; do independent inspection while waiting. A missing budget can be an
-   explicit assumption, not an invented user requirement.
+   explicit assumption, not an invented user requirement. The elicitation
+   procedure this describes is now written down in
+   [RESEARCH.md](RESEARCH.md#agree-the-brief); the persisted brief artifact
+   remains T2.
 2. **Choose a declared method and inspect existing evidence.** Select a supported
    category/method version and compatible saved feeds. Separate a historical
    replay from current buying advice. If a category is missing, build and test
@@ -430,6 +433,14 @@ it as content. Such tests are regression evidence, not a guarantee against
 every prompt-injection attempt.
 
 ## 5. Controlled continuous improvement and durable knowledge
+
+**The operational half of this section now lives in the canonical documents**
+(2026-09-16): the cycle and the promotion table are in
+[RESEARCH.md](RESEARCH.md#the-improvement-cycle), and the maintenance rules,
+including the measured-effect requirement, are in
+[AGENTS.md](AGENTS.md#maintenance-workflow). What remains planned here is the
+tooling that would enforce them — study bundles and report validation (T2/T3),
+automated gates (T4). The text below is the reviewed rationale.
 
 Use a small, explicit cycle:
 

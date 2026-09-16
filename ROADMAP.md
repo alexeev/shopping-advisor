@@ -115,6 +115,32 @@ replacing the R0–R10 history. Current operating rules are in
   Cross-marketplace comparison stays unsupported by decision, not by
   limitation. T2–T5 are not implemented.
 
+**Runbook — requirement elicitation and the improvement loop (2026-09-16).**
+Audit of the documents against the actual end-to-end flow found two gaps that
+T0 and T1 had left: elicitation was one policy sentence in each of `AGENTS.md`
+and `RESEARCH.md` with no procedure under it, and the improvement cycle existed
+only in the transition plan, which is a reviewed proposal rather than operating
+instruction.
+
+- `RESEARCH.md` now has **Agree the brief**: inspect before asking; a
+  blocking / assumable / not-worth-asking test for missing information; one
+  batched round with stated defaults so silence is still usable; the
+  unsupported-category conversation as an explicit choice; read-back before
+  collection; and what to do when a requirement changes mid-study.
+- `RESEARCH.md` now has **the improvement cycle** — observation → reproducible
+  case → proposed change → review → versioned adoption → measured effect —
+  with the promotion table and a closing step that revises the *questions*
+  against what actually decided the answer. `AGENTS.md` requires a measured
+  effect in the maintenance report.
+- Measured while writing it: running the 34 committed mounting-paste records
+  under dry pasta's plausibility profile moves **14 values**, mostly `trusted`
+  to `disputed` (a 252 EUR/kg paste is outside pasta's 0.80–40 band). That is
+  the quiet half of the `--category` default; the classifier makes the loud
+  half obvious. An earlier draft of this warning overstated the loud half and
+  was corrected against the measurement.
+- Documentation change only: no code, no snapshots, 381 tests unchanged and
+  green. Links, anchors and the CLI defaults were verified.
+
 ---
 
 ## Decision principles

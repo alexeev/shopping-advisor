@@ -43,9 +43,26 @@ research. Keep a runtime upgrade separate from product behavior changes.
 ## Research rules
 
 - Write down the question, use case, required constraints, preferences, source
-  scope, freshness needs, and collection limits before collecting. Make
-  assumptions explicit. Ask for missing information only when it materially
-  changes the answer; follow the user's existing authorization.
+  scope, freshness needs, and collection limits before collecting, in a note
+  separate from the code. A user's constraint is not a fact about the product
+  class; once both are in a category module nobody can tell them apart.
+- Inspect before asking, then ask in one batched round. Block only on what would
+  make the work wrong or useless under every plausible answer — marketplace and
+  delivery region, a requirement that eliminates most of the shelf, the cost
+  basis of a "cheapest" question. Everything else becomes a stated assumption
+  with a default, including an absent budget. "You decide" is an answer: record
+  the default and show what would change if it were wrong. Follow the user's
+  existing authorization; confirming a brief is not a new permission ritual.
+  [RESEARCH.md](RESEARCH.md#agree-the-brief) has the procedure and an example.
+- Say when a category is not supported instead of working around it. Only
+  `dry_pasta`, `tyre_mounting_paste` and `basmati_rice` ship. Offer to build and
+  test a module, or answer within stated generic limits; do not present either
+  as a suitability judgement it is not.
+- Name `--category` on every command; it defaults to `dry_pasta`. A wrong
+  category is loud in `rank`/`summary`/`card` (the classifier rejects the
+  records) and quiet in `validated`, which applies the profile's bands whatever
+  the classifier said: the committed mounting-paste cases move 14 values, mostly
+  `trusted` to `disputed`, under dry pasta's price band.
 - Prefer retained evidence and offline re-extraction for parser changes.
   Historical fixture prices cannot support current buying advice.
 - Keep runs sequential for now, with unique feed output paths, explicit locale,
@@ -101,8 +118,16 @@ HTML; it must not be exported or promoted. Read
 6. Update current docs alongside behavior. Record evidence-backed learnings as
    fixtures, code, source observations or dated roadmap decisions. Hypotheses
    remain proposals; a research run must not silently rewrite its own method.
-7. Report the change, checks, limitations, and remaining work. Keep important
-   changes inspectable and reversible; do not commit or publish unless requested.
+7. Report the change, checks, limitations, and remaining work, including the
+   **measured effect**: a count, a snapshot diff, or a case that now passes.
+   "Improved X" is not a measured effect. Keep important changes inspectable
+   and reversible; do not commit or publish unless requested.
+
+This workflow is the second half of the research loop, not a separate activity:
+observation → reproducible case → proposed change → review → versioned adoption
+→ measured effect, and back. [RESEARCH.md](RESEARCH.md#the-improvement-cycle)
+holds the cycle, where each kind of learning belongs, and the rule that the
+questions asked of a user are revised from what actually decided past answers.
 
 ## Where durable knowledge belongs
 
