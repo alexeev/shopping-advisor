@@ -1,12 +1,13 @@
 # Transition to an agent-operated research repository
 
-**Status: reviewed and adopted; T0 implemented, T1–T5 remain planned.**
+**Status: reviewed and adopted; T0 and T1 implemented, T2–T5 remain planned.**
 
 The assessment below records the repository at commit `95b8bbd` on 2026-09-16;
-findings describe that snapshot, including documentation gaps now addressed by
-T0. See [ROADMAP.md](ROADMAP.md#agent-operation-transition) for implementation
-evidence and [AGENTS.md](AGENTS.md) / [RESEARCH.md](RESEARCH.md) for current
-operation. This plan does not replace the data contract.
+findings describe that snapshot, including documentation gaps addressed by T0
+and the identity, provenance, retention and profile gaps addressed by T1. See
+[ROADMAP.md](ROADMAP.md#agent-operation-transition) for implementation evidence
+and [AGENTS.md](AGENTS.md) / [RESEARCH.md](RESEARCH.md) for current operation.
+This plan does not replace the data contract.
 
 ## Recommendation
 
@@ -498,6 +499,14 @@ history. Both instruction entry points lead to the same rules. No extraction
 or trust behavior changes in the documentation step.
 
 ### T1 — Make acquisition and replay safe to build upon
+
+**Status: DONE (2026-09-16).** Unique run creation, atomic manifests with code
+and settings provenance, per-page fetch metadata and digests, feed/page binding
+checks on replay, bounded failure capture, visible redaction quarantine,
+marketplace-scoped listing identity, deterministic merge ties, refusals for
+mixed-unit and directionless rankings, and the proxy-free default profile are
+shipped. `offer` moved to **contract v2**. See the
+[roadmap verification record](ROADMAP.md#agent-operation-transition).
 
 **Depends on:** T0's supported-scope decisions.
 

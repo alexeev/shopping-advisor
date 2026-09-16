@@ -11,7 +11,16 @@ parse.
 Everything a crawl knows about itself now survives it (:mod:`amazon_scraper.run`):
 the run's identity and locale travel on every record, every sighting is written
 down *before* de-duplication can discard it, and the page each record came from
-is kept so a later extractor never has to ask Amazon twice.
+is kept -- with the time it was fetched, the URLs it came from and the digest of
+the bytes stored -- so a later extractor never has to ask Amazon twice.
+
+What a crawl *fails* to get survives it too. A challenge page and a 200 with no
+product title are still counted in the stats and still produce no record, but a
+bounded, truncated, redacted sample of each is now retained, because "48
+records from 56 requests" with nothing underneath it cannot be reproduced
+without crawling the shelf again. Search responses are retained only when the
+run is asked for them: they are the only witness to what a query returned, and
+the largest thing a crawl downloads.
 """
 
 import collections
@@ -170,7 +179,7 @@ class AmazonProductSpider(scrapy.Spider):
 
     def __init__(self, keyword='spaghetti hartweizen', domain='www.amazon.de',
                  max_pages=2, max_products_per_query=0, keep_pages=1,
-                 asin='', *args, **kwargs):
+                 keep_search_pages=0, asin='', *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.seed_asins = self._parse_asins(asin)
@@ -203,6 +212,12 @@ class AmazonProductSpider(scrapy.Spider):
         self.profile = for_domain(host)
         self.extractor = PdpExtractor(self.profile)
         self.keep_pages = str(keep_pages).lower() not in ('0', 'false', 'no')
+        # Off by default. A search response is the only witness to what a
+        # query returned -- and to what it did not -- but it is also the
+        # largest thing a crawl downloads, so retaining it is a decision the
+        # study makes rather than a default it inherits.
+        self.keep_search_pages = \
+            str(keep_search_pages).lower() not in ('0', 'false', 'no')
         self._queued_by_query = collections.Counter()
         self._seen_asins = set()
         self.run = None
@@ -245,8 +260,14 @@ class AmazonProductSpider(scrapy.Spider):
                        'max_pages': self.max_pages,
                        'max_products_per_query': self.max_per_query,
                        'keep_pages': self.keep_pages,
+                       'keep_search_pages': self.keep_search_pages,
                        'asin': self.seed_asins},
             keep_pages=self.keep_pages,
+            keep_search_pages=self.keep_search_pages,
+            # So the manifest can state which code, which pacing and which
+            # feed produced this evidence, rather than leaving a later reader
+            # to assume the profile that happens to be current.
+            settings=self.settings,
         ).open()
         self.logger.info('Run %s -> %s (locale %s, %s)', self.run.run_id,
                          self.run.directory, locale['language'],
@@ -334,8 +355,14 @@ class AmazonProductSpider(scrapy.Spider):
             stats.inc_value('amazon/challenge/search')
             self.logger.warning(
                 'CHALLENGE on search page %s (%s): %s', page, reason, response.url)
+            self.retain_failure(f'challenge_search_{reason}', response)
             yield from self.advance_search(response, keyword_index, page)
             return
+
+        if self.run is not None:
+            self.run.save_search_page(keyword, page, response.text,
+                                      final_url=response.url,
+                                      http_status=response.status)
 
         search_products = response.css("div.s-result-item[data-asin]")
         grid_rank = self.grid_ranks(response)
@@ -476,6 +503,22 @@ class AmazonProductSpider(scrapy.Spider):
         numbers = [int(t.strip()) for t in labels if t.strip().isdigit()]
         return max(numbers) if numbers else 1
 
+    def retain_failure(self, reason, response):
+        """Keep a bounded sample of a response that produced no record.
+
+        A challenge page and a 200 with no product title were both counted and
+        then dropped, which leaves "48 records from 56 requests" with nothing
+        underneath it: neither the block nor the parse defect can be
+        reproduced without crawling the shelf again. The run store caps and
+        truncates what it keeps; this only decides that it is worth keeping.
+        """
+        if self.run is None:
+            return
+        self.run.save_failure(reason, response.text,
+                              key=response.meta.get('asin') or '',
+                              final_url=response.url,
+                              http_status=response.status)
+
     def parse_product_data(self, response):
         stats = self.crawler.stats
 
@@ -483,6 +526,7 @@ class AmazonProductSpider(scrapy.Spider):
         if reason:
             stats.inc_value('amazon/challenge/pdp')
             self.logger.warning('CHALLENGE on PDP %s (%s)', response.url, reason)
+            self.retain_failure(f'challenge_pdp_{reason}', response)
             return
 
         if not response.css('#productTitle, #title'):
@@ -490,6 +534,7 @@ class AmazonProductSpider(scrapy.Spider):
             # structure problem, tracked separately from blocking.
             stats.inc_value('amazon/pdp_parse_failed')
             self.logger.warning('No #productTitle on %s', response.url)
+            self.retain_failure('pdp_no_product_title', response)
             return
 
         asin = response.meta['asin']
@@ -509,7 +554,14 @@ class AmazonProductSpider(scrapy.Spider):
             lineage.update(self.run.lineage())
             # Kept before the record is built, so a later extractor can be run
             # over this exact page without asking Amazon for it again.
-            self.run.save_page(asin, response.text)
+            stored = self.run.save_page(
+                asin, response.text, request_url=response.request.url,
+                final_url=response.url, http_status=response.status)
+            if stored is not None:
+                # One fetch time, on the page index and on the record, rather
+                # than two clocks read a moment apart. A replay of this page
+                # then reproduces the record's own timestamp exactly.
+                lineage['fetched_at'] = stored['fetched_at']
 
         record = self.extractor.extract(response.selector, response.text, lineage)
 

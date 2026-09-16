@@ -33,11 +33,18 @@ as a weight.
 
 import re
 
+from ..extraction.marketplaces import domain_key
+
 # The dimension that means "how much is in the pack". Amazon names its own
 # dimensions, so this is a lookup, not a heuristic. Other dimensions seen on
 # the corpus -- flavor_name, color_name, style_name -- say nothing about
 # quantity and are left alone.
 SIZE_DIMENSIONS = ('size_name', 'size')
+
+
+def marketplace_of(record):
+    """The normalised marketplace this record was observed on, or ``''``."""
+    return domain_key(record.get('marketplace') or '')
 
 
 def matrix(record):
@@ -80,16 +87,24 @@ def family_key(record):
     Amazon's ``parentAsin`` is the family's own id and is never one of the
     buyable members -- it was present and distinct on all 24 corpus pages that
     have a matrix -- which makes it exactly the key we want.
+
+    It is scoped by marketplace (T1), because an ASIN is minted per
+    marketplace: the same ten characters name a different family on a
+    different Amazon site, and grouping across the two would fold two offers
+    in two currencies into one row and then rank the pair on pack size. An
+    empty prefix means the record did not record which marketplace it came
+    from, which is its own scope and not a claim to belong to any other.
     """
     data = matrix(record)
     if not data:
         return None
+    market = marketplace_of(record)
     parent = data.get('parent_asin')
     if parent:
-        return parent
+        return f'{market}:{parent}'
     # No parent: the member set still identifies the family uniquely.
     members = sorted(data.get('values_by_asin') or {})
-    return f'set:{",".join(members)}' if len(members) > 1 else None
+    return f'{market}:set:{",".join(members)}' if len(members) > 1 else None
 
 
 def siblings(record):
@@ -141,13 +156,18 @@ def offer_key(record):
 
 
 def offer_index(records, asin_of=lambda record: record.get('asin')):
-    """``{asin: offer key}`` pooled from every matrix in a set of records.
+    """``{(marketplace, asin): offer key}`` pooled from every matrix in a set.
 
     A matrix describes the whole family, not just the ASIN whose page it came
     from, so one record's matrix can place a sibling that has no matrix of its
     own -- Amazon does not render the twister on every member. Pooling the
     claims first is therefore strictly better than asking each record about
     itself, and it is free: the evidence is already in hand.
+
+    The pool is keyed by marketplace and ASIN. A matrix is a statement about
+    one marketplace's shelf, and a sibling it names is a listing *there*; an
+    index keyed by ASIN alone would let a ``.de`` matrix place a ``.com``
+    record it has never seen.
     """
     index = {}
     for record in records:
@@ -157,8 +177,10 @@ def offer_index(records, asin_of=lambda record: record.get('asin')):
         family = family_key(record)
         if not family:
             continue
+        market = marketplace_of(record)
         for asin in (data.get('values_by_asin') or {}):
-            index.setdefault(asin, (family, variant_signature(data, asin)))
+            index.setdefault((market, asin),
+                             (family, variant_signature(data, asin)))
     return index
 
 
@@ -177,7 +199,8 @@ def group_offers(records, key=None, asin_of=lambda record: record.get('asin')):
             explicit = key(record)
             if explicit is not None:
                 return explicit
-        return index.get(asin_of(record)) or offer_key(record)
+        return (index.get((marketplace_of(record), asin_of(record)))
+                or offer_key(record))
 
     groups, ungrouped = {}, []
     for record in records:

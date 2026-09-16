@@ -327,7 +327,18 @@ def pack_size(card):
             else f'{amount:g} {unit}')
 
 
-def rank_text(cards, axis_key=None, require=(), limit=20):
+def axis_units(cards, axis):
+    """``{unit: records}`` over the values this axis could actually rank."""
+    units = {}
+    for card in cards:
+        value = card['axes'].get(axis.key)
+        if value is not None and value.usable:
+            unit = value.unit or ''
+            units[unit] = units.get(unit, 0) + 1
+    return dict(sorted(units.items(), key=lambda item: (-item[1], item[0])))
+
+
+def rank_text(cards, axis_key=None, require=(), limit=20, unit=None):
     """Best-first on one axis the user names, one row per offer.
 
     Ranking is offered on a single axis, never on a composite: a composite
@@ -339,6 +350,19 @@ def rank_text(cards, axis_key=None, require=(), limit=20):
     Rows are *offers*, not ASINs: when two listings are the same product in
     different boxes, the best pack wins the row and the rest are named under
     it, so choosing a different size stays possible.
+
+    Two orderings this used to produce are now refusals (T1), because both
+    read exactly like an answer:
+
+    **An axis with no better direction.** ``Axis.better`` is empty for a value
+    that can differ without one side winning -- mounting paste's price per
+    kilogram carries the caveat "shown, not ranked" -- and a sort with
+    ``reverse=False`` turned that into ascending order with no explanation.
+
+    **One ordering over two dimensions.** On the committed mounting-paste
+    case feed, 12 of the 15 rankable pack sizes are in grams and 3 are in
+    millilitres. Sorted together, a 50 ml tin sits among the tubs as though a
+    density had been supplied. The caller names the unit instead.
     """
     if not cards:
         return 'No records.'
@@ -347,23 +371,58 @@ def rank_text(cards, axis_key=None, require=(), limit=20):
     if axis is None:
         return (f'{axis_key}: not an axis of {category.label}. '
                 f'Known: {", ".join(category.axis_keys)}')
+    if not axis.better:
+        rankable = [other.key for other in category.axes if other.better]
+        return (f'{axis.label} declares no better direction for '
+                f'{category.label}, so there is no ranking to produce'
+                + (f': {axis.caveat}' if axis.caveat else '') + '. '
+                + (f'Rankable axes: {", ".join(rankable)}.' if rankable else
+                   'This category declares no rankable axis.'))
 
     matched = [card for card in cards if is_match(card)]
     wanted = [card for card in matched
               if all(card['claims'].get(key) is not None
                      and card['claims'][key].status == TRUSTED for key in require)]
 
+    units = axis_units(wanted, axis)
+    if unit is not None and unit not in units:
+        return (f'{unit}: no {category.label} has a trusted {axis.key} in it. '
+                + (f'Measured units here: {", ".join(units)}.' if units else
+                   f'No record has a trusted {axis.key} at all.'))
+    if unit is None and len(units) > 1:
+        seen = ', '.join(f'{count} in {name or "no unit"}'
+                         for name, count in units.items())
+        return (f'{category.label}: {axis.label.lower()} is measured in more '
+                f'than one unit here ({seen}). One ordering over both would '
+                f'rank values that need a conversion nobody supplied. Name '
+                f'the unit to rank on, e.g. --unit {next(iter(units))}.')
+    ranking_unit = unit if unit is not None else next(iter(units), None)
+
+    def ranked_value(card):
+        """The value this card may be ranked on, or None with the reason."""
+        value = card['axes'].get(axis.key)
+        if value is None:
+            return None, 'no value for this axis'
+        if not value.usable:
+            return None, (value.notes[0] if value.notes else value.status)
+        if (value.unit or '') != ranking_unit:
+            return None, (f'measured in {value.unit or "no unit"}, which is '
+                          f'not comparable with {ranking_unit or "no unit"}')
+        return value, ''
+
     groups = variation.group_offers(wanted)
     reverse = axis.better == 'higher'
     ranked, dropped = [], []
     for _, members in groups:
-        usable = [card for card in members
-                  if card['axes'].get(axis.key) is not None
-                  and card['axes'][axis.key].usable]
+        usable = [card for card in members if ranked_value(card)[0] is not None]
         if usable:
             usable.sort(key=lambda card: card['axes'][axis.key].value,
                         reverse=reverse)
             ranked.append(usable)
+            # Identity, not equality: two cards of one offer differ, but
+            # comparing them field by field would walk both whole records.
+            dropped.extend(card for card in members
+                           if not any(card is kept for kept in usable))
         else:
             dropped.extend(members)
 
@@ -372,6 +431,7 @@ def rank_text(cards, axis_key=None, require=(), limit=20):
     collapsed = sum(len(members) - 1 for members in ranked)
 
     lines = [f'{category.label}: ranked by {axis.label.lower()}'
+             + (f' in {ranking_unit}' if len(units) > 1 else '')
              + (f' ({axis.better} first)' if axis.better else '')
              + (f', requiring {", ".join(require)}' if require else ''),
              f'{len(matched)} {category.label} · {len(wanted)} match the filter · '
@@ -396,10 +456,8 @@ def rank_text(cards, axis_key=None, require=(), limit=20):
         lines += ['', f'  Excluded from the ranking ({len(dropped)}), '
                       f'because ranking them would be guessing:']
         for card in dropped[:10]:
-            value = card['axes'].get(axis.key)
-            why = ((value.notes[0] if value.notes else value.status)
-                   if value is not None else 'no value for this axis')
-            lines += _wrap(f'{card["asin"]} — {why}', indent=' ' * 4)
+            lines += _wrap(f'{card["asin"]} — {ranked_value(card)[1]}',
+                           indent=' ' * 4)
         if len(dropped) > 10:
             lines.append(f'    … and {len(dropped) - 10} more')
     return '\n'.join(lines)
@@ -466,8 +524,8 @@ def summary_text(cards):
 
 def card_json(card):
     """The card as plain data, for a downstream consumer or an AI reader."""
-    out = {key: card[key] for key in ('category_key', 'asin', 'title', 'brand',
-                                      'url', 'query')}
+    out = {key: card[key] for key in ('category_key', 'asin', 'marketplace',
+                                      'title', 'brand', 'url', 'query')}
     out['category'] = card['category'].as_dict()
     out['axes'] = {key: value.as_dict()
                    for key, value in sorted(card['axes'].items())}

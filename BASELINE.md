@@ -10,6 +10,9 @@
 > raised to a 9-second configured delay after challenge measurements. T0 also
 > removed the legacy `amazon_search` spider. Use [RESEARCH.md](RESEARCH.md) for
 > current bounded commands; the old rates and spider list below are historical.
+> T1 later made this profile the Scrapy default and moved the ScrapeOps
+> integration into an opt-in `settings_scrapeops.py`; `SCRAPY_PROJECT=baseline`
+> still selects the same settings, so the commands below remain valid.
 
 Scope: verify that this existing Scrapy project can traverse
 `search → pagination → PDP → JSONL` on **amazon.de**, from a local machine,

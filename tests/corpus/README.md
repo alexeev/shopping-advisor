@@ -12,6 +12,16 @@ amazon_com/    1 page  + expected.jsonl.gz + validated.jsonl.gz
 redact.py                                    run before adding a page
 ```
 
+`redact.py` is now a command line over `amazon_scraper/redaction.py`. The rules
+moved into runtime code because the crawler's page store depends on them, and a
+crawl's privacy handling must not depend on a test directory being importable.
+
+Pages are extracted here with a lineage of `{'asin': …}` and nothing else, so
+these records carry no marketplace. That is why `offer[0]` in
+`validated.jsonl.gz` reads `':B0PARENT01'`: since contract v2 a family identity
+is scoped by marketplace, and an empty prefix means the record does not name
+one. Records written by the spider always do.
+
 `expected.jsonl.gz` is what the page says. `validated.jsonl.gz` is how much of
 that holds up — every value with its `source`, its `status` and the evidence
 behind it — produced with **no category profile**, so what is pinned is the

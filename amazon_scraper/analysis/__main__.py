@@ -7,9 +7,10 @@
     uv run python -m amazon_scraper.analysis compare data/products.jsonl A B
     uv run python -m amazon_scraper.analysis cards   data/products.jsonl --json
 
-**Every command takes as many feeds as the study needed**, merged by ASIN with
-the freshest crawl winning -- see :mod:`amazon_scraper.analysis.feeds` for why
-that is not the same as the order they are named in. ``.gz`` is read directly.
+**Every command takes as many feeds as the study needed**, merged by
+marketplace and ASIN with the freshest crawl winning -- see
+:mod:`amazon_scraper.analysis.feeds` for why that is not the same as the order
+they are named in. ``.gz`` is read directly.
 
     uv run python -m amazon_scraper.analysis rank \
         data/validation_v3_amazon_de.jsonl data/fusilli_broad.jsonl \
@@ -25,6 +26,13 @@ about the crawl, not about the data.
 
     uv run python -m amazon_scraper.analysis rank data/paste.jsonl \
         --category tyre_mounting_paste
+
+**One analysis covers one marketplace.** Feeds that span several stop the
+command instead of being merged into a ranking across two currencies and two
+delivery regions; ``--marketplace www.amazon.de`` states which one to keep and
+reports how many records were set aside. Likewise ``--unit`` names the unit to
+rank on when an axis is measured in more than one; nothing converts grams into
+millilitres on the way.
 """
 
 import argparse
@@ -63,6 +71,33 @@ def split_arguments(arguments):
     return paths, asins
 
 
+def one_marketplace(records, provenance, wanted):
+    """``(records, provenance)`` for exactly one marketplace.
+
+    Merging is marketplace-scoped, so a mixed feed set no longer loses
+    records -- but everything downstream still compares them: one ranking,
+    one currency symbol, one delivery region implied by the whole report. Two
+    marketplaces in one analysis is therefore stopped here rather than
+    rendered, and the caller says which one it meant.
+    """
+    seen = provenance.get('marketplaces') or {}
+    if not wanted:
+        if len(seen) > 1:
+            sys.exit('these feeds hold records from more than one marketplace '
+                     f'({", ".join(name or "unlabelled" for name in seen)}). '
+                     'Prices, currencies and delivery regions are not '
+                     'comparable across them; name one with --marketplace.')
+        return records, provenance
+    kept, set_aside = feeds_module.select_marketplace(records, wanted)
+    if not kept:
+        sys.exit(f'{wanted}: no records from that marketplace. '
+                 f'These feeds hold: '
+                 f'{", ".join(name or "unlabelled" for name in seen)}')
+    return kept, dict(provenance, records=len(kept),
+                      marketplaces=feeds_module.marketplaces(kept),
+                      set_aside=len(set_aside))
+
+
 def pick(cards, asin):
     for card in cards:
         if card['asin'] == asin:
@@ -78,8 +113,8 @@ def main(argv=None):
                                  'validated'))
     parser.add_argument('feeds', nargs='+', metavar='FEED_OR_ASIN',
                         help='one or more JSONL feeds written by the '
-                             'amazon_product spider, merged by ASIN; plus the '
-                             'ASIN(s) card and compare need')
+                             'amazon_product spider, merged by marketplace '
+                             'and ASIN; plus the ASIN(s) card and compare need')
     parser.add_argument('--category', default='dry_pasta',
                         help=f'one of: {", ".join(known())}')
     parser.add_argument('--require', default='',
@@ -89,6 +124,13 @@ def main(argv=None):
                         help="comparison axis to rank on; defaults to the "
                              "category's own")
     parser.add_argument('--limit', type=int, default=20)
+    parser.add_argument('--marketplace', default='',
+                        help='the one marketplace to analyse, when the feeds '
+                             'span several; the rest are set aside and '
+                             'counted, not merged in')
+    parser.add_argument('--unit', default='',
+                        help='the unit to rank on, when the axis is measured '
+                             'in more than one (e.g. g or ml)')
     parser.add_argument('--json', action='store_true',
                         help='emit cards as JSON instead of text')
     args = parser.parse_args(argv)
@@ -100,6 +142,7 @@ def main(argv=None):
 
     paths, asins = split_arguments(args.feeds)
     records, provenance = feeds_module.merge(paths)
+    records, provenance = one_marketplace(records, provenance, args.marketplace)
     # Where the records came from heads the report, so a number in it can be
     # traced back to a crawl. Machine-readable output gets it on stderr
     # instead, because a provenance line inside a JSONL stream is corruption.
@@ -130,7 +173,8 @@ def main(argv=None):
     if args.command == 'summary':
         print(report.summary_text(cards))
     elif args.command == 'rank':
-        print(report.rank_text(cards, args.axis, require, args.limit))
+        print(report.rank_text(cards, args.axis, require, args.limit,
+                               unit=args.unit or None))
     elif args.command == 'card':
         if not asins:
             sys.exit('card needs an ASIN')

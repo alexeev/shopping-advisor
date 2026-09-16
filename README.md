@@ -10,9 +10,9 @@ is **`amazon_product`**; it handles search, pagination, and direct ASIN fetches.
 |---|---|
 | Operate or maintain the repository as an agent | [AGENTS.md](AGENTS.md) — canonical instructions for either provider stack |
 | Research a product or try the offline example | [RESEARCH.md](RESEARCH.md) — current runbook and commands |
-| Understand fields and trust semantics | [CONTRACT.md](CONTRACT.md) — extraction schema **6**, validation contract **1** |
+| Understand fields and trust semantics | [CONTRACT.md](CONTRACT.md) — extraction schema **6**, validation contract **2** |
 | Understand priorities and previous decisions | [ROADMAP.md](ROADMAP.md) |
-| Understand the agent transition | [AGENT_TRANSITION_PLAN.md](AGENT_TRANSITION_PLAN.md) — T0 delivered; later stages planned |
+| Understand the agent transition | [AGENT_TRANSITION_PLAN.md](AGENT_TRANSITION_PLAN.md) — T0 and T1 delivered; T2–T5 planned |
 
 `CLAUDE.md` is a thin entry point to the same instructions. If an agent does
 not automatically discover repository instructions, tell it to read
@@ -53,13 +53,14 @@ uv run --offline --locked python -m unittest discover -s tests
 `--locked` checks that the committed lock matches the project; do not regenerate
 it as a side effect of ordinary research. No virtualenv activation is needed.
 
-Select the validated profile explicitly. **The default in `scrapy.cfg` is
-still ScrapeOps**, not the local baseline; changing that belongs to T1.
+**The default crawl profile is the validated, proxy-free local one** (T1). It
+needs no API key and no optional packages, and it asks Amazon.de for German.
+`SCRAPY_PROJECT` no longer has to be set; `SCRAPY_PROJECT=baseline` still
+selects the same profile, so existing commands keep working.
 
 PowerShell:
 
 ```powershell
-$env:SCRAPY_PROJECT = 'baseline'
 $env:PYTHONIOENCODING = 'utf-8'
 uv run --offline --locked scrapy list
 ```
@@ -67,14 +68,13 @@ uv run --offline --locked scrapy list
 POSIX shell:
 
 ```sh
-export SCRAPY_PROJECT=baseline
 export PYTHONIOENCODING=utf-8
 uv run --offline --locked scrapy list
 ```
 
 The expected spider list is just `amazon_product`. Listing spiders makes no
-marketplace requests. These variables apply to subsequent commands in the
-same shell; a newly opened shell needs them again.
+marketplace requests. The encoding variable applies to subsequent commands in
+the same shell; a newly opened shell needs it again.
 
 Start with the [offline research walkthrough](RESEARCH.md#offline-walkthrough).
 It uses committed evidence, requires no account, and shows both a usable
@@ -85,7 +85,8 @@ comparison and a disputed value that must not decide a purchase.
 | Layer | Entry points | Responsibility |
 |---|---|---|
 | Acquisition | `amazon_scraper/spiders/amazon_product.py` | Search and direct ASIN requests, deduplication, challenge detection, coverage stats |
-| Run evidence | `amazon_scraper/run.py` | Manifest, discovery log, retained PDPs, offline re-extraction |
+| Run evidence | `amazon_scraper/run.py` | Manifest, discovery log, retained PDPs and their fetch metadata, bounded failure samples, offline re-extraction |
+| Provenance | `amazon_scraper/provenance.py`, `amazon_scraper/redaction.py` | Code/settings identity, artefact digests, atomic manifest writes, page redaction |
 | Extraction | `amazon_scraper/extraction/` | Amazon structures and locale profiles; raw and normalized data, per-block diagnostics |
 | Validation | `amazon_scraper/validation/` | Quantity, pricing, nutrition, review and variation checks; evidence-bearing values |
 | Category analysis | `amazon_scraper/analysis/categories/` | Classification, meaningful claims and comparison axes; category plausibility profiles |
@@ -123,10 +124,17 @@ evidence sections; consult the text card and module when researching it.
 `--require` filters on an observed trusted claim, not independent certification.
 Use explicit `--category`; the CLI otherwise defaults to `dry_pasta`.
 
+`rank` produces one ordering over one axis in one unit, and refuses rather
+than inventing a comparison: an axis the category declares no better direction
+for is not ranked at all, and an axis measured in more than one unit needs
+`--unit`. Both refusals name what to do instead.
+
 Variants are grouped using Amazon's variation matrices: pack sizes can share
 an offer, while non-size dimensions are retained. Missing matrices do not
-justify guessed product identity. Do not merge marketplaces or rank grams and
-millilitres together; current merge/group/rank safeguards are incomplete.
+justify guessed product identity. Listing identity — merging and family
+grouping alike — is the normalised marketplace plus the ASIN. An analysis
+still covers one marketplace: feeds spanning several stop the command until
+`--marketplace` names one.
 
 ### Commands
 
@@ -138,14 +146,17 @@ millilitres together; current merge/group/rank safeguards are incomplete.
 | `... cards FEED --category CATEGORY --json` | JSONL cards for category matches; category extras are not yet complete |
 | `... compare FEED ASIN ASIN --category CATEGORY` | Differences supported by comparable values and reasons for refusal |
 | `... validated FEED --category CATEGORY` | JSONL validation using that category's plausibility profile; no category claim evaluation |
-| `python -m amazon_scraper.run reextract RUN_DIR --feed ORIGINAL_FEED -o NEW_FEED` | Offline extraction from retained pages |
+| `python -m amazon_scraper.run reextract RUN_DIR --feed ORIGINAL_FEED -o NEW_FEED` | Offline extraction from retained pages; refuses a feed belonging to another crawl or marketplace |
+| `python -m amazon_scraper.run inspect RUN_DIR` | What a run did, which code and settings produced it, how it ended, what it retained |
 
 Run these with `uv run --offline --locked`. The analysis commands accept
-multiple JSONL or `.jsonl.gz` feeds. They merge by ASIN and choose the newest
-`fetched_at`; timestamp ties keep the first encountered record. Mixing
-marketplaces is unsafe. JSON output puts the provenance summary on stderr;
-do not combine stderr with the data stream. `--json` formats cards, not a
-structured ranking or summary.
+multiple JSONL or `.jsonl.gz` feeds. They merge by marketplace and ASIN and
+choose the newest `fetched_at`; a tie falls to a declared order (newer schema,
+then a later re-extraction of the same bytes, then run id and a record digest),
+so the argument order never decides. Feeds from several marketplaces stop the
+command until `--marketplace` names one. JSON output puts the provenance
+summary on stderr; do not combine stderr with the data stream. `--json`
+formats cards, not a structured ranking or summary.
 
 The `validated` CLI always supplies a category profile (default `dry_pasta`).
 For neutral validation, the Python API is `validate(record)` with no profile;
@@ -167,22 +178,40 @@ old successful fast crawl is a current rate recommendation.
 | `max_pages` | Search pages per query, default 2 |
 | `max_products_per_query` | Per-query discovery cap; default 0 means unlimited |
 | `keep_pages` | Default 1; keep it enabled for replay |
+| `keep_search_pages` | Default 0. Retains search responses, which are the only witness to what a query returned — and the largest thing a crawl downloads |
 
 The product feed is written wherever `-O` specifies; there is no automatic CSV
 feed. `-O` overwrites that output, so choose a new path for each collection.
 Nested product records should be stored as JSONL. Each crawl separately writes:
 
 ```text
-data/runs/<run_id>/manifest.json
-data/runs/<run_id>/discovery.jsonl
+data/runs/<run_id>/manifest.json      arguments, locale, code, settings, feeds, state
+data/runs/<run_id>/discovery.jsonl    every sighting, before deduplication
+data/runs/<run_id>/pages.jsonl        per artefact: fetch time, URLs, status, digest
 data/runs/<run_id>/pages/<ASIN>.html.gz
+data/runs/<run_id>/quarantine/        pages whose redaction failed — not exportable
+data/runs/<run_id>/failures/          bounded samples of challenges and parse failures
+data/runs/<run_id>/search/            search responses, with keep_search_pages=1
 ```
 
-The manifest records arguments, locale, counts, stats and finish reason.
-Discovery logs preserve sightings before deduplication. Retained pages support
-later extraction without another request. Run/page hashes, guaranteed unique
-run IDs, complete failure capture, and portable study manifests are still T1+
-work; see the [runbook limitations](RESEARCH.md#current-limitations).
+Failure samples are capped per reason and truncated, and are retained whether
+or not `keep_pages` is set: a crawl that retains nothing still has to be able
+to explain what it did not get.
+
+Run IDs are unique and the directory is created exclusively, so two crawls
+started in the same second cannot share one. The manifest is written
+atomically and carries its own state: a crawl that never closed reads as
+`interrupted` rather than as a finished one. It also records the code revision,
+lock digest, schema/contract versions and an allowlist of acquisition settings
+— never a credential — so a later reader can say which code produced the
+evidence.
+
+`pages.jsonl` records when each page was fetched and the SHA-256 of the bytes
+actually stored. That digest is over the **redacted** text, not over Amazon's
+reply. Because fetch time is recorded rather than read from the filesystem,
+copying a run directory no longer makes its pages look freshly fetched.
+Portable study manifests remain T2 work; see the
+[runbook limitations](RESEARCH.md#current-limitations).
 
 ## Maintenance and reference material
 
@@ -221,7 +250,7 @@ retain the old name as part of their original measurements.
 
 | Symptom | Action |
 |---|---|
-| `ModuleNotFoundError: scrapeops_scrapy` | Select `SCRAPY_PROJECT=baseline` in the current shell and check `scrapy list`. |
+| `ModuleNotFoundError: scrapeops_scrapy` | Only the opt-in ScrapeOps profile needs it. Unset `SCRAPY_PROJECT` (or set it to `baseline`) and check `scrapy list`. |
 | Locale conflict on startup | Confirm baseline/German headers and `.de`; do not bypass the check. |
 | No or few records | Inspect manifest challenge/HTTP/parse counters, query coverage, and caps. HTTP 200 or `finished` is not proof of usable coverage. |
 | uv cache is not writable | Set `UV_CACHE_DIR` to a writable directory; `data/.uv-cache` is an ignored local option. Retry locked setup. |
@@ -232,11 +261,14 @@ For the cache override, use `$env:UV_CACHE_DIR = 'data/.uv-cache'` in PowerShell
 or `export UV_CACHE_DIR=data/.uv-cache` in a POSIX shell. Do not delete a shared
 cache or change dependency versions to work around a filesystem error.
 
-The optional ScrapeOps profile requires `uv sync --locked --extra scrapeops`,
-private credential configuration, and a matching locale. It is not part of
-the validated baseline. `settings.py` currently has a placeholder key and does
-not load one from the environment; do not commit a real key there. Prefer the
-baseline for supported research. The default-profile/credential cleanup is T1.
+The optional ScrapeOps profile is `SCRAPY_PROJECT=scrapeops` and requires
+`uv sync --locked --extra scrapeops` plus `SCRAPEOPS_API_KEY` in the
+environment; no key is stored in the repository. It is **not validated**:
+every measurement here was taken without a proxy, so its pacing, challenge
+rate and the prices a proxied IP is shown are unknown. Treat a study collected
+through it as a different acquisition path and say so in the report. The run
+manifest records which profile answered and whether a proxy middleware was in
+the request path.
 
 ## License and origin
 

@@ -1,9 +1,9 @@
 # Product research runbook
 
 This is the current workflow for the shipped tools. Read [AGENTS.md](AGENTS.md)
-first. T0 makes the existing workflow discoverable; structured study artifacts
-and automated report validation in the [transition plan](AGENT_TRANSITION_PLAN.md)
-are not implemented yet.
+first. T0 makes the existing workflow discoverable and T1 makes acquisition and
+replay trustworthy; structured study artifacts and automated report validation
+in the [transition plan](AGENT_TRANSITION_PLAN.md) are not implemented yet.
 
 ## Offline walkthrough
 
@@ -23,7 +23,8 @@ market discovery. The feed deliberately includes known defects and controls.
 uv run --offline --locked python -m amazon_scraper.analysis summary tests/cases/pasta_v1.jsonl.gz --category dry_pasta
 ```
 
-Expect 25 records, 22 classified as dry pasta, three other products, and no
+Expect a provenance line reading 25 records from one feed on `amazon.de`, then
+25 records, 22 classified as dry pasta, three other products, and no
 undecided classification. The summary explicitly says accuracy is not measured:
 a wrong rejection could still be a confident decision. Inspect the status
 counts rather than treating a populated numeric field as usable.
@@ -83,7 +84,7 @@ force a comparison.
 uv run --offline --locked python -m amazon_scraper.analysis validated tests/cases/pasta_v1.jsonl.gz --category dry_pasta
 ```
 
-Expect 25 JSONL records with `contract_version: 1` and
+Expect 25 JSONL records with `contract_version: 2` and
 `category_profile: "dry_pasta"`. This command applies the selected category's
 plausibility bands; it does not run its classifier/claim evaluator. For neutral
 validation, use the Python API `validate(record)` without a profile. There is
@@ -127,21 +128,17 @@ before its judgments become a supported method.
 ### Live collection
 
 Inspect existing feeds/pages first. Fresh prices require a new observation;
-new parser fields can often be obtained by re-extraction. Keep the baseline
-profile and encoding variables from README. Choose a new output path for every
-run; the example path below must not already contain evidence you need.
+new parser fields can often be obtained by re-extraction. Keep the default
+profile's pacing and the encoding variable from README. Choose a new output
+path for every run; the example path below must not already contain evidence
+you need.
 
-PowerShell (networked crawl):
+The proxy-free profile is the default since T1, so no profile variable is
+needed. `SCRAPY_PROJECT=baseline` still selects the same profile if a written
+command already sets it. Both shells run the same line:
 
-```powershell
-$env:SCRAPY_PROJECT = 'baseline'
+```text
 uv run --offline --locked scrapy crawl amazon_product -a keyword="spaghetti hartweizen" -a domain="www.amazon.de" -a max_pages=1 -a max_products_per_query=5 -s CLOSESPIDER_TIMEOUT=180 -O data/research-example-01.jsonl
-```
-
-POSIX shell (same networked crawl):
-
-```sh
-SCRAPY_PROJECT=baseline uv run --offline --locked scrapy crawl amazon_product -a keyword="spaghetti hartweizen" -a domain="www.amazon.de" -a max_pages=1 -a max_products_per_query=5 -s CLOSESPIDER_TIMEOUT=180 -O data/research-example-01.jsonl
 ```
 
 Here **`--offline` applies to uv, not the crawler**: Scrapy makes marketplace
@@ -156,12 +153,30 @@ and choose another output path. Several queries or ASINs use semicolon-separated
 strings. An ASIN-only run does not perform the default pasta search. Named
 products matter: search can miss a relevant product even across brand queries.
 
-Record the logged run ID and the feed path together. Inspect
-`data/runs/<run_id>/manifest.json` for `finish_reason`, counts,
-`amazon/challenge/*`, HTTP/download/parse errors, and `page_write_errors`.
+Record the logged run ID and the feed path together; the manifest also names
+the feed the crawl was told to write. Read the run back with:
+
+```text
+uv run --offline --locked python -m amazon_scraper.run inspect data/runs/ACTUAL_RUN_ID
+```
+
+It reports the run state (`complete`, `interrupted`, or `legacy` for a store
+written before T1), the code revision and settings profile that produced the
+evidence, challenge/HTTP/parse counters, retained failure samples, and any
+quarantined pages. A run that never closed its manifest is `interrupted`: its
+coverage is partial regardless of how many records the feed holds.
+
 Inspect `discovery.jsonl` to distinguish never-sighted products from repeated
-sightings. Direct ASIN seeds do not appear as search sightings; their feed
-`search_query` is `asin:<ASIN>` and the arguments are in the manifest.
+sightings, and `pages.jsonl` for each retained page's fetch time, URLs, status
+and stored-bytes digest. Direct ASIN seeds do not appear as search sightings;
+their feed `search_query` is `asin:<ASIN>` and the arguments are in the
+manifest. Add `-a keep_search_pages=1` when the study needs to show what a
+query returned; it is off by default because search pages are large.
+
+Challenge pages and titleless responses are retained as bounded, truncated
+samples under `failures/`, capped per reason. A page whose redaction failed is
+kept under `quarantine/`: it is still evidence and still re-extracts, but it
+must not be exported or promoted into the corpus.
 
 A `finished` crawl or HTTP 200 response does not prove adequate research
 coverage. If challenges or failures leave decisive gaps, record them, stop
@@ -177,23 +192,33 @@ feed, and a new destination. The command works in either shell:
 uv run --offline --locked python -m amazon_scraper.run reextract data/runs/ACTUAL_RUN_ID --feed data/research-example-01.jsonl -o data/research-example-01-reextracted.jsonl
 ```
 
-Supply the original feed so fetch time and discovery lineage survive. Without
-it, fetch time falls back to filesystem mtime, which copying files can change;
-do not treat that as proof of freshness. Keep original feeds unchanged.
+Supply the original feed so the discovery lineage — which query found the
+product, and at which position — survives. Fetch time comes from the run's own
+page index and survives the bundle being copied; a run store written before T1
+has no index, and its replayed records then carry `fetched_at: null` with
+`fetched_at_source: "unknown"` rather than a filesystem timestamp. Treat those
+as unknown freshness. Keep original feeds unchanged.
+
+Replay refuses a feed that belongs to another crawl or another marketplace,
+and reports a page whose stored bytes no longer match the digest the run
+recorded. A replayed record carries `extracted_at`, which is how a merge tells
+a new reading of old bytes from a new observation.
 
 Use the walkthrough's analysis commands with your feed and explicit category.
-Multiple feeds go in the positional list. Verify they are from one marketplace
-before merging; the current merger deduplicates by ASIN alone. A newer record
-without a price must not be silently replaced with an old priced record in the
-recommendation.
+Multiple feeds go in the positional list. Merging keys on marketplace and ASIN,
+so a mixed set no longer loses records — but an analysis still covers one
+marketplace, and the command stops until `--marketplace` names one. A newer
+record without a price must not be silently replaced with an old priced record
+in the recommendation.
 
 Read cards for known candidates, excluded candidates, and the shortlist.
 `summary` counts classifier decisions, not accuracy. Compare units, variants,
-pack sizes and cost assumptions before preferring a ranking row. The existing
-`rank` command does not enforce a complete user brief; in particular its
-quantity ranking can mix g and ml, and it permits axes without a declared
-better direction. Do not use those orderings as recommendations. `compare`
-does refuse incompatible units and can expose the limitation.
+pack sizes and cost assumptions before preferring a ranking row. `rank` does
+not enforce a complete user brief: it orders one axis, in one unit, and states
+the exclusions. It refuses an axis with no declared better direction, and asks
+for `--unit` when the axis is measured in more than one — name the unit the
+use case actually needs rather than taking the larger group. `compare` refuses
+incompatible units and can expose the limitation.
 
 ### Check external evidence and write the report
 
@@ -242,11 +267,11 @@ evidence and explain any changed analysis after a fix.
 
 | Limitation | What to do now | Planned stage |
 |---|---|---|
-| Identical crawls started in the same second can share a directory | Run sequentially and record IDs/unique output paths; inspect any collision | T1 |
-| Feed and variation identity lack marketplace scope | Analyze a single validated marketplace at a time | T1 |
-| Missing hashes/code/settings and mtime fallback weaken replay | Record commands, revision, original feed and run paths; identify unknown freshness | T1 |
-| Search/challenge/titleless response bodies are not retained; retention/redaction can fail | Inspect counters and retained files; do not claim full failure replay or export unverified captures | T1 |
-| Some axes can be ranked despite incompatible units/no preferred direction | Use suitable comparable axes and inspect pairwise comparisons | T1/T2 |
+| One analysis covers one marketplace; cross-marketplace comparison is unsupported | Name the marketplace with `--marketplace` and report only that shelf | R4/T5 |
+| Evidence collected before T1 has no page digests, recorded fetch times or feed bindings | `inspect` reports such a run as `legacy`; label its freshness unknown rather than inferring it | — (historical data) |
+| Feeds are bound by the run id on their records, not by a digest taken at close | Keep original feeds unchanged and record their paths; a merged multi-run feed reports `mixed` lineage | T2 |
+| Failure capture is bounded, and search pages are retained only on request | Read the capped counters in the manifest; re-collect with `keep_search_pages=1` when discovery itself is in question | — (by design) |
+| A quarantined page is evidence but not exportable | Re-extract it if needed; never promote it into the corpus or attach it to a report | — (by design) |
 | No structured study brief, complete category JSON, or report checks | Keep explicit working notes and perform documented manual verification | T2/T3 |
 | Original full studies/reports and basmati source documents are not all tracked | Use the committed walkthrough for onboarding; request/rebuild missing evidence only when the task needs it | T2/T3 |
 | No two-provider acceptance trial yet | Load the same canonical instructions; do not claim proven provider handoff | T4 |
@@ -255,9 +280,11 @@ evidence and explain any changed analysis after a fix.
 
 | Symptom | First evidence to inspect |
 |---|---|
-| Setup/profile/locale failure | README troubleshooting, `scrapy.cfg`, current shell variables, `settings_baseline.py` |
-| Challenge, failed download or missing candidates | Run manifest stats, logged errors, discovery occurrences, planned queries/ASINs |
+| Setup/profile/locale failure | README troubleshooting, `scrapy.cfg`, current shell variables, `settings.py` |
+| Challenge, failed download or missing candidates | `run inspect`, the manifest stats, retained `failures/` samples, discovery occurrences, planned queries/ASINs |
+| A crawl that stopped without a summary | `run inspect`: an `interrupted` state means the manifest never closed and coverage is partial |
 | Missing or wrong extracted field | `extraction.errors`, raw content/tables, retained page; reproduce with `reextract` |
+| A replay that refuses a feed or a page | The feed belongs to another crawl/marketplace, or the stored bytes no longer match the run's recorded digest |
 | Disputed number | Evidence card and source fields, quantity/price units, category profile |
 | Expected product classified out | Title, ingredients/body, the category classifier and existing cases |
 | Test snapshot mismatch | Field-level diff and saved page; explain the change before updating any expected output |

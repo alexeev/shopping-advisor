@@ -6,7 +6,7 @@ before either of those changes. Two artefacts are published here:
 | Artefact | Version | Produced by | Answers |
 |---|---|---|---|
 | **Product record** | `SCHEMA_VERSION = 6` | `amazon_scraper.extraction` | what the page says |
-| **Validated record** | `CONTRACT_VERSION = 1` | `amazon_scraper.validation` | how much of that holds up |
+| **Validated record** | `CONTRACT_VERSION = 2` | `amazon_scraper.validation` | how much of that holds up |
 
 They are versioned separately because they change for different reasons and
 have different consumers. An extractor learning to read a new Amazon
@@ -15,7 +15,7 @@ moves the second.
 
 ```text
 extraction  ──►  validation  ──►  category analysis  ──►  report
-schema v6        contract v1      analysis/categories/    analysis/report.py
+schema v6        contract v2      analysis/categories/    analysis/report.py
 ```
 
 ---
@@ -118,7 +118,7 @@ inferred from any volume field present, which reported a 50 ml sponge tin as
 
 ---
 
-## 3. The validated record (contract v1)
+## 3. The validated record (contract v2)
 
 `amazon_scraper.validation.validate(record, profile) -> Validated`
 
@@ -144,7 +144,7 @@ validated.as_dict()              # JSON-serialisable, snapshot-tested
 | `contract_version`, `schema_version` | int | this shape, and the record's |
 | `category_profile` | str | the profile's `key`, or `'product'` for none |
 | `asin`, `title`, `brand`, `url`, `marketplace`, `query`, `run_id`, `locale` | str | lineage, copied |
-| `offer` | `(family, signature)` or `None` | identity of "this product, in whatever pack size" |
+| `offer` | `(family, signature)` or `None` | identity of "this product, in whatever pack size", **scoped by marketplace** since v2 |
 | `size_label`, `siblings`, `variation` | str / list / dict | Amazon's own pack label and family |
 | `quantity` | `Value` | total pack content, in `g` or `ml` |
 | `price` | `Value` | what the listing costs |
@@ -157,6 +157,25 @@ validated.as_dict()              # JSON-serialisable, snapshot-tested
 
 `as_dict()` also omits the raw `variation` matrix and serializes `review_sample`
 as its count plus status/evidence, rather than duplicating all review text.
+
+### Listing identity is a marketplace and an ASIN
+
+An ASIN is minted per Amazon site. The same ten characters name different
+products on different marketplaces, and where they name the same product it is
+a different offer, in another currency, with another delivery region. So the
+identity of a listing is the **normalised host plus the ASIN** — `www.` is
+stripped, case is folded — and `offer[0]` carries that host: `'amazon.de:B0PARENT01'`.
+
+An empty prefix (`':B0PARENT01'`) means the record did not record a
+marketplace. That is its own scope, not membership of any other: the saved-page
+corpus extracts with no marketplace in its lineage, so its snapshot shows the
+empty form. A record written by the spider always names one.
+
+Two consumers depend on this and both were wrong before v2: feed merging keyed
+by ASIN alone discarded a `.de` observation in favour of a `.com` one, and
+variation grouping pooled a family across marketplaces. Comparison across
+marketplaces remains unsupported regardless — the analysis CLI stops rather
+than ranking two currencies together.
 
 `Validated` also exposes `search_reviews(pattern, …)` and
 `review_signal(pattern, label, …)`, kept deliberately separate from `search()`,
@@ -387,6 +406,7 @@ May change without a bump, because no correct consumer can depend on it:
 | **schema v5** | added `reviews`: the complete ratings histogram and the sample of cards the PDP renders (R5). **Purely additive** — every schema-4 field keeps its name and meaning, and the corpus regression diff touched only `reviews.*` and `extraction.blocks_present` |
 | **schema v6** | `price.range`, and `price.amount` is no longer filled from one end of a price range. A variation parent with no size selected renders "5,63€ - 26,15€" in its own price container; the extractor published 5,63 EUR as the price of a listing that cost 9,98. Additive for every record that has a price; the 7 records in the mounting-paste sets that had a *fabricated* one now correctly have none |
 | **contract v1** | first published validated record (R2); extended in R5 with `review_rating`, `review_negative_share` and `review_sample`, which add fields without changing any existing one. A `price.range` reads as `unknown` with the range as its evidence — it adds no field to the validated record, because "we do not know" was already expressible |
+| **contract v2** | `offer` is scoped by marketplace (T1). The field keeps its shape — a family identity and a variant signature — but the identity is no longer a bare parent ASIN, which is only unique within one Amazon site. That is a change in what a published value *means*, so it is a bump rather than an addition. The corpus regression diff touched exactly two fields on the 39 saved pages: `contract_version` on all of them, and `offer[0]` on the 27 that carry a family, which gain the (empty, because the corpus records no marketplace) host prefix. No status, value, source or note moved |
 
 ---
 

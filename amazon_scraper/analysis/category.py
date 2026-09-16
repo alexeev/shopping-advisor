@@ -129,6 +129,10 @@ def card(record, validated, category, classification, axes, claims):
     return {
         'category_key': category.key,
         'asin': validated.asin,
+        # Carried on the card because grouping and ranking are
+        # marketplace-scoped: an ASIN alone does not identify a listing, and
+        # the card is what those layers are handed.
+        'marketplace': validated.marketplace,
         'title': validated.title,
         'brand': validated.brand,
         'url': validated.url,

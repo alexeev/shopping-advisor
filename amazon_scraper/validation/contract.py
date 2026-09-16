@@ -39,7 +39,13 @@ from .evidence import DISPUTED, Value, search
 #: ``SCHEMA_VERSION``: the two change for different reasons and are consumed
 #: by different code. CONTRACT.md states what each may and may not change
 #: within a version.
-CONTRACT_VERSION = 1
+#:
+#: v2 scopes ``offer`` by marketplace. The field keeps its shape -- a family
+#: identity and a variant signature -- but the identity is no longer a bare
+#: ASIN, because an ASIN is only unique within one Amazon site. That is a
+#: change in what a published value *means*, which the compatibility policy
+#: says is a bump rather than an addition.
+CONTRACT_VERSION = 2
 
 
 @dataclass(frozen=True)
@@ -85,7 +91,8 @@ class Validated:
     run_id: str
     locale: str
 
-    #: Identity of "this product, in whatever pack size", or None.
+    #: Identity of "this product, in whatever pack size", or None. Scoped by
+    #: marketplace since contract v2: ``('amazon.de:B0PARENT', (…))``.
     offer: object
     #: Amazon's own label for this pack, e.g. ``"500 g (5er Pack)"``.
     size_label: str

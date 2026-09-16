@@ -388,12 +388,40 @@ class RealCases(unittest.TestCase):
         size stayed unverified and unverified values are not ranked.
         """
         cards = [self.cards[asin] for asin in self.PASTES]
-        text = report.rank_text(cards)
-        self.assertIn('ranked by pack size (lower first)', text)
+        text = report.rank_text(cards, unit='g')
+        self.assertIn('ranked by pack size in g (lower first)', text)
         first = [line for line in text.splitlines()
                  if line.strip().startswith('1.')][0]
         self.assertIn('B087WQJQDS', first)
         self.assertIn('5 g', first)
+
+    def test_grams_and_millilitres_are_not_ranked_as_one_shelf(self):
+        """This category is exactly where the mixed ranking is real: of the
+        pack sizes this case set can rank, 12 are in grams and 3 in
+        millilitres, and sorted together a 50 ml tin sits among the tubs as
+        though a density had been supplied. The unit is named or nothing is
+        ranked."""
+        cards = [self.cards[asin] for asin in self.PASTES]
+        text = report.rank_text(cards)
+        self.assertIn('measured in more than one unit', text)
+        self.assertIn('12 in g', text)
+        self.assertIn('3 in ml', text)
+        self.assertNotIn('1. ', text)
+
+    def test_the_unit_that_was_not_ranked_is_named_not_dropped(self):
+        cards = [self.cards[asin] for asin in self.PASTES]
+        text = report.rank_text(cards, unit='ml')
+        self.assertIn('ranked by pack size in ml', text)
+        self.assertIn('not comparable with ml', text,
+                      'the gram packs must be excluded with a reason')
+
+    def test_an_axis_the_category_refuses_to_rank_stays_unranked(self):
+        """Price per kilogram carries "shown, not ranked": a volume discount
+        on a consumable you will use twice is not a saving."""
+        cards = [self.cards[asin] for asin in self.PASTES]
+        text = report.rank_text(cards, 'price_per_base')
+        self.assertIn('declares no better direction', text)
+        self.assertIn('not ranked', text)
 
     def test_a_pack_size_stated_only_in_a_bullet_still_counts(self):
         """"5 g Tube" in a feature bullet, and nowhere structured."""

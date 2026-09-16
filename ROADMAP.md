@@ -49,6 +49,72 @@ replacing the R0–R10 history. Current operating rules are in
   Linux installation; no live crawl or model-provider acceptance trial was run.
   Provider interchangeability trials remain T4. T1–T5 are not implemented.
 
+**T1 — DONE (2026-09-16): make acquisition and replay safe to build upon.**
+
+- **Run identity.** The ID was a digest of second-resolution time, marketplace
+  and arguments — the three things two concurrent crawls of one shelf agree on
+  — and `open()` accepted an existing directory. It now carries random bytes
+  and the directory is created exclusively; a collision raises
+  `RunDirectoryExists` and writes nothing.
+- **Manifest.** Written through a temporary file and renamed, and carrying its
+  own `state`, so a crawl killed mid-flight reads as `interrupted` rather than
+  as one that was never asked to close. It records the code revision and dirty
+  flag, the lock digest, schema/contract versions, an **allowlist** of
+  acquisition settings — never a credential — and the feeds the crawl was told
+  to write. New `run inspect` reads all of it back.
+- **Per-observation metadata.** `pages.jsonl` records each retained artefact's
+  fetch time, request/final URL, HTTP status and the SHA-256 of the bytes
+  actually stored, documented as a digest of the *redacted* text rather than of
+  Amazon's reply. Replay reads fetch time from there, so copying a bundle no
+  longer makes its pages look freshly fetched; a store written before T1 has no
+  index and its records carry `fetched_at: null` with
+  `fetched_at_source: "unknown"` instead of a filesystem timestamp.
+- **Feed and page bindings.** Replay refuses a feed belonging to another crawl
+  or marketplace, reports `mixed`/`legacy` lineage rather than inventing
+  provenance, and fails the individual page whose stored bytes no longer match
+  the recorded digest. Replayed records carry `extracted_at`, which is how a
+  merge distinguishes a new reading of old bytes from a new observation.
+- **Failure capture.** Challenge pages, titleless PDPs and — on request —
+  search responses are retained, redacted, truncated to 256 KB and capped at
+  five samples per reason, with the over-cap count recorded.
+- **Redaction.** Moved from `tests/corpus/redact.py` into
+  `amazon_scraper/redaction.py`; the corpus CLI imports it. The silent
+  `except Exception: return html` fallback is gone: a failure is counted and
+  the page is quarantined out of the export/promotion path.
+- **Marketplace-scoped identity.** Listing identity is the normalised host plus
+  the ASIN, in feed merging and in variation family/offer grouping. A two-row
+  probe that previously discarded the `.de` observation in favour of a newer
+  `.com` one now keeps both. Merge ties fall through a declared order
+  (schema, then `extracted_at`, then run id and record digest), so argument
+  order never decides. This moved `offer` in the published validated record,
+  so **contract v2** with a CONTRACT §7 entry; the corpus diff touched exactly
+  `contract_version` on 39 records and `offer[0]` on the 27 with a family.
+- **No unrequested comparison.** `rank` refuses an axis the category declares
+  no better direction for, and refuses one ordering across two units — on the
+  committed mounting-paste cases that was 12 gram packs and 3 millilitre ones
+  sorted together — asking for `--unit`. The analysis CLI stops on feeds
+  spanning several marketplaces until `--marketplace` names one, and reports
+  how many records were set aside.
+- **Profiles.** The proxy-free local profile is the Scrapy default;
+  `SCRAPY_PROJECT=baseline` still resolves to it for existing commands, and the
+  ScrapeOps integration is `SCRAPY_PROJECT=scrapeops` with the key read from
+  the environment and no literal in the repository. Verified that none of the
+  three ScrapeOps components can be imported on a checkout without the extra,
+  which is where the old default failed — at crawl time, not at `scrapy list`.
+- Verification: **381 tests passed** (323 before), locked environment, no
+  network. All seven documented offline walkthrough commands reproduce their
+  stated counts, exclusions and refusals. A scratch run store exercised
+  manifest, page index, failure capture, `inspect` and `reextract` end to end.
+  `scrapy list` returns `amazon_product` with no `SCRAPY_PROJECT` set and with
+  `baseline`.
+- Verification limits: still no live crawl, so challenge retention, search-page
+  retention and page-write failures were exercised with constructed responses
+  rather than against Amazon. Feeds are bound by the run id on their records
+  and by the declared feed path, not by a digest taken at close — the feed
+  exporter and the run both close on `spider_closed` and nothing orders them.
+  Cross-marketplace comparison stays unsupported by decision, not by
+  limitation. T2–T5 are not implemented.
+
 ---
 
 ## Decision principles
@@ -626,8 +692,10 @@ because re-extracting a German page against an English label vocabulary is
 the silent under-extraction R1's locale gate exists for. `--feed` supplies
 what a stored page cannot know: which query found the product, where it
 ranked, and when it was fetched. Without it search context is absent and
-fetch time falls back to filesystem mtime, which is not reliable freshness
-evidence after copying a page. T1 plans durable per-observation timestamps.
+fetch time fell back to filesystem mtime, which is not reliable freshness
+evidence after copying a page. T1 removed that fallback: fetch time is
+recorded per page when it is fetched, and a run store written before that
+reports unknown freshness rather than a filesystem timestamp.
 
 **`fetched_at` is carried across, never refreshed.** A re-extraction stamped
 with today's clock would make every old page the freshest evidence in a study

@@ -172,6 +172,49 @@ class Offers(unittest.TestCase):
         self.assertTrue(all(key is None for key, _ in groups))
 
 
+class AcrossMarketplaces(unittest.TestCase):
+    """An ASIN is minted per marketplace, and so is a parent ASIN.
+
+    Without a marketplace in the key, one family key covers two shelves: two
+    listings in two currencies collapse into a single ranked row, and a
+    ``.de`` matrix places a ``.com`` record it has never seen.
+    """
+
+    FAMILY = matrix(['size_name'], {'B_ONE': ['500 g (1er Pack)'],
+                                    'B_FIVE': ['500 g (5er Pack)']})
+
+    def on(self, marketplace, asin='B_ONE', **overrides):
+        return record(asin, marketplace=marketplace, variation=self.FAMILY,
+                      **overrides)
+
+    def test_the_same_parent_on_two_marketplaces_is_two_families(self):
+        self.assertNotEqual(variation.family_key(self.on('www.amazon.de')),
+                            variation.family_key(self.on('www.amazon.com')))
+
+    def test_the_marketplace_is_normalised_before_it_is_used(self):
+        self.assertEqual(variation.family_key(self.on('www.amazon.de')),
+                         variation.family_key(self.on('amazon.de')))
+
+    def test_two_marketplaces_are_never_folded_into_one_offer_row(self):
+        groups = variation.group_offers([self.on('www.amazon.de'),
+                                         self.on('www.amazon.com')])
+        self.assertEqual(sorted(len(members) for _, members in groups), [1, 1])
+
+    def test_a_matrix_only_places_siblings_on_its_own_marketplace(self):
+        """The pooled index is the path that crosses marketplaces silently:
+        the ``.de`` record's matrix names B_FIVE, and a ``.com`` B_FIVE is a
+        different listing."""
+        groups = variation.group_offers([
+            self.on('www.amazon.de'),
+            record('B_FIVE', marketplace='www.amazon.com')])
+        self.assertEqual(sorted(len(members) for _, members in groups), [1, 1])
+
+    def test_a_record_that_names_no_marketplace_keeps_its_own_scope(self):
+        self.assertNotEqual(variation.family_key(self.on('www.amazon.de')),
+                            variation.family_key(record('B_ONE',
+                                                        variation=self.FAMILY)))
+
+
 class AgainstTheCorpus(unittest.TestCase):
 
     @classmethod
@@ -212,10 +255,12 @@ class AgainstTheCorpus(unittest.TestCase):
 
 class Reporting(unittest.TestCase):
 
-    def pasta(self, asin, price, quantity, variation_data=None):
+    def pasta(self, asin, price, quantity, variation_data=None,
+              currency='EUR', marketplace='www.amazon.de'):
         return evaluate(record(
             asin, title='Penne Rigate', brand='Garofalo',
-            price={'amount': price, 'currency': 'EUR'},
+            marketplace=marketplace,
+            price={'amount': price, 'currency': currency},
             unit_price={'amount': round(price / (quantity / 1000), 2),
                         'unit': 'kg'},
             package={'total_quantity_base': quantity, 'total_quantity_unit': 'g',
@@ -223,6 +268,29 @@ class Reporting(unittest.TestCase):
             food={'ingredients': {'text': 'HARTWEIZENGRIESS'}, 'allergens': [],
                   'nutrition': {}},
             variation=variation_data or {}))
+
+    def test_two_currencies_are_not_ranked_as_one_price_list(self):
+        """Currency is the unit of the price axis, so the same rule that
+        refuses grams against millilitres refuses euros against dollars. It
+        should not be reachable through the CLI -- that stops earlier, on the
+        marketplace -- but a ranking that quietly sorted 7.99 USD below
+        8.49 EUR would read exactly like an answer."""
+        cards = [self.pasta('B_EUR', 2.5, 500.0),
+                 self.pasta('B_USD', 2.0, 500.0, currency='USD',
+                            marketplace='www.amazon.com')]
+        text = report.rank_text(cards, 'price_per_base')
+        self.assertIn('measured in more than one unit', text)
+        self.assertIn('--unit EUR/kg', text)
+        self.assertIn('1. ', report.rank_text(cards, 'price_per_base',
+                                              unit='EUR/kg'))
+
+    def test_an_axis_with_no_better_direction_is_not_ranked(self):
+        """Sorting it ascending produced an ordering that reads exactly like
+        a recommendation for a value the category says has no better side."""
+        cards = [self.pasta('B_ONE', 2.5, 500.0)]
+        text = report.rank_text(cards, 'raw_materials')
+        self.assertIn('declares no better direction', text)
+        self.assertIn('Rankable axes:', text)
 
     def test_pack_sizes_collapse_into_one_ranked_row(self):
         family = matrix(['size_name'], {

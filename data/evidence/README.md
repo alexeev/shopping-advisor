@@ -30,13 +30,23 @@ uv run python -m amazon_scraper.analysis summary \
 
 uv run python -m amazon_scraper.analysis rank \
     data/evidence/validation-amazon-de-mounting-paste-2026-09-15-v4.jsonl.gz \
-    --category tyre_mounting_paste
+    --category tyre_mounting_paste --unit g
 ```
+
+`--unit g` is required here and the refusal without it is the point: 22 of the
+25 rankable pack sizes in this feed are in grams and 3 are in millilitres, and
+one ordering over both would place a 50 ml tin among the tubs as though a
+density had been supplied.
 
 ```python
 from amazon_scraper import run
 occurrences = run.load_discovery('data/runs/<run_id>')   # a live run
 ```
+
+The manifests committed here predate T1, so `run.run_state(manifest)` reports
+them as `legacy`: they have no page digests, no per-page fetch times and no
+feed bindings. They are still the record of what those crawls asked for and
+what came back; they are not evidence of the freshness of anything.
 
 ## Why the discovery log is separate from the records
 
