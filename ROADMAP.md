@@ -20,6 +20,72 @@ item, because the reasoning is what makes the current order defensible.
 | **R8** | Marketplace-aware text matching | **DONE** |
 | **R9** | A second pass for missing prices | PLANNED (behind a decision test) |
 | **R10** | Scoring as a shared facility | **DEFERRED** — one consumer is not two |
+| **R11** | Category synthesis as a default step | PLANNED |
+| **R12** | Discovery that states its own coverage | PLANNED |
+| **R13** | The conversation as the entry point | PLANNED |
+| **R14** | A recommendation in a category nobody validated | PLANNED (needs R10, R11) |
+
+## Product vision — the shopping conversation
+
+**Recorded 2026-09-16. None of this is current behaviour.** It is written down
+so that R11–R14 below can be read against a destination instead of as four
+unrelated ideas, and so that the distance between each step and what ships
+today is a number somebody can argue with.
+
+The flow this project is ultimately for:
+
+1. A user describes a purchase in their own words, as broadly as they like.
+2. One round of clarifying questions — the few that change the answer.
+3. The agent researches the category. If one ships, it uses it. **If none
+   ships, it builds one — as a normal step, not as an offer the user has to
+   accept.**
+4. It collects the options the marketplace actually has for that question.
+5. It comes back with a recommendation, its alternatives, and what would
+   change it.
+
+Where each step stands:
+
+| Step | Today | Gap |
+|---|---|---|
+| 1–2. Describe and clarify | Shipped as **procedure**: [Agree the brief](RESEARCH.md#agree-the-brief) and the validated brief artifact (T2) | It is a runbook an agent follows, not a flow the product offers — R13 |
+| 3. Use a category | Shipped. Three categories, `--category` on every command | — |
+| 3. Build a category | Possible, as a scoped maintenance change a human reviews; the runbook tells the agent to **offer it as a choice** | Becoming the default is R11, and it is the largest single change in this list |
+| 4. Collect the options | Shipped, bounded. Search, direct ASINs, retained pages | "All relevant options" is not reachable by search alone, and this repository has measured it twice — R12 |
+| 5. Recommend | Shipped for a declared axis, with exclusions and refusals (T2) | A fresh category has no validated axis to declare, which is R14 and unblocks R10 |
+
+### What the vision does not change
+
+Three things are load-bearing and survive all of it. Recording them here is
+cheaper than rediscovering them under deadline:
+
+- **The architecture boundary holds.** A synthesized category is still a
+  profile, a classifier, a list of claims and a set of axes, sitting
+  downstream of the JSONL. The acquisition layer still never learns what good
+  pasta is. R2 established this with a second category and nothing in this
+  vision needs it relaxed.
+- **The trust vocabulary holds.** `trusted` still means the applicable checks
+  passed. A category invented ten minutes ago cannot promote a value, and it
+  must not be able to.
+- **Refusal is still a result.** The end state is *not* "always produces a
+  recommendation". It is "produces one where the evidence supports it, and
+  says so precisely where it does not" — which is what T2's
+  `insufficient_evidence` outcome is for.
+
+### The honest risk, stated once
+
+Every failure this repository has paid for has the same shape: something that
+was true for one buyer became a fact about a product class, and no later
+reader could tell the difference. Tyre mounting paste ranks the smallest pack
+first because one reader was fitting one scooter tyre. Basmati's score weights
+come from one particular question.
+
+A category **written during a study, from that study's brief**, is that
+failure mechanized. T2 built the separation that makes the vision safe —
+constraints live in the brief, and the study report says of every decision
+whether the brief stated it or the category supplied it — and R11 is only
+defensible on top of it. Building the generator without the separation would
+be faster and would produce a machine for laundering one user's preferences
+into permanent product knowledge.
 
 ## Agent-operation transition
 
@@ -1100,6 +1166,184 @@ It stays in `basmati_rice.py`.
 
 ---
 
+## R11 — Category synthesis as a default step
+
+**Status: PLANNED.** The largest change in the [vision](#product-vision--the-shopping-conversation),
+and the one with the most ways to be quietly wrong.
+
+### Scope
+
+Today three categories ship and the runbook tells the agent to *offer* to
+build a fourth. The target is that it builds one, as an ordinary step, for any
+product a user asks about — and that the result is honest about being ten
+minutes old.
+
+A synthesized category supplies exactly what a written one supplies: a
+`CategoryProfile`, a classifier, a list of claims with the reason each
+matters, and axes with a declared better direction. Nothing new in the
+architecture. What is new is the **provisional** status and what it forbids.
+
+### Why it is not free
+
+- **A category built from one study's brief launders that study's
+  constraints into permanent product knowledge.** This is the failure the
+  whole repository is shaped around. The generator gets what is true for
+  every buyer of the class; the brief keeps the rest. T2's stated-versus-
+  defaulted record is what makes the difference auditable afterwards.
+- **A shipped category is evidence-backed, and a fresh one is not.** Every
+  one of the three was built against real records, and `tests/cases/` asserts
+  the false-positive guards as loudly as the true positives — five of the
+  pasta records are there *only* because an earlier reconciler disputed them
+  wrongly. A category written in one session has none of that, and its
+  confidence must not look the same in a report.
+- **The quiet half is the plausibility profile.** A wrong classifier is loud:
+  the mounting-paste cases come out as `0 dry pasta · 0 offers`. A wrong
+  *band* is silent, and measured — 34 mounting-paste records under dry
+  pasta's band move 14 values, mostly `trusted` to `disputed`. A generator
+  that invents a price band to have one will be wrong in exactly that
+  invisible way. The precedent is already in this file: mounting paste ships
+  `price_band=None` because "inventing a band to have one would reject real
+  listings." **A provisional category should default to no band**, and earn
+  one from observed records rather than from a guess.
+
+### Done when
+
+- A category the agent generates is marked provisional, carries the evidence
+  and the cases it was derived from, and its study report says which of its
+  judgements rest on validated knowledge and which on knowledge invented for
+  this question.
+- Generated categories go through the same review a written one does before
+  losing the provisional mark — `CONTRACT.md` §5 already says a profile is
+  data and may not add a rule, and that stays true of a generated one.
+- A regression case set exists for at least one generated category, built the
+  same way the three shipped ones were: false-positive guards included.
+
+---
+
+## R12 — Discovery that states its own coverage
+
+**Status: PLANNED.** Promoted from [E3](#e3--discovery-coverage-of-the-category),
+which has already answered the interesting half of the question.
+
+### Scope
+
+The vision's step 4 says "collect the options the marketplace has". The
+honest version of that target is **not** "all" — it is a study that says what
+it searched, what it reached, and which class of product it is known to
+under-sample.
+
+### Why it is not free: two measurements, both negative
+
+- **Eight generic queries in German and English, two pages each, never
+  surfaced AKASH at all.** It took a query naming the brand. AKASH is one of
+  only two basmatis Stiftung Warentest rated "gut" in 5/2026 — so a
+  researcher who did not already know the answer would not have reached the
+  product the study ended up recommending.
+- **Thirteen queries across five crawls never surfaced a 50 ml Rema Tip Top
+  tin**, because its title is "Rema Tip Top 501004 - Schwammdose,
+  Transparent, 50 ml" and contains no word anyone would search for. It is a
+  bicycle tyre mounting gel and its title never says so.
+
+Neither is fixed by crawling deeper; the broad sweep already went two pages
+per query. E3's sharper finding is that generic queries systematically
+under-sample **diaspora brands**, which on Amazon.de are a large share of the
+real shelf in exactly the categories where they matter — rice, pulses,
+spices, flour. That is query design, not crawl depth.
+
+### Done when
+
+- A brand-expansion pass, seeded from the first crawl's own `brand` field, is
+  a bounded and measured step rather than something a researcher remembers.
+- A study report states its discovery coverage as a fact: which queries ran,
+  what they returned, which products arrived only through a named-ASIN or
+  brand-expansion path, and what the method is known not to reach.
+- E3's threshold decides the priority: brand-only-discovered products taking
+  more than ~20% of a shortlist. On basmati it was **1 of 8 finalists, and 2
+  of the 3 products with external laboratory evidence** — above the bar on
+  the measure that matters.
+
+---
+
+## R13 — The conversation as the entry point
+
+**Status: PLANNED.** Depends on nothing technical; depends on R11 to be
+useful for a product nobody wrote a category for.
+
+### Scope
+
+Steps 1 and 2 of the vision exist today as a *runbook an agent follows*:
+[Agree the brief](RESEARCH.md#agree-the-brief) has the blocking/assumable
+test, the batched round, the read-back before collection. T2 made the output
+of that conversation a validated artifact. What does not exist is the flow —
+a user describing a purchase and getting a study, without anybody reading
+`RESEARCH.md` first.
+
+### Why it is not free
+
+The brief must still be **written down and agreed**. The conversation is how
+it gets filled in, not a replacement for it: an unrecorded requirement change
+is indistinguishable from a result, and that sentence is in the runbook
+because the alternative was tried. A flow that elicits requirements and keeps
+them only in the dialogue would undo T2.
+
+The second trap is the questionnaire. The runbook's rule — block only on what
+would make the work wrong under every plausible answer, assume the rest with
+a stated default — is a product decision, not an implementation detail. A
+flow that asks ten questions to feel thorough is worse than the CLI.
+
+### Done when
+
+- A user who has read nothing can describe a purchase and receive either a
+  study bundle or a stated reason there is none.
+- Every question asked is recorded in the brief with its answer or the
+  default taken, and the report shows what would change if a default were
+  wrong — the runbook's closing step already asks which questions actually
+  decided the answer, and this is what makes that measurable.
+
+---
+
+## R14 — A recommendation in a category nobody validated
+
+**Status: PLANNED. Needs R10 and R11.**
+
+### Scope
+
+Step 5 of the vision, for the case that makes it hard. Recommending within a
+shipped category is done: name an axis, rank it, state the exclusions, refuse
+where the evidence will not carry. A category synthesized this morning has no
+validated axis worth declaring, and "cheapest per kilogram" is a dry-pasta
+answer that means nothing for a vacuum cleaner.
+
+### Why it is not free, and what it unblocks
+
+This is the second consumer R10 has been waiting for. R10 is deferred for a
+good reason — one category is one data point, and in R2 three of the four
+things the layer "had to learn" turned out to be bugs — but a generator that
+produces categories *is* a second consumer, and an open-ended one.
+
+The three properties R10 already established are the safeguards, and they
+matter more here, not less:
+
+- every component published with its evidence, never just the total;
+- a missing input scores **neutral**, never zero;
+- the total shrunk toward neutral in proportion to how much is unknown.
+
+The third is the one that stops a synthesized category from recommending a
+listing whose entire case is its own adjectives. R10's own worked failure —
+a 10 kg bag with five ratings, ranked first on a feature bullet claiming
+every heavy metal was below the limit of detection — is precisely what an
+unvalidated category will produce by default.
+
+### Done when
+
+- A recommendation from a provisional category is reproducible, states the
+  weights it used and where they came from, and is visibly less confident
+  than one from a validated category.
+- `insufficient_evidence` remains reachable and is reached: a generator that
+  can always find something to recommend has replaced judgement with output.
+
+---
+
 ## Deferred and rejected work
 
 | Capability | Decision | Reconsider when |
@@ -1122,7 +1366,8 @@ It stays in `basmati_rice.py`.
 | Generic extraction | **Correct as is.** No pasta logic in the parser; all fourteen measured pasta signals are recoverable from `raw_tables`, `content.*` and `food.ingredients`. Do not trade "raw first, normalized second" for coverage. |
 | Food extraction | **Correct placement**, one change: the food layer must stop asserting values it cannot defend. |
 | Validation | **Two layers, never inside extraction** — shipped in R2 as `amazon_scraper/validation/`, published as [CONTRACT.md](CONTRACT.md). Extraction stays faithful to the source. *Generic:* unit-versus-field disagreement, basis-phrase-as-value, mass balance, Atwater, single-nutrient corroboration, quantity-versus-price coherence, on-page source conflict. *Category:* plausibility bands, claim/ingredient contradictions, price floors — supplied to the generic layer as **data**, never as procedure. |
-| Category analysis | **Downstream of the JSONL.** The acquisition layer never learns what good pasta is. Confirmed by a second category in R2: tyre mounting paste needed no change to the crawler, the extractor, or any trust rule — only a profile, a classifier and a list of claims. |
+| Category analysis | **Downstream of the JSONL.** The acquisition layer never learns what good pasta is. Confirmed by a second category in R2: tyre mounting paste needed no change to the crawler, the extractor, or any trust rule — only a profile, a classifier and a list of claims. **This boundary survives [R11](#r11--category-synthesis-as-a-default-step):** a category the agent writes is the same four things in the same place, so synthesis is a question about where category knowledge *comes from*, never about where it sits. |
+| Who writes a category | **Changing, deliberately — see [R11](#r11--category-synthesis-as-a-default-step).** Today a human writes one as a reviewed maintenance change, and the runbook offers that as a choice. The target is that the agent writes one by default, marked provisional, carrying its evidence, and unable to look as confident as a validated one. The boundary that replaces "a human wrote it" is **validated versus provisional**, and it has to be visible in the report rather than implied by the absence of a warning. |
 | Marketplace-specific | `shared structural extraction + marketplace profile + adapters where measured evidence demands`. Correct, but currently over-applied: two profiles exist that nobody validated. |
 | Discovery / Product | **Separate the record now (R1), defer the entity (R3).** The requirement is that a repeat sighting must not cost a repeat fetch and must not be erased. |
 | Locale | **Record it, do not abstract it.** Justification is correctness: the request locale and the label vocabulary are chosen independently today and can disagree with no error at all. German stays the authoritative Amazon.de discovery locale. |
@@ -1187,6 +1432,11 @@ before R2 — do not model what nothing reads.
 - **Threshold:** brand-only-discovered products taking more than ~20% of a
   shortlist → query design becomes a roadmap item, most likely as a
   brand-expansion pass seeded from the first crawl's own brand field.
+- **Crossed, and promoted to [R12](#r12--discovery-that-states-its-own-coverage)
+  (2026-09-16).** The basmati measure is above the bar, and the
+  [product vision](#product-vision--the-shopping-conversation) makes coverage
+  load-bearing rather than incidental: a flow that promises to collect the
+  options a marketplace has must be able to say which ones it cannot reach.
 
 ### E4 — Does the trust bar leave enough to compare?
 

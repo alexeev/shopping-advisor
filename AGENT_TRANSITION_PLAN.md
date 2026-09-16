@@ -603,6 +603,14 @@ requirements, and trust decisions must agree for identical inputs/methods.
 
 ### T5 — Expand only when a real study earns it
 
+**This is not in tension with the [product vision](ROADMAP.md#product-vision--the-shopping-conversation),
+and the two are easy to misread as opposites.** The vision is the destination —
+a conversation that builds a category by default, collects what the marketplace
+has, and recommends. T5 is the rule for *getting there*: each expansion earned
+by a named study and a bounded experiment, rather than built because the end
+state implies it. R11–R14 in the roadmap are that decomposition, and each
+carries its own "done when" for the same reason.
+
 Apply R9's missing-price experiment before automating refresh; its old basmati
 ASIN set may need to be reconstructed or replaced by an explicitly comparable
 fresh study. Do not assume the original untracked inputs are available.

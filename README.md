@@ -36,6 +36,21 @@ credential required for crawling, analysis, or tests.
   report. The researcher still establishes requirements, checks external
   sources, writes the report, and records the limits of the evidence.
 
+### Where this is going
+
+The intended end state is a conversation: a user describes a purchase broadly,
+answers a few clarifying questions, and the agent researches it — **building a
+category when none ships**, rather than offering to — collects the options the
+marketplace has, and returns a recommendation with its alternatives and what
+would change it.
+
+None of that is current behaviour, and the scope above is what actually ships.
+The destination, the four milestones it decomposes into, and the two
+measurements that say why "collect every relevant option" is the hard part are
+in [the product vision](ROADMAP.md#product-vision--the-shopping-conversation).
+The end state is still not "always produces a recommendation": it is one where
+the evidence supports it, and a precise account of the gap where it does not.
+
 ## Setup and first check
 
 Run commands from the repository root. The project uses CPython **3.14** and

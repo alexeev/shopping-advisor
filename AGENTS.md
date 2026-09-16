@@ -32,6 +32,13 @@ than define separate research rules. Read this file, [README.md](README.md), and
   provider interchangeability trials are future stages in
   [AGENT_TRANSITION_PLAN.md](AGENT_TRANSITION_PLAN.md), not current
   capabilities. A study's `sources` are declared and unverified.
+- The [product vision](ROADMAP.md#product-vision--the-shopping-conversation)
+  records where this is going: a conversation in which building a category is
+  the default rather than an offer (R11), discovery states its own coverage
+  (R12), and a recommendation is possible in a category nobody validated
+  (R14). **It is a destination, not a licence.** Until R11 ships, follow the
+  rule below and say when a category is not supported; a category written
+  mid-study today is a reviewed maintenance change, not a normal step.
 
 ## Environment and checks
 

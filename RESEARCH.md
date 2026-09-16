@@ -259,6 +259,16 @@ rather than working around it:
 - answer within stated limits, using only what the generic layer can check, and
   label it as not a suitability judgement.
 
+This is the step the [product vision](ROADMAP.md#product-vision--the-shopping-conversation)
+intends to change: building the category should become the **default**, not a
+choice the user has to accept, and that is R11. It is not the default today,
+and the reason is worth carrying into the conversation either way. Every
+shipped category was built against real records, and `tests/cases/` asserts
+its false-positive guards as loudly as its true positives — five pasta records
+are committed *only* because an earlier reconciler disputed them wrongly. A
+category written in one sitting has none of that behind it. Until a
+provisional status exists to say so in the report, offer the choice.
+
 Name the category on **every** command: `--category` defaults to `dry_pasta`.
 The two ways that goes wrong are not equally visible.
 
