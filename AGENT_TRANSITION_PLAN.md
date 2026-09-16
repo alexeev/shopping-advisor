@@ -9,6 +9,14 @@ and the identity, provenance, retention and profile gaps addressed by T1. See
 and [AGENTS.md](AGENTS.md) / [RESEARCH.md](RESEARCH.md) for current operation.
 This plan does not replace the data contract.
 
+**Product-review update, 2026-09-16:** the
+[revised roadmap](ROADMAP.md#priorities-and-true-dependencies) owns current
+sequencing. This transition is the foundation, not the full product end state.
+The coding interface is permanent. Routine task-driven extension additionally
+needs R13 evidence/gap planning, R15 controlled adaptation, R16 lifecycle and
+R14 unseen-problem/reuse trials. The assessment and initial priorities below
+retain their historical context; T0–T3 are not work to repeat.
+
 ## Recommendation
 
 Keep the existing Python, Scrapy, extraction, validation, and category-analysis
@@ -590,7 +598,9 @@ reports both pass when correctly framed; fabricated or mismatched support fails.
 
 ### T4 — Enforce maintenance gates and provider interchangeability
 
-**Depends on:** T2/T3 examples; baseline CI can be added as early as T0/T1.
+**Depends on:** shipped T2/T3 examples. Deliver maintenance gates now alongside
+R13; R15 requires this slice before default extension execution. Supported-study
+provider trials can start independently; extension handoff trials follow R15/R14.
 
 **Changes:** Add CI for clean locked setup, the offline suite, schema/examples,
 and report checks. Exercise supported Windows and Linux command paths. Add a
@@ -609,25 +619,27 @@ requirements, and trust decisions must agree for identical inputs/methods.
 
 ### T5 — Expand only when a real study earns it
 
-**This is not in tension with the [product vision](ROADMAP.md#product-vision--the-shopping-conversation),
-and the two are easy to misread as opposites.** The vision is the destination —
-a conversation that builds a category by default, collects what the marketplace
-has, and recommends. T5 is the rule for *getting there*: each expansion earned
-by a named study and a bounded experiment, rather than built because the end
-state implies it. R11–R14 in the roadmap are that decomposition, and each
-carries its own "done when" for the same reason.
+T5 is an ongoing demand-driven expansion policy, not a stage that completes a
+catalogue. A named research need may justify a task-local addition immediately
+through R15's gates; promotion into maintained or shared capability requires
+R16's evidence. The second-use rule for generalization must not block a first
+bounded experiment or a reproducible correctness fix.
 
 Apply R9's missing-price experiment before automating refresh; its old basmati
 ASIN set may need to be reconstructed or replaced by an explicitly comparable
 fresh study. Do not assume the original untracked inputs are available.
 Revisit R4 when US research is requested, with new representative fixtures and
 locale tests. Revisit R10 only with a second justified scoring consumer.
-Add another retailer, browser acquisition, OCR, or a persistent database only
-after a named study demonstrates the limitation and a bounded experiment shows
-benefit. Successful two-provider operation does not require multi-marketplace
-support, multi-agent roles, or a hosted platform.
+Try another retailer adapter, browser acquisition or OCR when a named study
+demonstrates the gap, using a bounded experiment; retain and promote according
+to R16. A persistent database still needs demonstrated value over files.
+Successful two-provider operation does not require multi-marketplace support,
+multi-agent roles, or a hosted platform.
 
 ## 7. First implementation priorities
+
+Historical T0–T4 sequence; T0–T3 are now delivered. Use the revised ROADMAP
+order for the next implementation batch.
 
 The first implementation batch should contain a few independently reviewable
 changes, not the whole target architecture:

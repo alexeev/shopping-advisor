@@ -6,6 +6,12 @@ replay trustworthy, T2 persists studies, and T3 adds the external-source ledger,
 claim checks and separate semantic review. Provider trials remain T4 in the
 [transition plan](AGENT_TRANSITION_PLAN.md).
 
+The permanent product interface is the coding-agent conversation. The
+[revised product vision](ROADMAP.md#product-vision--the-shopping-conversation)
+plans routine, controlled extension during research, including new sources,
+extractors and methods. R13/R15/R16 define the missing planning, execution and
+reuse gates; this runbook describes current operation until those gates ship.
+
 ## Offline walkthrough
 
 After [setup and shell configuration](README.md#setup-and-first-check), run the
@@ -490,8 +496,8 @@ Before delivery, check that decisive numeric values are usable, units/currency
 agree, citations support the selected variant and claim, sample reviews are
 not used for rates, and conclusions say “among sources/products inspected”
 where coverage is limited. Record the checks and remaining uncertainty.
-There is no automated report validator today. An honest insufficient-evidence
-answer is a valid result.
+Automated report validation does not establish semantic truth. An honest
+insufficient-evidence answer is a valid result.
 
 ### Close and capture improvements
 

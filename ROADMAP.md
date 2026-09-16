@@ -1,8 +1,9 @@
 # Shopping Advisor roadmap
 
 The plan of record for this repository. It supersedes the P0–P6 hypothesis
-that preceded it; that hypothesis is kept below, with the verdict on each
-item, because the reasoning is what makes the current order defensible.
+that preceded it. The revised product vision and dependency order below govern
+future work; completed milestones and the superseded hypothesis retain their
+measurements as history.
 
 **Status legend:** `DONE` · `IN PROGRESS` · `NEXT` · `PLANNED` · `DEFERRED` ·
 `DROPPED`
@@ -20,72 +21,203 @@ item, because the reasoning is what makes the current order defensible.
 | **R8** | Marketplace-aware text matching | **DONE** |
 | **R9** | A second pass for missing prices | PLANNED (behind a decision test) |
 | **R10** | Scoring as a shared facility | **DEFERRED** — one consumer is not two |
-| **R11** | Category synthesis as a default step | PLANNED |
+| **R11** | Category synthesis as a default step | PLANNED (first R15 application) |
 | **R12** | Discovery that states its own coverage | PLANNED |
-| **R13** | The conversation as the entry point | PLANNED |
-| **R14** | A recommendation in a category nobody validated | PLANNED (needs R10, R11) |
+| **R13** | The conversation as the entry point | **NEXT** (intake, evidence and gap plan) |
+| **R14** | A recommendation in a category nobody validated | PLANNED (R11–R13, R15, R16 gates) |
+| **R15** | Controlled task-driven capability adaptation | PLANNED (after R13 and T4 maintenance gates) |
+| **R16** | Capability lifecycle and architectural review | PLANNED (minimum lifecycle before R14) |
 
 ## Product vision — the shopping conversation
 
-**Recorded 2026-09-16. None of this is current behaviour.** It is written down
-so that R11–R14 below can be read against a destination instead of as four
-unrelated ideas, and so that the distance between each step and what ships
-today is a number somebody can argue with.
+**Revised product direction, 2026-09-16. The extension operating model below
+is planned; the shipped scope remains in [README](README.md#supported-scope).**
 
-The flow this project is ultimately for:
+Shopping Advisor is a **durable, continuously extensible research harness for
+an AI software agent**. Its permanent user interface is an AI coding interface,
+such as Codex CLI or Claude CLI. Each purchasing request is a research task
+and, when necessary, an opportunity to extend the harness. It succeeds when
+previously unseen problems can be accommodated through small, safe, reusable
+extensions without destabilizing what already works.
 
-1. A user describes a purchase in their own words, as broadly as they like.
-2. One round of clarifying questions — the few that change the answer.
-3. The agent researches the category. If one ships, it uses it. **If none
-   ships, it builds one — as a normal step, not as an offer the user has to
-   accept.**
-4. It collects the options the marketplace actually has for that question.
-5. It comes back with a recommendation, its alternatives, and what would
-   change it.
+The system is **permanently incomplete by design**. A finite catalogue of
+categories is accumulated capability, never the boundary of the product.
+New needs may require software adjustments; they should rarely require a
+redesign. The harness is both an execution environment and organizational
+memory: tested code, contracts, retained evidence, studies and dated decisions.
 
-Where each step stands:
+The user's experience is:
 
-| Step | Today | Gap |
+**intent → useful questions → research → evidence → comparison → recommendation**
+
+The agent understands the purchase decision, identifies relevant characteristics
+and sufficient evidence, asks only questions that materially improve the answer,
+then uses the harness. It detects missing capabilities, makes bounded additions,
+validates them, completes the research and retains what proved useful. This
+includes new categories, marketplace behavior, sources, extraction techniques,
+comparison methods and research procedures. Category synthesis alone is not the
+operating model.
+
+The user need not know what modules exist or whether engineering happened.
+Explain engineering only when it changes cost, time, confidence, limitations or
+the purchasing decision. A conditional comparison, tie or precise
+insufficient-evidence answer is a valid outcome. Missing software should normally
+trigger bounded adaptation; unavailable decisive evidence must never trigger
+invented certainty.
+
+### What the product is not
+
+- A fixed shopping application awaiting its own chat or web frontend. The coding
+  interface is the lasting interface; CLI commands are tools used by the agent.
+- A scraper with advice appended, or a programme to prebuild every category.
+  Acquisition and maintained categories serve decisions, not coverage targets.
+- An unrestricted self-modifying agent. A task cannot silently rewrite its own
+  trust policy, permissions or acceptance criteria to manufacture success.
+- A universal product ontology, scoring engine or agent framework. Shared
+  abstractions earn their place through demonstrated use.
+
+### Architectural properties that make this possible
+
+1. **Local change.** Source adapters acquire and extract; generic validation
+   owns trust; category methods interpret; briefs own user preferences; studies
+   preserve decisions. A new extraction technique may change extraction, but
+   never insert a buyer's preferences there. Locality means the narrowest
+   responsible layer, not a promise that only category files ever change.
+2. **Inspectable contracts.** Source identity, units, provenance, applicability
+   and unknowns survive each boundary. Briefs remain data, not executable
+   imports. Deterministic arithmetic and replay stay in software.
+3. **Controlled execution.** Agent-authored code is executable code, including
+   imports and tests. Isolate changes, bound resources and access, check the
+   diff, test success and counterexamples, review semantic output, then adopt
+   reversibly. A provisional label is not an execution safeguard.
+4. **Regression protection.** Existing categories, generic snapshots and saved
+   studies are gates on a change. Version changed meanings and preserve the
+   prior evidence/method so changed decisions can be explained or rolled back.
+5. **Earned reuse.** Distinguish a task experiment, a maintained capability and
+   a stable shared foundation. Passing one task does not establish generality;
+   neither repeated code generation nor more categories proves a shared design.
+6. **Portable memory.** Repository instructions, files and CLI contracts are
+   canonical. Provider adapters stay thin; another agent can resume using
+   artifacts without private chat history. Replay requires no model provider.
+7. **Bounded research.** Separate a software gap from an evidence gap, preserve
+   partial results and stop when further work cannot justify its cost. Trust
+   statuses do not improve because a deadline or a shortlist demands it.
+
+### Roadmap assessment — 2026-09-16
+
+**Verdict: the architecture is a credible starting point; the previous roadmap
+was not yet a credible delivery sequence for continuous extension.** R0–R8
+and T0–T3 establish reusable research primitives and an evidence trail. R11–R14
+recognised unseen categories, but omitted a general adaptation lifecycle,
+placed conversation late, and made R14 depend on deferred R10 while calling
+R14 its justification. This revision removes that circular dependency.
+
+The assessment uses the complete R0–R14, T0–T5, deferred-work and E1–E4 plans,
+the current runbook and contracts, and these implementation seams:
+[category registration](shopping_advisor/analysis/categories/__init__.py),
+[category interface](shopping_advisor/analysis/category.py),
+[brief](shopping_advisor/study/brief.py),
+[bundle](shopping_advisor/study/bundle.py),
+[audit](shopping_advisor/study/audit.py), and
+[provenance](shopping_advisor/provenance.py).
+Historical crawl measurements below are prior project evidence, not newly
+verified marketplace facts or buying advice.
+
+| Requirement | What exists / remaining gap | Roadmap decision |
 |---|---|---|
-| 1–2. Describe and clarify | Shipped as **procedure**: [Agree the brief](RESEARCH.md#agree-the-brief) and the validated brief artifact (T2) | It is a runbook an agent follows, not a flow the product offers — R13 |
-| 3. Use a category | Shipped. Three categories, `--category` on every command | — |
-| 3. Build a category | Possible, as a scoped maintenance change a human reviews; the runbook tells the agent to **offer it as a choice** | Becoming the default is R11, and it is the largest single change in this list |
-| 4. Collect the options | Shipped, bounded. Search, direct ASINs, retained pages | "All relevant options" is not reachable by search alone, and this repository has measured it twice — R12 |
-| 5. Recommend | Shipped for a declared axis, with exclusions and refusals (T2) | A fresh category has no validated axis to declare, which is R14 and unblocks R10 |
+| Conversation as entry point | Shared agent instructions and CLI tools exist; no end-to-end conversation acceptance trial | R13 begins now inside the coding interface; no new frontend |
+| Purchasing intent and criteria | T2 records assumptions and defaults; category defaults still encode past buyers' preferences | R13 evaluates material questions and explicit criteria before collection |
+| Dynamic evidence discovery | T3 audits declared sources; it does not decide what evidence a new question needs | R13 adds a requirement-to-evidence plan; R12 measures collection against it |
+| Capability-gap detection | Brief requires an already registered category and feeds; registry lookup is not a gap analysis | R13 records gaps before an executable brief; do not loosen unknown-key/import safeguards |
+| Task-driven adaptation | Maintenance process exists; R11 covered categories only | New R15 covers all capability types; R11 is its first category application |
+| Safe execution and validation | Locked runtime and local tests exist; no tracked CI or validated extension isolation workflow | T4 maintenance gates and R15 precede default execution of new capabilities |
+| Architectural locality | Extraction/validation/category boundaries work for existing consumers; records and identities remain Amazon-shaped | Extend the demonstrated seam; a new retailer earns a source-native adapter, not fake ASINs |
+| Regression protection | Corpus, category cases and study replay exist | T4 automates checks; R15 records semantic before/after decisions and rollback |
+| Capability reuse | Static registration finds three categories, without lifecycle/applicability metadata | R16 adds a small discoverable capability index tied to code and cases |
+| Evidence-based promotion | Runbook requires scope, counterexamples and measured effect | R16 separates retention, maintained local capability and shared abstraction promotion |
+| Lessons without uncontrolled growth | Durable homes already defined; promotion/disposal outcomes not tracked | R16 records reuse, rejection, expiry and supersession beside existing homes |
+| Architectural review / debt | Deferral principles exist; no review cadence or accountable output | R16 adds a recurring review gate with measured simplification decisions |
+| Provider independence | Canonical instructions and ordinary CLIs exist; portability is not demonstrated | Preserve T4 two-provider study, repair and handoff trials; no provider SDK in the core |
+| Traceability of research and changes | T1–T3 bind evidence and reports; code revision/dirty flag do not preserve an exact uncommitted patch | R15 binds base, patch, method, checks and resulting study revision |
+| Insufficient evidence | T2 refusal and T3 audits exist; extension-budget failure is not integrated | R12/R15/R14 distinguish missing evidence, failed adaptation and a valid qualified result |
 
-### What the vision does not change
+The existing seams also have limits. `Category.extras` can expose evidence, but
+the study currently shortlists on one axis and T3 external claims do not alter
+eligibility. A new comparison method must enter deterministic study decisions,
+serialization, rendering and replay together; adding a score to a card or prose
+to a report is insufficient. R15 should make the smallest tested extension to
+that path when an actual brief demands it. The Amazon-shaped record model is
+another boundary to test, not a reason to design a universal schema now.
 
-Three things are load-bearing and survive all of it. Recording them here is
-cheaper than rediscovering them under deadline:
+### Priorities and true dependencies
 
-- **The architecture boundary holds.** A synthesized category is still a
-  profile, a classifier, a list of claims and a set of axes, sitting
-  downstream of the JSONL. The acquisition layer still never learns what good
-  pasta is. R2 established this with a second category and nothing in this
-  vision needs it relaxed.
-- **The trust vocabulary holds.** `trusted` still means the applicable checks
-  passed. A category invented ten minutes ago cannot promote a value, and it
-  must not be able to.
-- **Refusal is still a result.** The end state is *not* "always produces a
-  recommendation". It is "produces one where the evidence supports it, and
-  says so precisely where it does not" — which is what T2's
-  `insufficient_evidence` outcome is for.
+Identifiers retain their historical meaning; their numeric order is not the
+execution order. T0–T3 and completed R milestones remain delivered, not work to
+repeat. T5 is the demand-driven expansion policy, not a final catalogue phase.
 
-### The honest risk, stated once
+| Order | Deliverable | Dependency and reason |
+|---|---|---|
+| 1 — next | R13 intake/evidence/gap planning; T4 maintenance-gate slice | Both build on shipped T2/T3. Establish what to change and how to protect existing behavior |
+| 2 | R15 bounded adaptation, with R11 as the first category case | Needs R13's recorded gap and T4's executable baseline. Prove isolation, validation, traceability and rollback before making adaptation routine |
+| 3 | R12 coverage and R16 minimum lifecycle/index | Evidence planning can start with R13; integrate after R15 artifacts exist. Coverage and deliberate retention are necessary before claiming the full loop works |
+| 4 | R14 unseen-problem and reuse acceptance trials; finish T4 provider trials | Needs R11–R13, R15, R16 minimum lifecycle and maintenance gates. Cross-provider extension handoff then tests these same artifacts |
+| Ongoing | R16 architectural reviews; T5 study-driven expansion | Use measurements from completed studies to simplify or extend; there is no final supported-category count |
 
-Every failure this repository has paid for has the same shape: something that
-was true for one buyer became a fact about a product class, and no later
-reader could tell the difference. Tyre mounting paste ranks the smallest pack
-first because one reader was fitting one scooter tyre. Basmati's score weights
-come from one particular question.
+R12 design and T4 supported-study provider trials can proceed earlier; neither
+needs to wait for synthesis. Full provider interchangeability is a release gate
+for that claim, not a reason to postpone the first local extension experiment.
+R10 is **not** a prerequisite for any of the above: a local comparison method
+can be sufficient, and a generator is not a demonstrated second consumer.
 
-A category **written during a study, from that study's brief**, is that
-failure mechanized. T2 built the separation that makes the vision safe —
-constraints live in the brief, and the study report says of every decision
-whether the brief stated it or the category supplied it — and R11 is only
-defensible on top of it. Building the generator without the separation would
-be faster and would produce a machine for laundering one user's preferences
-into permanent product knowledge.
+**Useful but secondary:** R4 marketplace expansion and R9 price refresh remain
+conditional on a real task and measured value. R10 shared scoring stays deferred.
+R3's retired variation-conflict criterion remains retired: missing source data
+cannot be fixed by adding software. E1 remains a scoped quantity audit; E2 is
+resolved; E3 supplies R12's discovery cases; E4 was answered in R0. Fresh studies
+must not treat those old samples as current market coverage.
+
+**Conflicting assumptions to retire:** a runbook-following agent is not an
+inferior precursor to a separate conversational product; it is the interface
+we intend to keep. An unseen category does not imply a numeric score. Historical
+pasta findings do not rule out OCR or browser extraction for a future task.
+Adding enough categories cannot complete the product. Conversely, extensibility
+does not justify speculative ontologies, plugin loaders or shared scoring.
+
+### Minimum viable operating model and success measures
+
+The minimum is one complete, repeatable extension loop, not an autonomous
+platform. It needs conversational intake, an evidence/gap plan, a bounded and
+isolated patch, regression and semantic review, a replayable result and an
+explicit retention decision. Files, existing CLIs and a small capability index
+are sufficient; a database, scheduler and agent orchestration are not required.
+
+R14 must demonstrate the thought experiment: an unanticipated category needs
+both a new extraction technique and a different comparison method. The agent
+adds them in the responsible layers, validates them, completes the study and
+leaves the next agent reusable evidence and code. A later distinct request
+must discover and reuse or narrowly adapt that work. A missing-evidence variant
+must correctly refuse, and a failed-patch variant must restore the baseline.
+
+Record, per trial: material versus unused questions; research/engineering time
+and resource budget; files/layers and shared contracts changed; applicable
+claims and unresolved gaps; old-study decision diffs; regression failures;
+manual interventions; rollback outcome; and capability reuse versus duplication.
+Initial acceptance requires **zero unexplained old-study decision changes**,
+all required checks passing, a replayable outcome, and an explicit promotion
+or disposal decision. Report locality and cost rather than inventing a universal
+line-count target; establish cost targets from these trials. Do not count a
+qualified refusal as a recommendation success, or a correct refusal as failure.
+
+These are planned acceptance measures, not measured improvements. Current
+unsupported-category instructions remain in force until R11 and R15 gates ship;
+this product review changes direction and sequencing, not runtime authority.
+
+Review effect: assessed all 15 operating-model requirements, added R15/R16,
+re-scoped R11–R14 and removed R10 from the acceptance dependency chain. Five
+current documents were aligned; 91 local file/anchor links and the whitespace
+diff check passed. Code, contracts, dependencies and snapshots are unchanged.
+No runtime tests or live research were run for this documentation-only review;
+new operating-model outcomes remain unmeasured until the planned trials.
 
 ## Agent-operation transition
 
@@ -1153,8 +1285,12 @@ not a reporting one.
 ### Decision test, before building anything
 
 Re-fetch the 73 unpriced basmati ASINs once, some hours later, and count how
-many price. **Below ~30% recovered**, those listings are genuinely dormant and
-an automated second pass is not worth its complexity.
+many price. **Below ~30% recovered**, defer an automated second pass for that workload;
+one unsuccessful refresh does not establish that a listing is genuinely dormant.
+Use fresh, explicitly comparable inputs if the historical 73-ASIN set is unavailable.
+Keep quantity-reconciliation changes separate from refresh automation, with their
+own evidence, counterexamples and CONTRACT version review. T2 now exposes
+exclusions, so the earlier invisible-omission finding is historical.
 
 ---
 
@@ -1188,69 +1324,55 @@ It stays in `basmati_rice.py`.
 
 ## R11 — Category synthesis as a default step
 
-**Status: PLANNED.** The largest change in the [vision](#product-vision--the-shopping-conversation),
-and the one with the most ways to be quietly wrong.
+**Status: PLANNED. Depends on R13 intake and R15 execution/validation gates.**
+This is the first category application of the general adaptation loop, not a
+standalone generator project.
 
 ### Scope
 
-Today three categories ship and the runbook tells the agent to *offer* to
-build a fourth. The target is that it builds one, as an ordinary step, for any
-product a user asks about — and that the result is honest about being ten
-minutes old.
+Use a maintained category where it fits the brief; otherwise create the smallest
+provisional category needed for the study. Keep classifier, claims, axes and
+interpretation downstream of extraction, and plausibility profiles as data.
+A task requiring new extraction also uses R15 in that responsible layer.
+Do not assume existing fields can express every future product characteristic.
 
-A synthesized category supplies exactly what a written one supplies: a
-`CategoryProfile`, a classifier, a list of claims with the reason each
-matters, and axes with a declared better direction. Nothing new in the
-architecture. What is new is the **provisional** status and what it forbids.
-
-### Why it is not free
-
-- **A category built from one study's brief launders that study's
-  constraints into permanent product knowledge.** This is the failure the
-  whole repository is shaped around. The generator gets what is true for
-  every buyer of the class; the brief keeps the rest. T2's stated-versus-
-  defaulted record is what makes the difference auditable afterwards.
-- **A shipped category is evidence-backed, and a fresh one is not.** Every
-  one of the three was built against real records, and `tests/cases/` asserts
-  the false-positive guards as loudly as the true positives — five of the
-  pasta records are there *only* because an earlier reconciler disputed them
-  wrongly. A category written in one session has none of that, and its
-  confidence must not look the same in a report.
-- **The quiet half is the plausibility profile.** A wrong classifier is loud:
-  the mounting-paste cases come out as `0 dry pasta · 0 offers`. A wrong
-  *band* is silent, and measured — 34 mounting-paste records under dry
-  pasta's band move 14 values, mostly `trusted` to `disputed`. A generator
-  that invents a price band to have one will be wrong in exactly that
-  invisible way. The precedent is already in this file: mounting paste ships
-  `price_band=None` because "inventing a band to have one would reject real
-  listings." **A provisional category should default to no band**, and earn
-  one from observed records rather than from a guess.
+A category may contain scoped domain knowledge and explicit method defaults;
+a buyer's constraints stay in the brief. Every new criterion needs a source or
+a labelled hypothesis and applicability limits. Provisional categories default
+to no invented plausibility band. In the existing 34 mounting-paste cases,
+using pasta's profile moves 14 values: a plausible-looking default can silently
+change trust without a classifier error.
 
 ### Done when
 
-- A category the agent generates is marked provisional, carries the evidence
-  and the cases it was derived from, and its study report says which of its
-  judgements rest on validated knowledge and which on knowledge invented for
-  this question.
-- Generated categories go through the same review a written one does before
-  losing the provisional mark — `CONTRACT.md` §5 already says a profile is
-  data and may not add a rule, and that stays true of a generated one.
-- A regression case set exists for at least one generated category, built the
-  same way the three shipped ones were: false-positive guards included.
+- An unseen category is created within the recorded study budget, through R15,
+  with positive cases, false-positive guards and missing-evidence cases.
+- Reports distinguish established observations from provisional interpretation;
+  maturity does not automatically upgrade or downgrade individual value status.
+- The profile cannot add rules or bypass validation ordering. New units, axes
+  and applicability limits are checked; old categories still pass their gates.
+- A changed buyer preference changes the brief or declared study method, not a
+  permanent fact about the category. The resulting decision difference replays.
+- R16 records whether the tested capability stays task-local or is promoted.
+  Becoming the default research step requires these gates, not a wording change
+  in the runbook alone.
 
 ---
 
 ## R12 — Discovery that states its own coverage
 
-**Status: PLANNED.** Promoted from [E3](#e3--discovery-coverage-of-the-category),
-which has already answered the interesting half of the question.
+**Status: PLANNED.** Builds on R13 evidence planning and T1/T3 provenance.
+Promoted from [E3](#e3--discovery-coverage-of-the-category) for its demonstrated
+discovery blind spots, not a proven completeness threshold.
 
 ### Scope
 
-The vision's step 4 says "collect the options the marketplace has". The
-honest version of that target is **not** "all" — it is a study that says what
-it searched, what it reached, and which class of product it is known to
-under-sample.
+Turn the evidence plan into bounded candidate and source discovery. Report
+what was requested, reached, failed or left unexamined, and why collection
+stopped. Counts describe the inspected sources, never the entire market.
+A brand expansion seeded only from the first crawl cannot discover a brand
+absent from that crawl: include justified independent catalogues, manufacturer
+sources and named candidates where the plan requires them.
 
 ### Why it is not free: two measurements, both negative
 
@@ -1264,11 +1386,11 @@ under-sample.
   Transparent, 50 ml" and contains no word anyone would search for. It is a
   bicycle tyre mounting gel and its title never says so.
 
-Neither is fixed by crawling deeper; the broad sweep already went two pages
-per query. E3's sharper finding is that generic queries systematically
-under-sample **diaspora brands**, which on Amazon.de are a large share of the
-real shelf in exactly the categories where they matter — rice, pulses,
-spices, flour. That is query design, not crawl depth.
+The measured two-page sweep did not solve these omissions. It does not prove
+that greater depth could never help. The basmati finding motivates testing
+whether generic queries under-sample diaspora brands; generalization to rice,
+pulses, spices or flour remains a hypothesis. Compare bounded query/source
+expansion with depth using decision-relevant yield, not raw result count.
 
 ### Done when
 
@@ -1277,100 +1399,201 @@ spices, flour. That is query design, not crawl depth.
 - A study report states its discovery coverage as a fact: which queries ran,
   what they returned, which products arrived only through a named-ASIN or
   brand-expansion path, and what the method is known not to reach.
-- E3's threshold decides the priority: brand-only-discovered products taking
-  more than ~20% of a shortlist. On basmati it was **1 of 8 finalists, and 2
-  of the 3 products with external laboratory evidence** — above the bar on
-  the measure that matters.
+- Coverage also maps decisive requirements to evidence found or missing,
+  including source-access failures, freshness, variant identity and budget stops.
+- Test a named candidate and a relevant brand absent from initial search, plus
+  a case where decisive evidence remains unavailable after bounded expansion.
+- Historical basmati evidence was **1 of 8 finalists (12.5%)**, below E3's
+  original 20% shortlist threshold. **2 of 3 externally tested products** is a
+  different denominator. The priority is the demonstrated decision-relevant
+  blind spot; record that revised rationale rather than claiming the old test passed.
 
 ---
 
 ## R13 — The conversation as the entry point
 
-**Status: PLANNED.** Depends on nothing technical; depends on R11 to be
-useful for a product nobody wrote a category for.
+**Status: NEXT. Depends on shipped T2/T3; does not wait for R11.**
 
 ### Scope
 
-Steps 1 and 2 of the vision exist today as a *runbook an agent follows*:
-[Agree the brief](RESEARCH.md#agree-the-brief) has the blocking/assumable
-test, the batched round, the read-back before collection. T2 made the output
-of that conversation a validated artifact. What does not exist is the flow —
-a user describing a purchase and getting a study, without anybody reading
-`RESEARCH.md` first.
+Make the existing coding-agent conversation the tested product entry point.
+The user describes a purchase; the agent inspects capabilities and evidence,
+asks one useful batch of questions where possible, records assumptions and
+produces a brief. Further questions are justified only by a newly material gap.
+There is no separate frontend or provider-specific orchestration requirement.
 
-### Why it is not free
+Before collecting, map each decisive requirement to its sufficient evidence:
+which characteristic, acceptable source class, identity/variant applicability,
+freshness, comparison method, and what happens if the evidence is missing.
+Use the T3 ledger for acquired evidence; a source plan is not verified evidence.
 
-The brief must still be **written down and agreed**. The conversation is how
-it gets filled in, not a replacement for it: an unrecorded requirement change
-is indistinguishable from a result, and that sentence is in the runbook
-because the alternative was tried. A flow that elicits requirements and keeps
-them only in the dialogue would undo T2.
+Compare this plan with the actual harness. Record whether each gap needs a
+source, fresh acquisition, parser/adapter, category interpretation, comparison
+method or user decision. First reuse existing capability. For remaining gaps,
+record the narrowest change, expected decision value, validation cases and
+finite research/engineering limits, then hand off to R15. Unknown evidence
+availability is a reason for a bounded probe, not automatic software work.
 
-The second trap is the questionnaire. The runbook's rule — block only on what
-would make the work wrong under every plausible answer, assume the rest with
-a stated default — is a product decision, not an implementation detail. A
-flow that asks ten questions to feel thorough is worse than the CLI.
+The current executable brief requires a known category and input feeds. Start
+with a retained intake/evidence plan before those exist, then bind it to the
+validated brief once the capability and inputs are ready. Do not bypass the
+brief's registry or introduce arbitrary import paths. Any new persisted shape
+needs a tested contract before becoming part of the executable workflow.
 
 ### Done when
 
-- A user who has read nothing can describe a purchase and receive either a
-  study bundle or a stated reason there is none.
-- Every question asked is recorded in the brief with its answer or the
-  default taken, and the report shows what would change if a default were
-  wrong — the runbook's closing step already asks which questions actually
-  decided the answer, and this is what makes that measurable.
+- A user who has read no project documentation can initiate a supported study
+  in the coding interface and receive a saved, auditable outcome.
+- An unsupported problem produces a useful evidence/gap plan without asking
+  the user to select a module or understand implementation details.
+- Questions/defaults and subsequent material revisions persist; a review counts
+  which questions affected the decision and removes unused questionnaire steps.
+- The plan distinguishes software gaps from unavailable evidence and has a
+  stopping rule for each. The final report explains decision-relevant limits.
 
 ---
 
 ## R14 — A recommendation in a category nobody validated
 
-**Status: PLANNED. Needs R10 and R11.**
+**Status: PLANNED. Depends on R11, R12, R13, R15, R16's minimum lifecycle and
+T4 maintenance gates. Does not depend on R10.**
 
 ### Scope
 
-Step 5 of the vision, for the case that makes it hard. Recommending within a
-shipped category is done: name an axis, rank it, state the exclusions, refuse
-where the evidence will not carry. A category synthesized this morning has no
-validated axis worth declaring, and "cheapest per kilogram" is a dry-pasta
-answer that means nothing for a vacuum cleaner.
+This is the acceptance milestone for the operating model. Start from a purchase
+problem not used to design the existing categories, requiring a new extraction
+technique and a different comparison method. Use R13's plan and R15's bounded
+adaptation to complete the research, then exercise reuse in a distinct request.
 
-### Why it is not free, and what it unblocks
-
-This is the second consumer R10 has been waiting for. R10 is deferred for a
-good reason — one category is one data point, and in R2 three of the four
-things the layer "had to learn" turned out to be bugs — but a generator that
-produces categories *is* a second consumer, and an open-ended one.
-
-The three properties R10 already established are the safeguards, and they
-matter more here, not less:
-
-- every component published with its evidence, never just the total;
-- a missing input scores **neutral**, never zero;
-- the total shrunk toward neutral in proportion to how much is unknown.
-
-The third is the one that stops a synthesized category from recommending a
-listing whose entire case is its own adjectives. R10's own worked failure —
-a 10 kg bag with five ratings, ranked first on a feature bullet claiming
-every heavy metal was below the limit of detection — is precisely what an
-unvalidated category will produce by default.
+Select the simplest defensible method: requirements and one declared axis,
+explicit tradeoffs, or a local multi-criteria method if the brief requires it.
+A scalar score is optional. If weights or missing-data conventions are used,
+state their origin, show components and test sensitivity. Neutral imputation
+and shrinkage are basmati choices, not universal laws; missing evidence for a
+hard requirement must remain missing regardless of any score.
 
 ### Done when
 
-- A recommendation from a provisional category is reproducible, states the
-  weights it used and where they came from, and is visibly less confident
-  than one from a validated category.
-- `insufficient_evidence` remains reachable and is reached: a generator that
-  can always find something to recommend has replaced judgement with output.
+- One unseen-problem study yields an evidence-backed recommendation or
+  conditional comparison, with applicable support and a replayable method.
+- A separate case lacking decisive evidence returns insufficient evidence;
+  failed adaptation is distinguished from evidence absence and exercises rollback.
+- A later distinct brief discovers and reuses or narrowly adapts the capability,
+  recording what transferred and what did not. No redesign is required; shared
+  contract changes, if needed, are small, justified and versioned.
+- Old studies have zero unexplained decision changes. R16 records retention or
+  promotion based on actual reuse, not the fact that code was generated twice.
+- The trial records the measures in the product vision. T4 additionally repeats
+  research, scoped repair and artifact handoff across both provider environments
+  before claiming provider interchangeability.
+
+---
+
+## R15 — Controlled task-driven capability adaptation
+
+**Status: PLANNED. Depends on R13's gap plan and T4's maintenance-gate slice.**
+
+### Scope
+
+Make a bounded engineering operation part of a study. Cover category modules,
+source acquisition/adapters, extraction patterns, evidence handling, comparison
+methods and procedures. Use the existing maintenance workflow, with an explicit
+link between the observed gap, patch and resulting research revision.
+
+For each adaptation retain the originating requirement/source, base revision
+and exact patch digest, affected layer, hypotheses, budget, reproduction cases,
+commands/check results, semantic decision diff, review findings and rollback
+instructions. Preserve the patch itself or a retrievable revision: a dirty flag
+cannot reproduce code. Bind these to the study and method revision without
+silently changing historical bundle IDs or overwriting previous results.
+
+Before executing new imports or tests, inspect the diff and use an isolated
+checkout/worktree plus restricted execution appropriate to the environment.
+A worktree isolates files, not credentials or network access: code validation
+needs a runner with declared filesystem, network, secret and time limits.
+Offline tests should need neither network nor credentials; bounded collection
+runs separately under existing pacing and authorized access. No new agent
+framework is required. Document and test the boundary instead of treating
+agent-generated code as safe because it was generated locally.
+
+Test the new behavior and counterexamples, run the full offline suite and study
+replays, inspect changes in eligibility/trust/prose, then record review and
+versioned adoption before using the changed method for a recommendation.
+Ordinary authorized local work needs no new permission ritual. Changes to trust
+semantics, dependencies, permissions or foundational contracts need explicit
+scope and review; the task cannot expand its own authority or weaken its gates.
+Retrieved text remains evidence, never execution instructions.
+
+### Done when
+
+- A category case and a case changing extraction or evidence acquisition both
+  complete the patch → checks → review → study-revision loop within stated limits.
+- A faulty patch fails a meaningful regression and is withdrawn; a timeout or
+  interrupted operation preserves evidence and resumes from verified artifacts.
+- The baseline and previous studies can be restored without losing original
+  inputs; new outputs identify the exact code and method that produced them.
+- Execution restrictions are demonstrated with failure cases, including an
+  attempted access outside the allowed boundary and source-embedded instructions.
+- At the budget limit, the agent reports a qualified result or a specific blocker.
+  It does not retry indefinitely, lower trust or turn a failed patch into success.
+
+---
+
+## R16 — Capability lifecycle and architectural review
+
+**Status: PLANNED. Minimum lifecycle depends on R15 artifacts and precedes R14;
+periodic review continues after the first operating-model release.**
+
+### Scope and promotion gates
+
+Keep a small repository index linking capabilities to code, method version,
+applicability, source/study evidence, regression cases, maturity and last review.
+Use it during R13 inspection; do not create a parallel free-form memory store or
+a dynamic loader for source-provided code. Experiments live with their study and
+patch; maintained knowledge stays in the durable homes named in RESEARCH.
+
+| State | Entry / exit evidence |
+|---|---|
+| Task experiment | Named gap, bounded change and tests; usable only within its validated scope after R15 review. Retain for audit, withdraw or nominate for reuse at study close |
+| Maintained local capability | Demonstrated value in a distinct subsequent use, applicability/counterexamples, regression protection, recorded review and maintenance responsibility. One success remains provisional |
+| Shared foundation | Multiple real consumers demonstrate the same semantics and benefit from sharing. Compare local duplication with proposed coupling; migrate only with compatibility tests and measured effect |
+| Retired or superseded | Record reason, replacement and replay implications. Remove obsolete executable paths where safe while preserving historical artifacts and method identity |
+
+A correctness fix may enter the existing maintained layer through its normal
+regression workflow; it does not need a second customer to justify fixing a bug.
+The broader-use gate applies to promoting an experimental capability or shared
+abstraction, not to retaining useful evidence.
+
+### Done when
+
+- A second study finds a prior capability through the index and checks its
+  applicability before reuse. A superficially similar but incompatible case
+  declines reuse without changing generic rules to fit it.
+- Every trial extension has a recorded keep/promote/reject/retire decision,
+  evidence and responsible maintainer role; unresolved hypotheses stay labelled.
+- At each operating-model milestone and every five extension-bearing studies,
+  the maintainer reviews duplication, cross-layer imports, category leakage,
+  unused capabilities, replay compatibility, test cost and unresolved debt.
+  No background scheduler is needed for this review gate.
+- Each review records concrete retain/simplify/retire decisions in ROADMAP with
+  supporting study IDs, an owner and a next checkpoint. Any refactoring carries
+  semantic diffs and rollback; a reasoned no-change decision is acceptable.
+- Shared scoring, storage and adapter frameworks are reconsidered from these
+  measurements, not from an ambition to make the system complete.
 
 ---
 
 ## Deferred and rejected work
 
+These decisions describe the measured workloads, not permanent limits on future
+research. R15 may test a previously deferred technique when a named task needs
+it, within budget and authorization. Revisit the evidence, not just the label.
+
 | Capability | Decision | Reconsider when |
 |---|---|---|
-| Browser automation (Playwright, Selenium) | **REJECTED** | `amazon/challenge/*` becomes non-zero at a meaningful rate, or a field with demonstrated product value is found to exist only after JS execution. Today: 201/201 HTTP 200, zero challenges; the one client-loaded structure found duplicates server-rendered data. |
+| Browser automation (Playwright, Selenium) | **DEFERRED; rejected for the measured workload** | A named task needs evidence unavailable through the current adapter, demonstrated by a bounded probe. Historical 201/201 HTTP 200 and duplicate client-loaded data justify the old decision, not a universal ban. Challenges alone do not authorize bypassing access limits. |
 | Proxy rotation, fingerprinting | **REJECTED** | Sustained 429/503 on **PDP** requests under current pacing. The measured 503s were a `/s?` burst artifact, fixed by sequential search pacing. |
-| OCR of product / A+ images | **DROPPED** | A named product question is blocked by image-only data. Measured: 0 of 60 bronze-die and 0 of 50 Gragnano claims are A+-image-only. Justifying evidence would be ≥20 records where a **V1 axis** is `unknown` and the value is visible only inside an image. |
+| OCR of product / A+ images | **DEFERRED; dropped from pasta V1** | A decisive requirement in a named task needs image-only evidence and a bounded extraction/validation trial shows value. The historical 0/60 bronze-die and 0/50 Gragnano findings apply to pasta; do not require 20 V1 records to justify a different task. |
 | Reviews | **DONE → R5** | Decision test passed at 57% against a 30% bar. Cost a tenth of the estimate: the data is in the retained PDP HTML, and the larger version is unavailable — `/product-reviews/` needs an account. |
 | Amazon.com completion | **DEFERRED → R4** | A stated user need for US research. |
 | Framework / runtime upgrade | **DEFERRED (maintenance)** | A product goal is blocked by the runtime. The last upgrade silently dropped an attribute table from two corpus pages; the corpus test is the gate. Never mix an upgrade with product work. |
@@ -1383,11 +1606,11 @@ unvalidated category will produce by default.
 
 | Boundary | Decision |
 |---|---|
-| Generic extraction | **Correct as is.** No pasta logic in the parser; all fourteen measured pasta signals are recoverable from `raw_tables`, `content.*` and `food.ingredients`. Do not trade "raw first, normalized second" for coverage. |
+| Generic extraction | Preserve raw evidence and keep category preferences out. The fourteen measured pasta signals fit existing fields; new tasks may justify local source parsers or new fields through R15 and contract review. Existing coverage does not establish architectural completeness. |
 | Food extraction | **Correct placement**, one change: the food layer must stop asserting values it cannot defend. |
 | Validation | **Two layers, never inside extraction** — shipped in R2 as `shopping_advisor/validation/`, published as [CONTRACT.md](CONTRACT.md). Extraction stays faithful to the source. *Generic:* unit-versus-field disagreement, basis-phrase-as-value, mass balance, Atwater, single-nutrient corroboration, quantity-versus-price coherence, on-page source conflict. *Category:* plausibility bands, claim/ingredient contradictions, price floors — supplied to the generic layer as **data**, never as procedure. |
-| Category analysis | **Downstream of the JSONL.** The acquisition layer never learns what good pasta is. Confirmed by a second category in R2: tyre mounting paste needed no change to the crawler, the extractor, or any trust rule — only a profile, a classifier and a list of claims. **This boundary survives [R11](#r11--category-synthesis-as-a-default-step):** a category the agent writes is the same four things in the same place, so synthesis is a question about where category knowledge *comes from*, never about where it sits. |
-| Who writes a category | **Changing, deliberately — see [R11](#r11--category-synthesis-as-a-default-step).** Today a human writes one as a reviewed maintenance change, and the runbook offers that as a choice. The target is that the agent writes one by default, marked provisional, carrying its evidence, and unable to look as confident as a validated one. The boundary that replaces "a human wrote it" is **validated versus provisional**, and it has to be visible in the report rather than implied by the absence of a warning. |
+| Category analysis | **Downstream of the JSONL.** The acquisition layer never learns what good pasta is. Confirmed by a second category in R2: tyre mounting paste needed no change to the crawler, the extractor, or any trust rule — only a profile, a classifier and a list of claims. **This boundary survives [R11](#r11--category-synthesis-as-a-default-step):** category interpretation stays in this layer; a task that also requires new extraction or evidence handling changes the corresponding layer through R15. |
+| Who writes a category | **Changing, deliberately — see [R11](#r11--category-synthesis-as-a-default-step).** Today an agent or human can write one through reviewed maintenance, and the runbook offers that as a choice. The target is that the agent writes one by default, within R15 gates, carrying its evidence and applicability. R16 distinguishes **task experiment, maintained capability and shared foundation**. Report limitations of provisional interpretation without conflating maturity with value-level trust. |
 | Marketplace-specific | `shared structural extraction + marketplace profile + adapters where measured evidence demands`. Correct, but currently over-applied: two profiles exist that nobody validated. |
 | Discovery / Product | **Separate the record now (R1), defer the entity (R3).** The requirement is that a repeat sighting must not cost a repeat fetch and must not be erased. |
 | Locale | **Record it, do not abstract it.** Justification is correctness: the request locale and the label vocabulary are chosen independently today and can disagree with no error at all. German stays the authoritative Amazon.de discovery locale. |
@@ -1440,11 +1663,10 @@ before R2 — do not model what nothing reads.
   Basmatireis is one of only two basmatis Stiftung Warentest rated "gut" in
   5/2026. A researcher who did not already know that result would not have
   reached the product it recommends.
-- **The sharper question now:** generic queries systematically under-sample
-  **diaspora brands**, which on Amazon.de are a large share of the real shelf
-  in exactly the categories where they matter — rice, pulses, spices, flour.
-  That is a query-design problem and it is not solved by crawling deeper: the
-  broad sweep already went two pages deep per query.
+- **The sharper hypothesis now:** generic queries may under-sample diaspora
+  brands beyond the observed basmati case. The two-page sweep did not resolve
+  that case; it does not measure other categories or rule out deeper discovery.
+  R12 compares bounded source/query expansion against that limitation.
 - **Experiment:** for a category, take the brands that only brand-specific
   queries discovered, and measure their share of the final shortlist. On
   basmati: **1 of 8 finalists, and 2 of the 3 products with external
@@ -1452,11 +1674,11 @@ before R2 — do not model what nothing reads.
 - **Threshold:** brand-only-discovered products taking more than ~20% of a
   shortlist → query design becomes a roadmap item, most likely as a
   brand-expansion pass seeded from the first crawl's own brand field.
-- **Crossed, and promoted to [R12](#r12--discovery-that-states-its-own-coverage)
-  (2026-09-16).** The basmati measure is above the bar, and the
-  [product vision](#product-vision--the-shopping-conversation) makes coverage
-  load-bearing rather than incidental: a flow that promises to collect the
-  options a marketplace has must be able to say which ones it cannot reach.
+- **Promoted to [R12](#r12--discovery-that-states-its-own-coverage), with
+  rationale corrected in the 2026-09-16 product review.** 1/8 is 12.5%, so the
+  original shortlist threshold was not crossed. Missing decision-relevant
+  candidates and 2/3 externally tested products justify a coverage experiment;
+  they do not prove exhaustive coverage or the original numeric hypothesis.
 
 ### E4 — Does the trust bar leave enough to compare?
 

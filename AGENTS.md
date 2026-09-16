@@ -34,12 +34,13 @@ than define separate research rules. Read this file, [README.md](README.md), and
   report. A brief's `sources` alone remain declared and unverified. Provider
   interchangeability trials remain T4 in [AGENT_TRANSITION_PLAN.md](AGENT_TRANSITION_PLAN.md).
 - The [product vision](ROADMAP.md#product-vision--the-shopping-conversation)
-  records where this is going: a conversation in which building a category is
-  the default rather than an offer (R11), discovery states its own coverage
-  (R12), and a recommendation is possible in a category nobody validated
-  (R14). **It is a destination, not a licence.** Until R11 ships, follow the
-  rule below and say when a category is not supported; a category written
-  mid-study today is a reviewed maintenance change, not a normal step.
+  is a permanently extensible research harness operated through a coding-agent
+  conversation. Task-driven adaptation covers categories, sources, extraction
+  and methods, not just a larger category catalogue. R13 defines intake/gap
+  planning; R15 controls adaptation; R16 governs reuse and architectural review;
+  R14 tests the complete loop. **These are planned capabilities, not runtime
+  authority.** Until R11 and R15 gates ship, follow the unsupported-category
+  rule below; a category written mid-study remains reviewed maintenance.
 
 ## Environment and checks
 

@@ -1,10 +1,14 @@
 # Shopping Advisor
 
-Shopping Advisor turns a purchase question into an evidence-backed comparison:
-a written brief, retained source evidence, validated claims, category-specific
-analysis, and a saved study whose decisions can be replayed. The product vision
-is a shopping conversation that returns a recommendation, alternatives, and
-what would change the answer.
+Shopping Advisor is a durable research harness for an AI software agent, with
+an AI coding interface as its permanent user interface. The target is to turn
+purchasing needs into evidence-backed decisions, extending the harness through
+small, tested changes when a request needs a capability that does not yet exist.
+It is permanently incomplete by design: success means accommodating unseen
+problems safely, not implementing every category in advance.
+
+Today it provides briefs, retained evidence, validation, category analysis and
+replayable studies. Routine task-driven extension remains planned.
 
 Data collection from Amazon.de through Scrapy is the current source integration. Its
 **`amazon_product`** spider handles search, pagination, and direct ASIN fetches.
@@ -44,18 +48,18 @@ credential required for crawling, analysis, or tests.
 
 ### Where this is going
 
-The intended end state is a conversation: a user describes a purchase broadly,
-answers a few clarifying questions, and the agent researches it — **building a
-category when none ships**, rather than offering to — collects the options the
-marketplace has, and returns a recommendation with its alternatives and what
-would change it.
+The user describes a purchase and receives useful questions, research, evidence,
+a comparison and a recommendation—or a precise account of insufficient evidence.
+The agent discovers what matters, reuses existing capabilities, detects gaps,
+adds and validates what is needed, and retains demonstrated learning. Categories,
+sources, extraction techniques and comparison methods can all evolve this way.
+Engineering is visible to the user when it affects cost, confidence or the decision.
 
-None of that is current behaviour, and the scope above is what actually ships.
-The destination, the four milestones it decomposes into, and the two
-measurements that say why "collect every relevant option" is the hard part are
-in [the product vision](ROADMAP.md#product-vision--the-shopping-conversation).
-The end state is still not "always produces a recommendation": it is one where
-the evidence supports it, and a precise account of the gap where it does not.
+The [product vision and roadmap assessment](ROADMAP.md#product-vision--the-shopping-conversation)
+define the minimum operating model, architectural safeguards and delivery order.
+R13 intake and T4 maintenance gates come first, then R15 controlled adaptation,
+R11 category synthesis, R12 coverage, R16 lifecycle and R14 unseen-problem trials.
+The supported scope above remains the operational limit until those gates ship.
 
 ## Setup and first check
 
