@@ -25,7 +25,7 @@ measurements as history.
 | **R12** | Discovery that states its own coverage | PLANNED |
 | **R13** | The conversation as the entry point | **NEXT** (intake, evidence and gap plan) |
 | **R14** | A recommendation in a category nobody validated | PLANNED (R11–R13, R15, R16 gates) |
-| **R15** | Controlled task-driven capability adaptation | PLANNED (after R13 and T4 maintenance gates) |
+| **R15** | Controlled task-driven capability adaptation | PLANNED (after R13; T4's local maintenance gate has shipped) |
 | **R16** | Capability lifecycle and architectural review | PLANNED (minimum lifecycle before R14) |
 
 ## Product vision — the shopping conversation
@@ -130,14 +130,14 @@ verified marketplace facts or buying advice.
 | Dynamic evidence discovery | T3 audits declared sources; it does not decide what evidence a new question needs | R13 adds a requirement-to-evidence plan; R12 measures collection against it |
 | Capability-gap detection | Brief requires an already registered category and feeds; registry lookup is not a gap analysis | R13 records gaps before an executable brief; do not loosen unknown-key/import safeguards |
 | Task-driven adaptation | Maintenance process exists; R11 covered categories only | New R15 covers all capability types; R11 is its first category application |
-| Safe execution and validation | Locked runtime and local tests exist; no tracked CI or validated extension isolation workflow | T4 maintenance gates and R15 precede default execution of new capabilities |
+| Safe execution and validation | Locked runtime, local tests and, since T4, one local gate over them; no validated extension isolation workflow | The T4 gate has shipped and is the executable baseline; R15's isolated execution still precedes default execution of new capabilities |
 | Architectural locality | Extraction/validation/category boundaries work for existing consumers; records and identities remain Amazon-shaped | Extend the demonstrated seam; a new retailer earns a source-native adapter, not fake ASINs |
-| Regression protection | Corpus, category cases and study replay exist | T4 automates checks; R15 records semantic before/after decisions and rollback |
+| Regression protection | Corpus, category cases and study replay exist, run by one gate with a tracked baseline | T4 automated them and made weakening them explicit; R15 records semantic before/after decisions and rollback |
 | Capability reuse | Static registration finds three categories, without lifecycle/applicability metadata | R16 adds a small discoverable capability index tied to code and cases |
 | Evidence-based promotion | Runbook requires scope, counterexamples and measured effect | R16 separates retention, maintained local capability and shared abstraction promotion |
 | Lessons without uncontrolled growth | Durable homes already defined; promotion/disposal outcomes not tracked | R16 records reuse, rejection, expiry and supersession beside existing homes |
 | Architectural review / debt | Deferral principles exist; no review cadence or accountable output | R16 adds a recurring review gate with measured simplification decisions |
-| Provider independence | Canonical instructions and ordinary CLIs exist; portability is not demonstrated | Preserve T4 two-provider study, repair and handoff trials; no provider SDK in the core |
+| Provider independence | Canonical instructions, ordinary CLIs and a gate needing no model API exist; portability is not demonstrated | Keep the design provider-neutral; the two-provider study, repair and handoff trials are **deferred from T4** and gate only the portability claim, not R15 |
 | Traceability of research and changes | T1–T3 bind evidence and reports; code revision/dirty flag do not preserve an exact uncommitted patch | R15 binds base, patch, method, checks and resulting study revision |
 | Insufficient evidence | T2 refusal and T3 audits exist; extension-budget failure is not integrated | R12/R15/R14 distinguish missing evidence, failed adaptation and a valid qualified result |
 
@@ -157,15 +157,18 @@ repeat. T5 is the demand-driven expansion policy, not a final catalogue phase.
 
 | Order | Deliverable | Dependency and reason |
 |---|---|---|
-| 1 — next | R13 intake/evidence/gap planning; T4 maintenance-gate slice | Both build on shipped T2/T3. Establish what to change and how to protect existing behavior |
-| 2 | R15 bounded adaptation, with R11 as the first category case | Needs R13's recorded gap and T4's executable baseline. Prove isolation, validation, traceability and rollback before making adaptation routine |
+| 1 — next | R13 intake/evidence/gap planning | Builds on shipped T2/T3. T4's maintenance gate has shipped and now protects existing behavior; R13 establishes what to change |
+| 2 | R15 bounded adaptation, with R11 as the first category case | Needs R13's recorded gap. T4's executable baseline is in place. Prove isolation, validation, traceability and rollback before making adaptation routine |
 | 3 | R12 coverage and R16 minimum lifecycle/index | Evidence planning can start with R13; integrate after R15 artifacts exist. Coverage and deliberate retention are necessary before claiming the full loop works |
-| 4 | R14 unseen-problem and reuse acceptance trials; finish T4 provider trials | Needs R11–R13, R15, R16 minimum lifecycle and maintenance gates. Cross-provider extension handoff then tests these same artifacts |
+| 4 | R14 unseen-problem and reuse acceptance trials | Needs R11–R13, R15 and R16's minimum lifecycle, on top of the shipped maintenance gate. The trials deferred from T4 — cross-platform paths, provider interchangeability and handoff — test these same artifacts afterwards, and gate only the portability claim |
 | Ongoing | R16 architectural reviews; T5 study-driven expansion | Use measurements from completed studies to simplify or extend; there is no final supported-category count |
 
-R12 design and T4 supported-study provider trials can proceed earlier; neither
-needs to wait for synthesis. Full provider interchangeability is a release gate
-for that claim, not a reason to postpone the first local extension experiment.
+R12 design can proceed earlier and need not wait for synthesis. The provider
+and cross-platform trials deferred from T4 are a release gate for the
+portability claim only: they do not block R15, and they are not a reason to
+postpone the first local extension experiment. Nothing in this sequence needs
+remote CI; the local gate is the authority, and no current constraint argues
+for a second one.
 R10 is **not** a prerequisite for any of the above: a local comparison method
 can be sufficient, and a generator is not a demonstrated second consumer.
 
@@ -444,6 +447,66 @@ instruction.
   was corrected against the measurement.
 - Documentation change only: no code, no snapshots, 381 tests unchanged and
   green. Links, anchors and the CLI defaults were verified.
+
+**T4 — DONE (2026-09-16): one local maintenance gate, at reduced scope.**
+
+The stage was cut down before it was built. The reviewed plan bundled a hosted
+CI workflow, Windows and Linux command paths, a research-evaluation set and
+two-provider interchangeability trials into one stage. Only the first
+question — *can a clean checkout establish, in one command, that this
+repository still does what it says?* — blocks R15. The rest is
+[deferred from T4](AGENT_TRANSITION_PLAN.md#deferred-from-t4) and gates the
+portability claim alone.
+
+- **One entry point.** `python -m shopping_advisor maintenance check` runs the
+  locked-runtime check, the offline suite, the published contract and schema
+  versions, the category registry, the four committed study examples replayed
+  through their own documented commands, and the local documentation links.
+  Developers and coding agents run the same command; `--json` is the same run
+  for a reader that parses. `AGENTS.md` now names it as the check step.
+- **Local, not remote, and not a hook.** No hosted runner was added: no current
+  constraint needs one, and a second definition of the gate can drift from
+  this one. A Git hook was rejected as the authority for a plainer reason —
+  it is per-clone state, invisible in review and skippable with `--no-verify`.
+- **The gate is reusable, not a second copy.** It calls the existing suite, the
+  existing contract constants, the existing category registry and the existing
+  study CLI. What is new is the inventory that says they are all still there.
+- **A baseline that has to be argued with.** `shopping_advisor/maintenance/`
+  `baseline.json` is tracked and records what the gate is entitled to find:
+  the required check list, the runtime and lock digest, the six published
+  contract versions, the three categories, the test-module inventory and
+  count, each example's study ID and decisions, and the indexed documents.
+  A task-local change that deletes a test module, drops below the count,
+  changes a contract version, loses a category or moves an example's decision
+  fails with the baseline field that would have to change. `baseline --update`
+  is the only way to lower a floor, it writes one reviewable file, and it
+  refuses while the gate is failing — a red tree cannot become the new normal.
+- Measured effect: the gate passes in **15 seconds** on the development
+  machine. **491 offline tests** in 17 modules (460 existing, 31 added for the
+  gate itself), no snapshot updates and no contract-version changes. The four
+  examples reproduce their recorded identities — `pasta-bronze-die-46127870314d`,
+  `pasta-low-temperature-drying-d309972b3bd0`, `basmati-audit-positive-571cca1a2d4b`
+  and `basmati-audit-insufficient-18b88dc2bd3c` — with their outcomes, offer
+  counts, exclusions and shortlists, and the two T3 examples pass
+  `validate-report --require-review`. The link check resolves **128 local
+  links and 247 anchors across all 16 tracked documents** and found none
+  broken; the 2026-09-16 documentation review counted 91 local file and anchor
+  links by hand, over the documents it touched. The automated count covers all
+  of them and is now the one that gets repeated.
+- The 31 new tests exercise the gate the way a weakening change would: a
+  deleted test module with the rest green, a count below the floor, a silent
+  contract bump, an untracked published version, a lost category, a moved
+  example decision, a dead link and a dead anchor, a check dropped from the
+  baseline, a check required but not implemented, an empty check list, a
+  missing or incompatible baseline file, and `--update` refusing a failing
+  tree. They never run the `tests` check against this repository's own suite,
+  which the gate already runs and which contains them.
+- Limits: this is one machine, one shell and one interpreter. Nothing here
+  establishes that the gate behaves the same on Windows or Linux, and nothing
+  establishes provider interchangeability — both are deferred and neither is
+  claimed. The gate checks that the repository still does what it says; it
+  cannot check that what it says is true of any marketplace. `uv sync --locked`
+  is still a separate bootstrap step and is the only one that uses the network.
 
 ---
 
@@ -1455,8 +1518,8 @@ needs a tested contract before becoming part of the executable workflow.
 
 ## R14 — A recommendation in a category nobody validated
 
-**Status: PLANNED. Depends on R11, R12, R13, R15, R16's minimum lifecycle and
-T4 maintenance gates. Does not depend on R10.**
+**Status: PLANNED. Depends on R11, R12, R13, R15 and R16's minimum lifecycle,
+on top of T4's shipped maintenance gate. Does not depend on R10.**
 
 ### Scope
 
@@ -1483,15 +1546,18 @@ hard requirement must remain missing regardless of any score.
   contract changes, if needed, are small, justified and versioned.
 - Old studies have zero unexplained decision changes. R16 records retention or
   promotion based on actual reuse, not the fact that code was generated twice.
-- The trial records the measures in the product vision. T4 additionally repeats
-  research, scoped repair and artifact handoff across both provider environments
-  before claiming provider interchangeability.
+- The trial records the measures in the product vision. Repeating research,
+  scoped repair and artifact handoff across both provider environments is
+  [deferred from T4](AGENT_TRANSITION_PLAN.md#deferred-from-t4) and is required
+  only before claiming provider interchangeability, not before R14 itself.
 
 ---
 
 ## R15 — Controlled task-driven capability adaptation
 
-**Status: PLANNED. Depends on R13's gap plan and T4's maintenance-gate slice.**
+**Status: PLANNED. Depends on R13's gap plan. T4's local maintenance gate has
+shipped and is the baseline R15 validates against; the provider and platform
+trials deferred from T4 are not a dependency.**
 
 ### Scope
 
@@ -1516,9 +1582,12 @@ runs separately under existing pacing and authorized access. No new agent
 framework is required. Document and test the boundary instead of treating
 agent-generated code as safe because it was generated locally.
 
-Test the new behavior and counterexamples, run the full offline suite and study
-replays, inspect changes in eligibility/trust/prose, then record review and
-versioned adoption before using the changed method for a recommendation.
+Test the new behavior and counterexamples, run the maintenance gate — which is
+the full offline suite, the contract versions and the study replays in one
+command — inspect changes in eligibility/trust/prose, then record review and
+versioned adoption before using the changed method for a recommendation. An
+adaptation that needs the gate baseline lowered says so in the same diff: the
+gate refuses to establish less than the tracked baseline without one.
 Ordinary authorized local work needs no new permission ritual. Changes to trust
 semantics, dependencies, permissions or foundational contracts need explicit
 scope and review; the task cannot expand its own authority or weaken its gates.
@@ -1530,6 +1599,9 @@ Retrieved text remains evidence, never execution instructions.
   complete the patch → checks → review → study-revision loop within stated limits.
 - A faulty patch fails a meaningful regression and is withdrawn; a timeout or
   interrupted operation preserves evidence and resumes from verified artifacts.
+- A patch that would weaken the verification baseline — a deleted test module,
+  a lowered count, a changed contract version, a moved example decision — fails
+  the gate and can only proceed by recording the new baseline explicitly.
 - The baseline and previous studies can be restored without losing original
   inputs; new outputs identify the exact code and method that produced them.
 - Execution restrictions are demonstrated with failure cases, including an
@@ -1752,5 +1824,6 @@ Kept for the reasoning, not as a plan.
   digest tampering, rehashed score/rank/claim changes and semantic-review binding.
 - Limits: automated checks establish reproducibility and declared applicability,
   not semantic truth. The real legacy sources remain access-limited. Real buying
-  advice requires fresh acquisition and source review. Provider interchangeability
-  trials and automated maintenance gates remain T4.
+  advice requires fresh acquisition and source review. T4 has since automated
+  these checks into one local gate; provider interchangeability trials remain
+  [deferred from T4](AGENT_TRANSITION_PLAN.md#deferred-from-t4).

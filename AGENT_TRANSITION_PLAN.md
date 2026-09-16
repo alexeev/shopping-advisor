@@ -1,6 +1,8 @@
 # Transition to an agent-operated research repository
 
-**Status: reviewed and adopted; T0–T3 implemented, T4–T5 remain planned.**
+**Status: reviewed and adopted; T0–T4 implemented, with T4 reduced to the
+local maintenance gate. T5 is an ongoing policy, and T4's provider and
+platform trials are explicitly deferred.**
 
 The assessment below records the repository at commit `95b8bbd` on 2026-09-16;
 findings describe that snapshot, including documentation gaps addressed by T0
@@ -37,7 +39,9 @@ The first priorities are:
 2. Close run-identity, provenance, and mixed-marketplace correctness gaps.
 3. Persist a research brief and study manifest; expose complete analysis as JSON.
 4. Make external evidence and finished reports traceable and verifiable.
-5. Prove the same workflow and maintenance gates in both provider environments.
+5. Make the maintenance gate one local command a clean checkout can run.
+   Proving the same workflow in a second provider environment is deferred
+   until one is actually in use; see [T4](#deferred-from-t4).
 
 ## 1. Current-state assessment
 
@@ -448,8 +452,8 @@ every prompt-injection attempt.
 including the measured-effect requirement, are in
 [AGENTS.md](AGENTS.md#maintenance-workflow). What remains planned here is the
 tooling that would enforce them — study bundles shipped in T2, report
-validation shipped in T3, automated gates remain T4. The text below is the reviewed
-rationale.
+validation shipped in T3, and T4 shipped the one local gate that runs them.
+The text below is the reviewed rationale.
 
 Use a small, explicit cycle:
 
@@ -596,26 +600,60 @@ changes in ranking reproduce. A historical adverse finding alone cannot be
 presented as a current batch conclusion. Positive and insufficient-evidence
 reports both pass when correctly framed; fabricated or mismatched support fails.
 
-### T4 — Enforce maintenance gates and provider interchangeability
+### T4 — One local maintenance gate
 
-**Depends on:** shipped T2/T3 examples. Deliver maintenance gates now alongside
-R13; R15 requires this slice before default extension execution. Supported-study
-provider trials can start independently; extension handoff trials follow R15/R14.
+**Status: DONE (2026-09-16), at deliberately reduced scope.** The gate is a
+single local, version-controlled command over the checks this repository
+already relies on. Cross-platform validation and provider interchangeability
+were removed from this stage and are deferred below; they do not block R15.
+See the [roadmap verification record](ROADMAP.md#agent-operation-transition).
 
-**Changes:** Add CI for clean locked setup, the offline suite, schema/examples,
-and report checks. Exercise supported Windows and Linux command paths. Add a
-small research-evaluation set spanning all three categories and realistic
-failure/injection cases. Document fixture promotion and study archival. Conduct
-the same onboarding, research, and maintenance exercise in both provider stacks.
+**Depends on:** the shipped T2/T3 examples, which the gate replays. R15 needs
+this gate before routine task-driven adaptation; R13 proceeds alongside it.
 
-**Acceptance:** Each stack independently completes the same supported study
-without undocumented instructions, leaves compatible artifacts, and passes the
-same acceptance checks. Both can diagnose a seeded parser failure from saved
-evidence and produce a scoped patch with regression coverage. One stack can
-resume the other's interrupted study from its artifacts. Record environment,
-method versions, success/failures, and human interventions. Core replay and CI
-require no model API. Prose can differ; eligibility, arithmetic, evidence
-requirements, and trust decisions must agree for identical inputs/methods.
+**Changes:** Expose the locked-runtime check, the offline suite, the published
+contract and schema versions, the category registry, the committed study
+examples replayed through their own documented commands, and the local
+documentation links through one authoritative entry point —
+`python -m shopping_advisor maintenance check`. Record what the gate is
+entitled to find in a tracked baseline, so that a task-local change cannot
+lower a floor, drop a check, bump a contract version or move an example's
+decision without an explicit, reviewable diff. Nothing here is a second copy
+of a check: the gate runs the existing suite, the existing contracts and the
+existing examples, and adds only the inventory that says they are all still
+there.
+
+**Acceptance:** A clean checkout runs `uv sync --locked` and then the one gate
+command, with no network after setup, no credentials and no model provider.
+The gate fails on a deleted test module, a test count below the recorded
+floor, an unexplained contract-version change, a lost category, a study
+example whose identity or decisions moved, a failed report audit and a dead
+documentation link — each naming the baseline field that would have to change.
+A tree that does not pass cannot record a new baseline. Developers and coding
+agents run the same command and read the same findings.
+
+#### Deferred from T4
+
+Cross-platform validation of the Windows and Linux command paths,
+Claude/Codex interchangeability, provider handoff trials, and a
+research-evaluation set spanning all three categories are **deferred, not
+cancelled**. The design stays provider-neutral — repository files and ordinary
+CLIs, no provider SDK in the core, and a gate that needs no model API — but
+portability is not being proven now, and no claim of proven portability may be
+made from the current evidence.
+
+These trials remain the release gate for the "operable primarily by agents
+using either provider stack" claim in section 8. They are **not** a
+prerequisite for R15 routine adaptation, which needs the executable local
+baseline and nothing further from this stage. Remote CI infrastructure is
+likewise out of scope: no current project constraint requires it, one local
+command already runs from a clean checkout, and a hosted runner would become a
+second definition of the gate that can drift from this one. Local Git hooks
+are not the authority either — a hook is per-clone state, invisible in review
+and skippable with `--no-verify`; a hook that calls the gate is a personal
+convenience. Re-open the deferred work when a second platform or a second
+provider is actually in use, and record the environment, the method versions,
+the failures and the human interventions when it runs.
 
 ### T5 — Expand only when a real study earns it
 
@@ -638,8 +676,8 @@ multi-agent roles, or a hosted platform.
 
 ## 7. First implementation priorities
 
-Historical T0–T4 sequence; T0–T3 are now delivered. Use the revised ROADMAP
-order for the next implementation batch.
+Historical T0–T4 sequence; T0–T4 are now delivered, T4 at the reduced scope
+recorded above. Use the revised ROADMAP order for the next implementation batch.
 
 The first implementation batch should contain a few independently reviewable
 changes, not the whole target architecture:
@@ -655,8 +693,10 @@ changes, not the whole target architecture:
 4. **Source applicability and report checks** (T3): turn the existing basmati
    external findings into inspectable evidence and prevent unsupported report
    conclusions.
-5. **Automated gates and two-provider trials** (T4, with CI earlier): test the
-   operating model on actual tasks, not just instruction-file presence.
+5. **One local automated gate** (T4, done): make the checks the repository
+   already trusts runnable as a single command from a clean checkout, with a
+   tracked baseline that has to be edited to establish less. Two-provider and
+   cross-platform trials were cut from this slice and deferred.
 
 Defer cosmetic module moves, universal product ontologies, generic scoring
 frameworks, new agent roles, vector memory, and scheduling. Remove obsolete
@@ -683,9 +723,15 @@ when all of the following are demonstrated for the **declared supported scope**:
 - Fixes and method changes are scoped, tested, reviewed, versioned, and
   reversible. Discoveries become fixtures, code, source observations, or dated
   documentation through the controlled process.
+- Fixes and method changes pass one local, version-controlled gate that a
+  clean checkout can run, and weakening that gate is an explicit reviewable
+  change rather than a quieter test run.
 - Both provider environments complete the shared research and maintenance
   acceptance exercises and can hand a study off to each other. Results record
-  the tested scope and any remaining human decisions.
+  the tested scope and any remaining human decisions. **This is the one item
+  below that remains deferred** (see [T4](#deferred-from-t4)); until it is
+  measured, the provider-interchangeability half of the claim above is a
+  design intention, not a demonstrated property.
 
 This definition does not promise exhaustive market coverage or scientifically
 verified product quality from marketplace text. It requires the system to know

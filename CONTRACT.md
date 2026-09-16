@@ -400,6 +400,11 @@ May change without a bump, because no correct consumer can depend on it:
 4. Records already on disk keep their own `schema_version`. The validation
    layer reads v2 and v3 records unchanged; older records simply carry fields
    it ignores.
+5. Re-record the [maintenance gate](AGENTS.md#environment-and-checks) baseline
+   in the same change: it pins every published version listed in §7 and the
+   T3 audit contracts below, and it fails on a number that moved without this
+   procedure. That is the point of it — a bump is a statement about meaning,
+   and an unremarked one is the failure this section exists to prevent.
 
 ---
 

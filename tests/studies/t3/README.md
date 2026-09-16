@@ -35,7 +35,13 @@ conflicts and supersession, missing and fabricated support, future source dates,
 stale prices, vendor assertions, review-sample misuse, digest tampering,
 rehashed score/rank/claim tampering and semantic-review binding. A source's
 embedded instructions remain inert text. These tests do not establish that an
-LLM will always resist prompt injection; provider trials remain T4.
+LLM will always resist prompt injection; provider trials are
+[deferred from T4](../../../AGENT_TRANSITION_PLAN.md#deferred-from-t4).
+
+Both examples are replayed by the
+[maintenance gate](../../../AGENTS.md#environment-and-checks) through exactly
+the commands above, and their study IDs, outcomes and counts are recorded in
+its baseline. A change that moves them fails the gate by name.
 
 The JSON schema is enforced by `study/audit.py` and described in
 [CONTRACT.md](../../../CONTRACT.md#8-study-audit-contracts-t3). For a new real

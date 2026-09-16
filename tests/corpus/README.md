@@ -93,4 +93,7 @@ Then read the snapshot diff before committing it. Two rules:
   matches an A+ image URL, and every 20-character uppercase token also matches
   a German A+ heading.
 * **A snapshot diff is a code review, not a refresh.** `--update` will happily
-  record a regression as the new expectation.
+  record a regression as the new expectation. Neither will the
+  [maintenance gate](../../AGENTS.md#environment-and-checks) catch it for you:
+  it re-runs the snapshot you committed. What it does catch is a page that
+  left the corpus, through the test count it records.

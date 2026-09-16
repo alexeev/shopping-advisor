@@ -31,8 +31,11 @@ than define separate research rules. Read this file, [README.md](README.md), and
 - T3 provides an external-source ledger, applicability checks, report validation
   and a separate semantic-review checklist. Use `study run --evidence LEDGER`
   and `study validate-report --require-review` before delivering an audited
-  report. A brief's `sources` alone remain declared and unverified. Provider
-  interchangeability trials remain T4 in [AGENT_TRANSITION_PLAN.md](AGENT_TRANSITION_PLAN.md).
+  report. A brief's `sources` alone remain declared and unverified.
+- T4 provides the one local maintenance gate under **Environment and checks**
+  below. Cross-platform and provider-interchangeability trials are
+  [deferred from T4](AGENT_TRANSITION_PLAN.md#deferred-from-t4): keep the work
+  provider-neutral, and do not claim portability that nothing has measured.
 - The [product vision](ROADMAP.md#product-vision--the-shopping-conversation)
   is a permanently extensible research harness operated through a coding-agent
   conversation. Task-driven adaptation covers categories, sources, extraction
@@ -48,13 +51,31 @@ Run from the repository root with uv-managed Python 3.14 / Scrapy 2.19.x:
 
 ```text
 uv sync --locked
-uv run --offline --locked python -m unittest discover -s tests
+uv run --offline --locked python -m shopping_advisor maintenance check
 ```
 
-Setup can download dependencies; tests and the committed-example analysis do
+**The second command is the gate, and it is the authoritative one.** It runs
+the locked-runtime check, the full offline suite, the published contract and
+schema versions, the category registry, the committed study examples replayed
+through their documented commands, and the local documentation links — and it
+compares all of that against `shopping_advisor/maintenance/baseline.json`,
+which records what it is entitled to find. Add `--json` for machine-readable
+findings. `--only NAME` narrows a run while iterating and says in its own
+output that it is not the gate; it does not substitute for one.
+
+`python -m unittest discover -s tests` still runs the suite alone, which is the
+right thing while iterating on one test. It is not the check that finishes a
+change: a suite with a module deleted from it passes.
+
+Setup can download dependencies; the gate and the committed-example analysis do
 not need the network. See README for PowerShell/POSIX environment syntax and
 cache troubleshooting. Do not change the lock or runtime during ordinary
-research. Keep a runtime upgrade separate from product behavior changes.
+research. Keep a runtime upgrade separate from product behavior changes; the
+gate fails on a changed lock digest for that reason.
+
+There is no remote CI and no Git hook standing behind this. The gate is local
+and version-controlled on purpose, and a hook that calls it is a personal
+convenience, never the authority.
 
 ## Research rules
 
@@ -133,9 +154,17 @@ HTML; it must not be exported or promoted. Read
 4. Add regression coverage for behavioral fixes, including false-positive or
    false-negative counterexamples. For documentation-only edits, verify commands,
    links and claims rather than writing tests that restate the documentation.
-5. Run relevant tests and the full offline suite for code/behavior changes. Read
+5. Run `maintenance check` for code/behavior changes; it is the full offline
+   suite, the contract versions and the study replays in one command. Read
    semantic output/snapshot diffs. Do not run `tests/test_corpus.py --update`
-   simply to accept failures. Apply CONTRACT's version rules when behavior changes.
+   simply to accept failures. Apply CONTRACT's version rules when behavior
+   changes — the gate will notice a version that moved without them.
+   If the change legitimately moves a floor the gate records — a retired
+   category, a test module that merged into another, a versioned contract
+   change, an example whose decision genuinely moved — re-record it with
+   `maintenance baseline --update` **as a separate, explained part of the same
+   change**. Never lower a floor to make a run green: a baseline edit is a
+   claim about the repository, and it is reviewed like one.
 6. Update current docs alongside behavior. Record evidence-backed learnings as
    fixtures, code, source observations or dated roadmap decisions. Hypotheses
    remain proposals; a research run must not silently rewrite its own method.

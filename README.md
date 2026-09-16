@@ -23,7 +23,8 @@ The supported scope below distinguishes shipped tools from the product vision.
 | Understand fields and trust semantics | [CONTRACT.md](CONTRACT.md) — extraction schema **6**, validation contract **2** |
 | Understand priorities and previous decisions | [ROADMAP.md](ROADMAP.md) |
 | Run or replay a saved study | [RESEARCH.md](RESEARCH.md#a-saved-study-end-to-end) — worked examples under [tests/studies](tests/studies/README.md) |
-| Understand the agent transition | [AGENT_TRANSITION_PLAN.md](AGENT_TRANSITION_PLAN.md) — T0–T3 delivered; T4–T5 planned |
+| Verify the repository before finishing a change | [AGENTS.md](AGENTS.md#environment-and-checks) — one local gate, `maintenance check` |
+| Understand the agent transition | [AGENT_TRANSITION_PLAN.md](AGENT_TRANSITION_PLAN.md) — T0–T4 delivered, T4 at reduced scope; T5 is an ongoing policy |
 
 `CLAUDE.md` is a thin entry point to the same instructions. If an agent does
 not automatically discover repository instructions, tell it to read
@@ -57,9 +58,12 @@ Engineering is visible to the user when it affects cost, confidence or the decis
 
 The [product vision and roadmap assessment](ROADMAP.md#product-vision--the-shopping-conversation)
 define the minimum operating model, architectural safeguards and delivery order.
-R13 intake and T4 maintenance gates come first, then R15 controlled adaptation,
-R11 category synthesis, R12 coverage, R16 lifecycle and R14 unseen-problem trials.
-The supported scope above remains the operational limit until those gates ship.
+T4's local maintenance gate has shipped. R13 intake comes next, then R15
+controlled adaptation, R11 category synthesis, R12 coverage, R16 lifecycle and
+R14 unseen-problem trials. The supported scope above remains the operational
+limit until those gates ship. Cross-platform and provider-interchangeability
+trials are [deferred](AGENT_TRANSITION_PLAN.md#deferred-from-t4) and block only
+the claim that either provider stack can operate this repository.
 
 ## Setup and first check
 
@@ -73,11 +77,28 @@ Both PowerShell and POSIX shells:
 
 ```text
 uv sync --locked
-uv run --offline --locked python -m unittest discover -s tests
+uv run --offline --locked python -m shopping_advisor maintenance check
 ```
 
 `--locked` checks that the committed lock matches the project; do not regenerate
 it as a side effect of ordinary research. No virtualenv activation is needed.
+
+The second command is the repository's one verification gate, and the only
+check a change has to pass. It runs the offline suite, the published contract
+and schema versions, the category registry, the committed study examples
+replayed through their documented commands, and the local documentation links,
+and it compares them against the tracked
+`shopping_advisor/maintenance/baseline.json`. It takes about fifteen seconds,
+needs no network after setup, and needs no credentials or model provider. A
+green run on a clean clone is the evidence that this repository still does what
+the rest of this file says it does.
+
+There is no hosted CI and no Git hook behind it: the gate is local and
+version-controlled so that it is the same command for everyone, visible in
+review, and impossible to skip by accident. Run the suite alone with
+`python -m unittest discover -s tests` while iterating; finish with the gate.
+[AGENTS.md](AGENTS.md#environment-and-checks) has the rules that go with it,
+including when re-recording the baseline is legitimate.
 
 **The default crawl profile is the validated, proxy-free local one** (T1). It
 needs no API key and no optional packages, and it asks Amazon.de for German.
@@ -145,6 +166,7 @@ names and local checkout locations are managed separately from this code.
 | Category analysis | `shopping_advisor/analysis/categories/` | Classification, meaningful claims and comparison axes; category plausibility profiles |
 | Analysis CLI | `shopping_advisor/analysis/__main__.py`, `report.py`, `feeds.py` | Feed merging, evidence cards, rankings, comparisons and summaries |
 | Study | `shopping_advisor/study/` | The written brief, its stated constraints, every candidate and its fate, the outcome, the report, and replay |
+| Maintenance gate | `shopping_advisor/maintenance/` | One local verification entry point over the suite, contracts, categories, examples and documentation, against a tracked baseline |
 
 `items.py`, `pipelines.py`, and `middlewares.py` are inherited scaffolding;
 they are not the research data model. The product spider emits dictionaries.
@@ -209,6 +231,8 @@ still covers one marketplace: feeds spanning several stop the command until
 | `python -m shopping_advisor.study run BRIEF` | Analyses the feeds the brief names and writes a study bundle; collects nothing |
 | `python -m shopping_advisor.study validate-report BUNDLE --require-review` | Validate indexed claims, replay decisions and require a separate completed semantic review |
 | `python -m shopping_advisor.study verify BUNDLE` | Re-derives the decisions from the bundle's own inputs and reports what moved |
+| `python -m shopping_advisor maintenance check` | The gate: runtime, offline suite, contract versions, categories, replayed examples and documentation links, against the tracked baseline |
+| `python -m shopping_advisor maintenance baseline --update` | Deliberately re-record the floors, from a tree that passes; refuses otherwise |
 
 Run these with `uv run --offline --locked`. The analysis commands accept
 multiple JSONL or `.jsonl.gz` feeds. They merge by marketplace and ASIN and
@@ -289,10 +313,21 @@ taken at close; see the [runbook limitations](RESEARCH.md#current-limitations).
 ## Maintenance and reference material
 
 Use [AGENTS.md](AGENTS.md#maintenance-workflow) for the change and verification
-sequence. The regression suite includes 39 saved PDPs (38 `.de`, one `.com`),
-a search page, and category cases. Read [corpus instructions](tests/corpus/README.md)
-before promoting a capture or regenerating snapshots. A snapshot update is
-a reviewed behavior change, not a routine way to fix a failing test.
+sequence; `maintenance check` is its verification step. The regression suite
+includes 39 saved PDPs (38 `.de`, one `.com`), a search page, and category
+cases. Read [corpus instructions](tests/corpus/README.md) before promoting a
+capture or regenerating snapshots. A snapshot update is a reviewed behavior
+change, not a routine way to fix a failing test.
+
+`shopping_advisor/maintenance/baseline.json` records what the gate is entitled
+to find: the required checks, the runtime and lock digest, the published
+contract versions, the registered categories, the test-module inventory and
+count, each committed example's study ID and decisions, and the indexed
+documents. It is tracked so that establishing *less* than before is a visible
+diff rather than a quieter test run. Re-record it with `maintenance baseline
+--update` when a change legitimately moves a floor, in the same change that
+moves it, with the reason; the command refuses to record a tree that does not
+pass.
 
 Adding a category normally means a module under `analysis/categories/`, registered
 through that package's `__init__.py`, plus tests. Start at `Category`, `Axis`,

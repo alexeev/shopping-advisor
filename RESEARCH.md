@@ -2,9 +2,11 @@
 
 This is the current workflow for the shipped tools. Read [AGENTS.md](AGENTS.md)
 first. T0 makes the existing workflow discoverable, T1 makes acquisition and
-replay trustworthy, T2 persists studies, and T3 adds the external-source ledger,
-claim checks and separate semantic review. Provider trials remain T4 in the
-[transition plan](AGENT_TRANSITION_PLAN.md).
+replay trustworthy, T2 persists studies, T3 adds the external-source ledger,
+claim checks and separate semantic review, and T4 puts every automated check
+behind [one local command](AGENTS.md#environment-and-checks). Provider and
+cross-platform trials are
+[deferred from T4](AGENT_TRANSITION_PLAN.md#deferred-from-t4).
 
 The permanent product interface is the coding-agent conversation. The
 [revised product vision](ROADMAP.md#product-vision--the-shopping-conversation)
@@ -530,9 +532,13 @@ observation → reproducible case → proposed change → review → versioned a
    finding — record it and say what would have to be kept next time.
 3. **Proposed change.** Scope it to the narrowest responsible layer, following
    [the maintenance workflow](AGENTS.md#maintenance-workflow).
-4. **Review and versioned adoption.** Tests, a readable diff, `CONTRACT.md`'s
-   version rules when a published meaning moves, and a dated roadmap entry for
-   anything that changes policy rather than fixing a defect.
+4. **Review and versioned adoption.** A green
+   [`maintenance check`](AGENTS.md#environment-and-checks), a readable diff,
+   `CONTRACT.md`'s version rules when a published meaning moves, and a dated
+   roadmap entry for anything that changes policy rather than fixing a defect.
+   If the change moves a floor the gate records, re-record the baseline in the
+   same diff and say why. Lowering the bar to fit the change, silently, is the
+   one thing this step exists to prevent.
 5. **Measured effect.** State what actually changed: a count, a snapshot diff,
    a failing case that now passes. "Contract v2 moved exactly `contract_version`
    on 39 records and `offer[0]` on the 27 with a family" is a measured effect;
@@ -589,7 +595,8 @@ to make a preferred product win.
 | A brief's `[[sources]]` are declarations | Use the external ledger and indexed claims for checked applicability | — (by design) |
 | Original full studies/reports and basmati source documents are not all tracked | Use the committed study examples for onboarding; request/rebuild missing evidence only when the task needs it; migrated citations remain unverified | — (historical access limits) |
 | A bundle replays only where the feeds its brief names are available; `data/studies/` is gitignored | Copy the bundle and its feeds together, or build the study over committed cases | — (retention policy) |
-| No two-provider acceptance trial yet | Load the same canonical instructions; do not claim proven provider handoff | T4 |
+| No two-provider acceptance trial, and no run on a second platform | Load the same canonical instructions; keep the work provider-neutral; do not claim proven provider handoff or cross-platform behaviour | [deferred from T4](AGENT_TRANSITION_PLAN.md#deferred-from-t4) |
+| The maintenance gate establishes that the repository still does what it says, not that what it says is true of any marketplace | Use it to finish a change; it replaces no part of source review or freshness judgement | — (by design) |
 
 ## Failure diagnosis
 

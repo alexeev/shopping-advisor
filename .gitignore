@@ -67,3 +67,7 @@ reports/*
 !shopping_advisor/evidence/*.json
 !tests/studies/t3/*.json
 !tests/studies/t3/*.jsonl
+
+# The maintenance gate's baseline. Tracked deliberately: it is the record of
+# what the gate is entitled to find, and a change to it has to be reviewable.
+!shopping_advisor/maintenance/*.json

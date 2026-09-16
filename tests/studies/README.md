@@ -59,6 +59,12 @@ machine and the id above is the one a clean checkout produces. Bundles are
 written under `data/studies/`, which is gitignored: the bundle is output, the
 brief is source. Nothing here touches the network.
 
+The [maintenance gate](../../AGENTS.md#environment-and-checks) runs exactly
+these commands for both briefs on every check, into a scratch directory, and
+compares the study id, outcome, offer, exclusion and shortlist counts with the
+ones recorded in its baseline. That is what keeps the ids printed above from
+going stale.
+
 ## Adding one
 
 Keep the brief's question answerable from committed evidence, state the
@@ -66,6 +72,9 @@ stopping criteria (`minimum_candidates`, `decisive_margin`) *before* looking
 at what the data supports, and add the assertions to `../test_study.py` in
 the same change. A brief whose expected outcome is not asserted will drift
 without anything failing, which is the failure mode these exist to prevent.
+Add it to `examples` in `shopping_advisor/maintenance/baseline.json` in the
+same change too, with a one-line `why`: that is what makes the gate replay it
+through the documented commands rather than only through the library.
 
 `shopping_advisor/study/brief.py` holds the schema and refuses unknown keys, so
 a misspelt constraint is an error rather than a constraint that silently did

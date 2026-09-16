@@ -383,8 +383,11 @@ label reads as a nutrition declaration — added in R2 so the corpus stops being
 exclusively groceries.
 
 ```bash
-uv run python -m unittest discover -s tests
+uv run python -m shopping_advisor maintenance check
 ```
+
+That is the gate, and the corpus test is one of the 17 modules it runs; the
+suite alone is `uv run python -m unittest discover -s tests`.
 
 When a change is meant to alter extraction output, regenerate the snapshot and
 review the diff as part of the change:

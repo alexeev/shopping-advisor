@@ -1,0 +1,125 @@
+{
+  "baseline_version": 1,
+  "categories": [
+    "basmati_rice",
+    "dry_pasta",
+    "tyre_mounting_paste"
+  ],
+  "checks": [
+    "categories",
+    "contracts",
+    "docs",
+    "examples",
+    "runtime",
+    "tests"
+  ],
+  "contracts": {
+    "brief": 1,
+    "evidence_ledger": 1,
+    "extraction_schema": 6,
+    "run_manifest": 2,
+    "study_manifest": 2,
+    "validation_contract": 2
+  },
+  "documentation": [
+    "AGENTS.md",
+    "AGENT_TRANSITION_PLAN.md",
+    "BASELINE.md",
+    "CLAUDE.md",
+    "CONTRACT.md",
+    "EXTRACTION.md",
+    "README.md",
+    "RESEARCH.md",
+    "ROADMAP.md",
+    "USABILITY.md",
+    "data/evidence/README.md",
+    "reports/README.md",
+    "tests/cases/README.md",
+    "tests/corpus/README.md",
+    "tests/studies/README.md",
+    "tests/studies/t3/README.md"
+  ],
+  "examples": [
+    {
+      "brief": "tests/studies/pasta-bronze-die.toml",
+      "expect": {
+        "excluded": 3,
+        "offers": 5,
+        "outcome": "recommendation",
+        "shortlisted": 3,
+        "study_id": "pasta-bronze-die-46127870314d"
+      },
+      "name": "pasta-bronze-die",
+      "why": "T2's worked recommendation: the offline walkthrough in RESEARCH.md ends here."
+    },
+    {
+      "brief": "tests/studies/pasta-low-temperature-drying.toml",
+      "expect": {
+        "excluded": 2,
+        "offers": 0,
+        "outcome": "insufficient_evidence",
+        "shortlisted": 0,
+        "study_id": "pasta-low-temperature-drying-d309972b3bd0"
+      },
+      "name": "pasta-low-temperature-drying",
+      "why": "T2's refusal: a study that correctly declines to name a winner."
+    },
+    {
+      "brief": "tests/studies/t3/positive.toml",
+      "evidence": "tests/studies/t3/evidence.json",
+      "expect": {
+        "excluded": 0,
+        "offers": 3,
+        "outcome": "recommendation",
+        "shortlisted": 3,
+        "study_id": "basmati-audit-positive-571cca1a2d4b"
+      },
+      "name": "t3-positive",
+      "review": "tests/studies/t3/positive-review.json",
+      "why": "T3's audited recommendation, through validate-report --require-review."
+    },
+    {
+      "brief": "tests/studies/t3/insufficient.toml",
+      "evidence": "tests/studies/t3/evidence.json",
+      "expect": {
+        "excluded": 0,
+        "offers": 3,
+        "outcome": "insufficient_evidence",
+        "shortlisted": 0,
+        "study_id": "basmati-audit-insufficient-18b88dc2bd3c"
+      },
+      "name": "t3-insufficient",
+      "review": "tests/studies/t3/insufficient-review.json",
+      "why": "T3's audited insufficient-evidence outcome, reviewed and still a refusal."
+    }
+  ],
+  "note": "What the maintenance gate is entitled to find. Tracked on purpose: a task-local change that lowers a floor, drops a check or moves an example's decision has to say so here, in a reviewable diff. Re-record with `maintenance baseline --update` from a tree that passes.",
+  "recorded_at": "2026-09-16T16:13:22+00:00",
+  "runtime": {
+    "lock_sha256": "e24bc67da2dba6c49538700bc8bce61658748c715e9103603f537c15694a32cd",
+    "python": "3.14",
+    "scrapy": "2.19"
+  },
+  "tests": {
+    "minimum": 491,
+    "modules": [
+      "test_analysis",
+      "test_attributed_search",
+      "test_audit",
+      "test_basmati",
+      "test_cli",
+      "test_corpus",
+      "test_extraction",
+      "test_feeds",
+      "test_maintenance",
+      "test_marketplaces",
+      "test_mounting_paste",
+      "test_reviews",
+      "test_run",
+      "test_settings",
+      "test_study",
+      "test_validation",
+      "test_variation"
+    ]
+  }
+}
