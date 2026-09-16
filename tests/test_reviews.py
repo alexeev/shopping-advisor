@@ -22,9 +22,9 @@ from parsel import Selector
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
-from amazon_scraper.extraction import reviews as extract_reviews  # noqa: E402
-from amazon_scraper.extraction.marketplaces import for_domain  # noqa: E402
-from amazon_scraper.validation import (  # noqa: E402
+from shopping_advisor.extraction import reviews as extract_reviews  # noqa: E402
+from shopping_advisor.extraction.marketplaces import for_domain  # noqa: E402
+from shopping_advisor.validation import (  # noqa: E402
     DISPUTED, STRUCTURED, TRUSTED, UNKNOWN, UNVERIFIED, reviews, validate)
 
 DE = for_domain('www.amazon.de')
@@ -311,7 +311,7 @@ class Signals(unittest.TestCase):
 
     def test_vendor_search_does_not_reach_review_text(self):
         """The separation that stops marketing copy corroborating itself."""
-        from amazon_scraper.validation import search as vendor_search
+        from shopping_advisor.validation import search as vendor_search
         rec = record(html=card(text='Absolut aromatischer Basmati'))
         self.assertEqual(vendor_search(rec, r'aromatischer'), [])
 

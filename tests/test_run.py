@@ -28,13 +28,13 @@ from scrapy.settings import Settings
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
-from amazon_scraper import run as run_module  # noqa: E402
-from amazon_scraper.extraction import PdpExtractor, for_domain  # noqa: E402
-from amazon_scraper.extraction.pdp import SCHEMA_VERSION  # noqa: E402
-from amazon_scraper.provenance import sha256_text  # noqa: E402
-from amazon_scraper.run import CrawlRun, acquisition_locale  # noqa: E402
-from amazon_scraper.spiders.amazon_product import AmazonProductSpider  # noqa: E402
-from amazon_scraper.validation.contract import CONTRACT_VERSION  # noqa: E402
+from shopping_advisor import run as run_module  # noqa: E402
+from shopping_advisor.extraction import PdpExtractor, for_domain  # noqa: E402
+from shopping_advisor.extraction.pdp import SCHEMA_VERSION  # noqa: E402
+from shopping_advisor.provenance import sha256_text  # noqa: E402
+from shopping_advisor.run import CrawlRun, acquisition_locale  # noqa: E402
+from shopping_advisor.spiders.amazon_product import AmazonProductSpider  # noqa: E402
+from shopping_advisor.validation.contract import CONTRACT_VERSION  # noqa: E402
 
 CORPUS = pathlib.Path(__file__).resolve().parent / 'corpus'
 SEARCH_PAGE = CORPUS / 'amazon_de_search' / 'spaghetti-hartweizen-p1.html.gz'

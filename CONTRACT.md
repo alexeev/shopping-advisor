@@ -5,8 +5,8 @@ before either of those changes. Two artefacts are published here:
 
 | Artefact | Version | Produced by | Answers |
 |---|---|---|---|
-| **Product record** | `SCHEMA_VERSION = 6` | `amazon_scraper.extraction` | what the page says |
-| **Validated record** | `CONTRACT_VERSION = 2` | `amazon_scraper.validation` | how much of that holds up |
+| **Product record** | `SCHEMA_VERSION = 6` | `shopping_advisor.extraction` | what the page says |
+| **Validated record** | `CONTRACT_VERSION = 2` | `shopping_advisor.validation` | how much of that holds up |
 
 They are versioned separately because they change for different reasons and
 have different consumers. An extractor learning to read a new Amazon
@@ -120,7 +120,7 @@ inferred from any volume field present, which reported a 50 ml sponge tin as
 
 ## 3. The validated record (contract v2)
 
-`amazon_scraper.validation.validate(record, profile) -> Validated`
+`shopping_advisor.validation.validate(record, profile) -> Validated`
 
 The Python API defaults to a neutral profile when called as `validate(record)`;
 the saved-page corpus pins this neutral output. The `analysis validated` CLI
@@ -130,7 +130,7 @@ has no neutral-profile switch. See [RESEARCH.md](RESEARCH.md#offline-walkthrough
 for an executable example.
 
 ```python
-from amazon_scraper.validation import validate, CategoryProfile
+from shopping_advisor.validation import validate, CategoryProfile
 
 validated = validate(record, CategoryProfile(key='paint', label='wall paint'))
 validated.quantity.status        # 'trusted'

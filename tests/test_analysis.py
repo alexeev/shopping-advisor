@@ -22,10 +22,10 @@ import unittest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
-from amazon_scraper.analysis import report  # noqa: E402
-from amazon_scraper.analysis.categories.dry_pasta import (  # noqa: E402
+from shopping_advisor.analysis import report  # noqa: E402
+from shopping_advisor.analysis.categories.dry_pasta import (  # noqa: E402
     CATEGORY, evaluate)
-from amazon_scraper.validation import (  # noqa: E402
+from shopping_advisor.validation import (  # noqa: E402
     DISPUTED, NOT_CLAIMED, TRUSTED, UNKNOWN, UNVERIFIED, nutrition as
     generic_nutrition, search, validate)
 
@@ -151,7 +151,7 @@ class ContractUse(unittest.TestCase):
         the only specification a second category would have had.
         """
         source = (pathlib.Path(__file__).resolve().parent.parent /
-                  'amazon_scraper' / 'analysis' / 'categories' /
+                  'shopping_advisor' / 'analysis' / 'categories' /
                   'dry_pasta.py').read_text(encoding='utf-8')
         # `check_claim_consistency` may dispute a *claim*; nothing may touch
         # the numeric pipeline.

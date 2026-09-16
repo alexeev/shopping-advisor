@@ -1,6 +1,6 @@
 """Command line for adding a page to the committed corpus.
 
-The rules themselves are runtime code -- :mod:`amazon_scraper.redaction` --
+The rules themselves are runtime code -- :mod:`shopping_advisor.redaction` --
 because the crawler's page store depends on them and a crawl's privacy
 handling must not depend on a test directory being importable. This file is
 the corpus-side entry point and nothing else.
@@ -22,7 +22,7 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2]))
 
-from amazon_scraper.redaction import (CORRELATION_ID, REQUEST_ID,  # noqa: E402
+from shopping_advisor.redaction import (CORRELATION_ID, REQUEST_ID,  # noqa: E402
                                       SESSION_ID, redact)
 
 __all__ = ['CORRELATION_ID', 'REQUEST_ID', 'SESSION_ID', 'redact']

@@ -40,8 +40,8 @@ from parsel import Selector
 # when run as a script from anywhere, not only under `unittest discover`.
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
-from amazon_scraper.extraction import PdpExtractor, for_domain  # noqa: E402
-from amazon_scraper.validation import validate  # noqa: E402
+from shopping_advisor.extraction import PdpExtractor, for_domain  # noqa: E402
+from shopping_advisor.validation import validate  # noqa: E402
 
 CORPUS = pathlib.Path(__file__).resolve().parent / 'corpus'
 

@@ -26,9 +26,9 @@ import unittest
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
-from amazon_scraper.analysis import report  # noqa: E402
-from amazon_scraper.study import bundle, brief as brief_module  # noqa: E402
-from amazon_scraper.study.analysis import (  # noqa: E402
+from shopping_advisor.analysis import report  # noqa: E402
+from shopping_advisor.study import bundle, brief as brief_module  # noqa: E402
+from shopping_advisor.study.analysis import (  # noqa: E402
     EXCLUDED, FILTERED_OUT, INSUFFICIENT_EVIDENCE, NOT_CATEGORY,
     RECOMMENDATION, SHORTLISTED, StudyError, analyse)
 
@@ -101,7 +101,7 @@ class BriefValidation(Temporary):
         """A brief selects among things this repository already reviewed. It
         is data, and the only power it has is to name a registry key."""
         self.refuses([('category = "dry_pasta"',
-                       'category = "amazon_scraper.analysis'
+                       'category = "shopping_advisor.analysis'
                        '.categories.dry_pasta"')],
                      'A category is named by its key, never by an import path')
 
@@ -445,8 +445,8 @@ class StructuredRanking(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        from amazon_scraper.analysis import feeds as feeds_module
-        from amazon_scraper.analysis.category import get
+        from shopping_advisor.analysis import feeds as feeds_module
+        from shopping_advisor.analysis.category import get
         records, _provenance = feeds_module.merge(
             [str(HERE / 'cases' / 'pasta_v1.jsonl.gz')])
         category = get('dry_pasta')
@@ -491,7 +491,7 @@ class CompleteCategoryJson(unittest.TestCase):
     """Every card section a category renders has to survive serialisation."""
 
     def card(self, key, record):
-        from amazon_scraper.analysis.category import get
+        from shopping_advisor.analysis.category import get
         return report.card_json(get(key).evaluate(record))
 
     def test_basmati_publishes_everything_its_text_card_shows(self):
@@ -515,7 +515,7 @@ class CompleteCategoryJson(unittest.TestCase):
         self.assertIsNone(card['declaration_conflict'])
 
     def test_every_category_declares_the_keys_it_adds(self):
-        from amazon_scraper.analysis.category import REGISTRY
+        from shopping_advisor.analysis.category import REGISTRY
         self.assertEqual(REGISTRY['dry_pasta'].extras, ('drying',))
         self.assertEqual(REGISTRY['tyre_mounting_paste'].extras,
                          ('suitability',))

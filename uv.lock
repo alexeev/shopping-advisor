@@ -82,7 +82,7 @@ wheels = [
 ]
 
 [[package]]
-name = "amazon-scrapy-scraper"
+name = "shopping-advisor"
 version = "0.2.0"
 source = { virtual = "." }
 dependencies = [

@@ -25,11 +25,11 @@ from scrapy.settings import Settings
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from amazon_scraper import settings as default_profile  # noqa: E402
-from amazon_scraper import settings_baseline  # noqa: E402
-from amazon_scraper.extraction import for_domain  # noqa: E402
-from amazon_scraper.provenance import acquisition_settings  # noqa: E402
-from amazon_scraper.run import acquisition_locale  # noqa: E402
+from shopping_advisor import settings as default_profile  # noqa: E402
+from shopping_advisor import settings_baseline  # noqa: E402
+from shopping_advisor.extraction import for_domain  # noqa: E402
+from shopping_advisor.provenance import acquisition_settings  # noqa: E402
+from shopping_advisor.run import acquisition_locale  # noqa: E402
 
 SETTING_NAMES = [name for name in dir(default_profile) if name.isupper()]
 
@@ -48,14 +48,14 @@ def as_settings(module):
 class Profiles(unittest.TestCase):
 
     def test_a_command_with_no_environment_gets_the_validated_profile(self):
-        self.assertEqual(profiles()['default'], 'amazon_scraper.settings')
+        self.assertEqual(profiles()['default'], 'shopping_advisor.settings')
         self.assertEqual(default_profile.SETTINGS_PROFILE, 'baseline')
 
     def test_the_name_every_existing_command_uses_still_resolves_here(self):
         """``SCRAPY_PROJECT=baseline`` is written down in this repository's
         reports, runbook and roadmap, and in shells outside it."""
         self.assertEqual(profiles()['baseline'],
-                         'amazon_scraper.settings_baseline')
+                         'shopping_advisor.settings_baseline')
         for name in SETTING_NAMES:
             with self.subTest(setting=name):
                 self.assertEqual(getattr(settings_baseline, name),
@@ -63,7 +63,7 @@ class Profiles(unittest.TestCase):
 
     def test_the_scrapeops_integration_is_opt_in_and_named(self):
         self.assertEqual(profiles()['scrapeops'],
-                         'amazon_scraper.settings_scrapeops')
+                         'shopping_advisor.settings_scrapeops')
 
 
 class NoCredentials(unittest.TestCase):
@@ -84,15 +84,15 @@ class NoCredentials(unittest.TestCase):
 
     def test_no_api_key_is_carried_in_the_default_profile(self):
         self.assertFalse(hasattr(default_profile, 'SCRAPEOPS_API_KEY'))
-        source = (ROOT / 'amazon_scraper' / 'settings.py').read_text(
+        source = (ROOT / 'shopping_advisor' / 'settings.py').read_text(
             encoding='utf-8')
         self.assertNotIn('API-KEY', source)
 
     def test_the_optional_profile_reads_its_key_from_the_environment(self):
         """A literal placeholder in a settings module is how a real key gets
         committed by somebody filling in the blank."""
-        module = importlib.import_module('amazon_scraper.settings_scrapeops')
-        source = (ROOT / 'amazon_scraper' / 'settings_scrapeops.py').read_text(
+        module = importlib.import_module('shopping_advisor.settings_scrapeops')
+        source = (ROOT / 'shopping_advisor' / 'settings_scrapeops.py').read_text(
             encoding='utf-8')
         self.assertIn("os.environ.get('SCRAPEOPS_API_KEY'", source)
         self.assertNotIn('API-KEY', source)

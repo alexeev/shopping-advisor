@@ -165,7 +165,7 @@ execution.** Browser automation is therefore still not justified. See §4.
 ### 2.1 Layering
 
 ```
-amazon_scraper/extraction/
+shopping_advisor/extraction/
   text.py          locale-agnostic text + number primitives
   marketplaces.py  per-location labels, currency, number format
   blocks.py        generic harvesters for Amazon's page structures
@@ -296,7 +296,7 @@ could not defend:
   `high` records failed plausibility more often than `medium` ones (5/45
   against 2/40). `source` stays — it is a fact about the page — and how much
   to believe a value is now decided per value, downstream, by
-  `amazon_scraper.validation`.
+  `shopping_advisor.validation`.
 - **`package.total_quantity_unit` follows the row the total came from**,
   rather than any volume field present on the page. A 50 ml tin filed as
   `Anzahl der Einheiten: 50.0 milliliter` used to be reported as 50 g, which
@@ -493,7 +493,7 @@ sources found it on 85 — **1.9× more**.
 The third column is kept as it was measured, and it is the reason the field no
 longer exists: the `high` rows failed plausibility checks more often than the
 `medium` ones. Schema v4 publishes the source and leaves the grading to
-`amazon_scraper.validation`, per value. See [CONTRACT.md](CONTRACT.md).
+`shopping_advisor.validation`, per value. See [CONTRACT.md](CONTRACT.md).
 | *(absent)* | 110 | — |
 
 | `total_quantity_source` | records |
@@ -884,7 +884,7 @@ module class names as a coarse hint.
 exists it is also server-rendered, so this is an accepted gap rather than a
 known loss.
 
-**`amazon_scraper/spiders/amazon_search.py` is untouched** and still carries
+**`shopping_advisor/spiders/amazon_search.py` is untouched** and still carries
 hardcoded `.com` URLs and the off-by-one pagination bug documented in
 BASELINE.md. It is not used by this pipeline.
 

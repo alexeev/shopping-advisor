@@ -26,9 +26,9 @@ import unittest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
-from amazon_scraper.analysis import category as cat  # noqa: E402
-from amazon_scraper.analysis.categories import basmati_rice as B  # noqa: E402
-from amazon_scraper.validation import (  # noqa: E402
+from shopping_advisor.analysis import category as cat  # noqa: E402
+from shopping_advisor.analysis.categories import basmati_rice as B  # noqa: E402
+from shopping_advisor.validation import (  # noqa: E402
     NOT_CLAIMED, TRUSTED, UNKNOWN, UNVERIFIED)
 
 MODULE = pathlib.Path(B.__file__)
@@ -218,11 +218,11 @@ class Classification(unittest.TestCase):
 class GrainAndVariety(unittest.TestCase):
 
     def grain(self, **kwargs):
-        from amazon_scraper.validation import validate
+        from shopping_advisor.validation import validate
         return B.grain_type(validate(record(**kwargs), B.PROFILE))
 
     def cultivar(self, **kwargs):
-        from amazon_scraper.validation import validate
+        from shopping_advisor.validation import validate
         return B.cultivar(validate(record(**kwargs), B.PROFILE))
 
     def test_sella_is_detected_as_parboiled(self):
@@ -322,7 +322,7 @@ class ReviewEvidence(unittest.TestCase):
     """The asymmetry, and the false positive that motivated the split."""
 
     def signals(self, reviews):
-        from amazon_scraper.validation import validate
+        from shopping_advisor.validation import validate
         return B.review_signals(validate(record(reviews=reviews), B.PROFILE))
 
     def test_praise_for_not_sticking_is_not_a_stickiness_complaint(self):
@@ -366,7 +366,7 @@ class ReviewEvidence(unittest.TestCase):
 
     def test_vendor_copy_cannot_produce_a_review_signal(self):
         """A bullet claiming aroma must not come back as a buyer report."""
-        from amazon_scraper.validation import validate
+        from shopping_advisor.validation import validate
         validated = validate(
             record(bullets=['Herrlich aromatischer, duftender Basmati'],
                    reviews=[]), B.PROFILE)
@@ -492,7 +492,7 @@ class Scoring(unittest.TestCase):
 
 class ExternalAttribution(unittest.TestCase):
     def result(self, **kwargs):
-        from amazon_scraper.validation import validate
+        from shopping_advisor.validation import validate
         return B.external_test(validate(record(
             title='Tilda Pure Original Basmati Reis 5 kg', **kwargs)))
 

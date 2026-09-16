@@ -48,9 +48,9 @@ would mean ignoring a contradiction the page itself contains.
 ## Running them
 
 ```text
-uv run --offline --locked python -m amazon_scraper.study check tests/studies/pasta-bronze-die.toml
-uv run --offline --locked python -m amazon_scraper.study run tests/studies/pasta-bronze-die.toml
-uv run --offline --locked python -m amazon_scraper.study verify data/studies/pasta-bronze-die-501d864a1a0c
+uv run --offline --locked python -m shopping_advisor.study check tests/studies/pasta-bronze-die.toml
+uv run --offline --locked python -m shopping_advisor.study run tests/studies/pasta-bronze-die.toml
+uv run --offline --locked python -m shopping_advisor.study verify data/studies/pasta-bronze-die-501d864a1a0c
 ```
 
 The study id is derived from the brief, the input digests and the published
@@ -67,7 +67,7 @@ at what the data supports, and add the assertions to `../test_study.py` in
 the same change. A brief whose expected outcome is not asserted will drift
 without anything failing, which is the failure mode these exist to prevent.
 
-`amazon_scraper/study/brief.py` holds the schema and refuses unknown keys, so
+`shopping_advisor/study/brief.py` holds the schema and refuses unknown keys, so
 a misspelt constraint is an error rather than a constraint that silently did
 nothing. A brief names a category by its **registry key** and never by an
 import path; nothing in it is imported, evaluated or interpolated into a

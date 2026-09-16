@@ -181,12 +181,12 @@ amazon.com leakage           none
 
 | File | Change | Why |
 |---|---|---|
-| `amazon_scraper/settings_baseline.py` | **New.** Overlays `settings.py`; disables the ScrapeOps proxy, monitor and retry middleware, restores Scrapy's own `RetryMiddleware`, and applies the conservative local profile. | Baseline must run with no API key. Upstream ScrapeOps config stays intact in `settings.py` for later use. |
-| `scrapy.cfg` | Registered `baseline = amazon_scraper.settings_baseline`. | Standard Scrapy mechanism for selecting the profile via `SCRAPY_PROJECT`. |
-| `amazon_scraper/spiders/amazon_product.py` | Runtime `keyword` / `domain` / `max_pages` args; marketplace-safe URL builders; pagination fix; challenge detection; lineage fields; removed the forced CSV feed. | See below. |
+| `shopping_advisor/settings_baseline.py` | **New.** Overlays `settings.py`; disables the ScrapeOps proxy, monitor and retry middleware, restores Scrapy's own `RetryMiddleware`, and applies the conservative local profile. | Baseline must run with no API key. Upstream ScrapeOps config stays intact in `settings.py` for later use. |
+| `scrapy.cfg` | Registered `baseline = shopping_advisor.settings_baseline`. | Standard Scrapy mechanism for selecting the profile via `SCRAPY_PROJECT`. |
+| `shopping_advisor/spiders/amazon_product.py` | Runtime `keyword` / `domain` / `max_pages` args; marketplace-safe URL builders; pagination fix; challenge detection; lineage fields; removed the forced CSV feed. | See below. |
 | `.gitignore` | Ignore `data/` and `*.jsonl`. | Keep crawl output out of the repo. |
 
-No API keys or secrets were added. `amazon_scraper/spiders/amazon_search.py`
+No API keys or secrets were added. `shopping_advisor/spiders/amazon_search.py`
 was deliberately left untouched — it is outside this task's scope and still
 carries the hardcoded `.com` URLs and the off-by-one pagination bug.
 

@@ -3,7 +3,7 @@
 import re
 import unittest
 
-from amazon_scraper.extraction.marketplaces import Marketplace, for_domain
+from shopping_advisor.extraction.marketplaces import Marketplace, for_domain
 
 
 class WordMatching(unittest.TestCase):

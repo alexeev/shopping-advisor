@@ -23,7 +23,7 @@ Use [RESEARCH.md](../RESEARCH.md) for the current research and verification
 workflow. Since T2 the question, constraints, assumptions, feed paths and
 digests, candidates, decisions, code revision and a generated report live in a
 **study bundle** under `data/studies/`, produced by
-`python -m amazon_scraper.study run BRIEF`. Write a report here only for what
+`python -m shopping_advisor.study run BRIEF`. Write a report here only for what
 the bundle cannot generate — suitability, tradeoffs, and external evidence
 someone checked — and name the study id it rests on. `data/studies/` is
 gitignored too: a bundle is not backed up by existing, and a study that has to

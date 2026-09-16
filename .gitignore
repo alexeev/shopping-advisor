@@ -20,8 +20,8 @@ products.jl
 *.jl
 
 # Scrapy project
-amazon_scraper/__pycache__/
-amazon_scraper/spiders/__pycache__/
+shopping_advisor/__pycache__/
+shopping_advisor/spiders/__pycache__/
 
 
 # IDE files

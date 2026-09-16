@@ -1,4 +1,4 @@
-# Product roadmap
+# Shopping Advisor roadmap
 
 The plan of record for this repository. It supersedes the P0–P6 hypothesis
 that preceded it; that hypothesis is kept below, with the verdict on each
@@ -89,6 +89,26 @@ into permanent product knowledge.
 
 ## Agent-operation transition
 
+### Product identity — 2026-09-16
+
+The crawler-era name `amazon-scrapy-scraper` described acquisition but omitted
+the brief, validation, category reasoning, comparison and saved-study layers
+already delivered. The project is now **shopping-advisor**, with the Python
+namespace `shopping_advisor` and a product entry point:
+`python -m shopping_advisor study|analysis|run ...`. Each command delegates
+to its existing layer; Amazon-specific source names remain explicit.
+See [migration instructions](README.md#project-name-and-migration).
+
+Measured effect: 41 existing modules moved to the product namespace; their
+logic is unchanged. The offline suite passes **433 tests** (428 existing,
+five product CLI integration tests), including the unchanged extraction and
+validation snapshots. The bronze-die example still produces study ID
+`pasta-bronze-die-501d864a1a0c`, five eligible offers and three shortlisted
+offers, and its saved bundle verifies through the product CLI. Only the root
+project name changed in the lockfile; dependency versions remain pinned.
+Schema, validation and study contract versions are unchanged because their
+data and decision semantics did not move. R11–R14 remain planned.
+
 The reviewed [transition plan](AGENT_TRANSITION_PLAN.md) adds T0–T5 without
 replacing the R0–R10 history. Current operating rules are in
 [AGENTS.md](AGENTS.md), with a shared research workflow in
@@ -144,7 +164,7 @@ replacing the R0–R10 history. Current operating rules are in
   search responses are retained, redacted, truncated to 256 KB and capped at
   five samples per reason, with the over-cap count recorded.
 - **Redaction.** Moved from `tests/corpus/redact.py` into
-  `amazon_scraper/redaction.py`; the corpus CLI imports it. The silent
+  `shopping_advisor/redaction.py`; the corpus CLI imports it. The silent
   `except Exception: return html` fallback is gone: a failure is counted and
   the page is quarantined out of the export/promotion path.
 - **Marketplace-scoped identity.** Listing identity is the normalised host plus
@@ -184,13 +204,13 @@ replacing the R0–R10 history. Current operating rules are in
 **T2 — DONE (2026-09-16): persist and replay a complete offline study.**
 
 - **The brief.** A study now starts from a TOML or JSON brief with a validated
-  schema (`amazon_scraper/study/brief.py`, `brief_version = 1`): question,
+  schema (`shopping_advisor/study/brief.py`, `brief_version = 1`): question,
   category, marketplace, feeds, constraints, freshness policy, assumptions,
   questions, declared sources and limits. Unknown keys are **refused**, not
   ignored — a misspelt constraint that silently does nothing was the failure
   mode this exists to prevent. The brief is data: it names a category by its
   registry key and never by an import path, and a brief naming
-  `amazon_scraper.analysis.categories.dry_pasta` gets the same refusal as a
+  `shopping_advisor.analysis.categories.dry_pasta` gets the same refusal as a
   typo. Feed paths resolve against the brief's own directory, so a brief and
   its feeds travel together and no absolute path enters a committed file.
 - **Constraints kept apart from category defaults.** The failure this repays
@@ -323,7 +343,7 @@ principle wins unless new measurement overrides it.
 
 **Status: DONE** · no crawl required · runs offline over existing JSONL
 
-Shipped as `amazon_scraper/analysis/`, with `tests/test_analysis.py` and the
+Shipped as `shopping_advisor/analysis/`, with `tests/test_analysis.py` and the
 evidence it was built from in `tests/cases/`.
 
 ### Outcome
@@ -424,7 +444,7 @@ Two findings worth carrying forward:
 **Status: DONE.** It was a gate on the next production crawl, and it landed
 before one ran.
 
-Shipped as `amazon_scraper/run.py` plus the spider wiring, with
+Shipped as `shopping_advisor/run.py` plus the spider wiring, with
 `tests/test_run.py` and the first saved search page in
 `tests/corpus/amazon_de_search/`.
 
@@ -511,7 +531,7 @@ Three findings worth carrying forward:
 rule earns promotion once a *second* consumer has exercised it, and this
 milestone built the second consumer first and promoted afterwards.
 
-Shipped as `amazon_scraper/validation/` and `amazon_scraper/analysis/
+Shipped as `shopping_advisor/validation/` and `shopping_advisor/analysis/
 categories/`, with **[CONTRACT.md](CONTRACT.md)**, `tests/test_validation.py`,
 `tests/test_mounting_paste.py`, a validation snapshot in the corpus test, and
 the crawl it was measured on in `data/evidence/`.
@@ -648,7 +668,7 @@ layer which rules to run — exactly what the profile is shaped to prevent.
 **Status: DONE**, with one of its two completion criteria **not met** and the
 reason recorded rather than worked around.
 
-Shipped as `amazon_scraper/analysis/variation.py` plus the reconciler and
+Shipped as `shopping_advisor/analysis/variation.py` plus the reconciler and
 report wiring, with `tests/test_variation.py`.
 
 ### Outcome
@@ -761,8 +781,8 @@ nutrition either converts correctly or returns `unknown`.
 **Status: DONE.** The decision test passed decisively, and the milestone cost
 roughly a tenth of what this entry budgeted, for a reason worth recording.
 
-Shipped as `amazon_scraper/extraction/reviews.py` and
-`amazon_scraper/validation/reviews.py`, with `tests/test_reviews.py` (33 tests)
+Shipped as `shopping_advisor/extraction/reviews.py` and
+`shopping_advisor/validation/reviews.py`, with `tests/test_reviews.py` (33 tests)
 and schema v5. Driven by the third category, basmati rice, where the properties
 that decide the purchase — does it smell of basmati, does it arrive with moths
 in it — are stated nowhere except in reviews.
@@ -853,8 +873,8 @@ question. Nothing new was needed, only exposing capability that already
 existed.
 
 ```
-amazon_scraper.run reextract <run_dir> [--feed old.jsonl] -o new.jsonl
-amazon_scraper.analysis <cmd> feed1.jsonl feed2.jsonl ...   # merge by ASIN
+shopping_advisor.run reextract <run_dir> [--feed old.jsonl] -o new.jsonl
+shopping_advisor.analysis <cmd> feed1.jsonl feed2.jsonl ...   # merge by ASIN
 ```
 
 Two of the four scripts were built. The other two were not, because they are
@@ -902,7 +922,7 @@ paths are **not committed inputs** in the current repository; use the
 [committed-case walkthrough](RESEARCH.md#offline-walkthrough) for onboarding:
 
 ```
-uv run python -m amazon_scraper.analysis rank \
+uv run python -m shopping_advisor.analysis rank \
     data/validation_v3_amazon_de.jsonl data/fusilli_broad.jsonl \
     data/fusilli_brands.jsonl --category dry_pasta
 ```
@@ -1365,7 +1385,7 @@ unvalidated category will produce by default.
 |---|---|
 | Generic extraction | **Correct as is.** No pasta logic in the parser; all fourteen measured pasta signals are recoverable from `raw_tables`, `content.*` and `food.ingredients`. Do not trade "raw first, normalized second" for coverage. |
 | Food extraction | **Correct placement**, one change: the food layer must stop asserting values it cannot defend. |
-| Validation | **Two layers, never inside extraction** — shipped in R2 as `amazon_scraper/validation/`, published as [CONTRACT.md](CONTRACT.md). Extraction stays faithful to the source. *Generic:* unit-versus-field disagreement, basis-phrase-as-value, mass balance, Atwater, single-nutrient corroboration, quantity-versus-price coherence, on-page source conflict. *Category:* plausibility bands, claim/ingredient contradictions, price floors — supplied to the generic layer as **data**, never as procedure. |
+| Validation | **Two layers, never inside extraction** — shipped in R2 as `shopping_advisor/validation/`, published as [CONTRACT.md](CONTRACT.md). Extraction stays faithful to the source. *Generic:* unit-versus-field disagreement, basis-phrase-as-value, mass balance, Atwater, single-nutrient corroboration, quantity-versus-price coherence, on-page source conflict. *Category:* plausibility bands, claim/ingredient contradictions, price floors — supplied to the generic layer as **data**, never as procedure. |
 | Category analysis | **Downstream of the JSONL.** The acquisition layer never learns what good pasta is. Confirmed by a second category in R2: tyre mounting paste needed no change to the crawler, the extractor, or any trust rule — only a profile, a classifier and a list of claims. **This boundary survives [R11](#r11--category-synthesis-as-a-default-step):** a category the agent writes is the same four things in the same place, so synthesis is a question about where category knowledge *comes from*, never about where it sits. |
 | Who writes a category | **Changing, deliberately — see [R11](#r11--category-synthesis-as-a-default-step).** Today a human writes one as a reviewed maintenance change, and the runbook offers that as a choice. The target is that the agent writes one by default, marked provisional, carrying its evidence, and unable to look as confident as a validated one. The boundary that replaces "a human wrote it" is **validated versus provisional**, and it has to be visible in the report rather than implied by the absence of a warning. |
 | Marketplace-specific | `shared structural extraction + marketplace profile + adapters where measured evidence demands`. Correct, but currently over-applied: two profiles exist that nobody validated. |

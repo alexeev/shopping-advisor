@@ -37,12 +37,12 @@ The first priorities are:
 
 | Layer | Current implementation | Assessment |
 |---|---|---|
-| Acquisition | [`amazon_product.py`](amazon_scraper/spiders/amazon_product.py) runs sequential query pagination and direct ASIN fetches, logs sightings before deduplication, detects challenge pages, and emits dictionaries through Scrapy feeds. | A useful bounded acquisition tool, not an end-to-end research workflow. The separate `amazon_search` spider is legacy code. |
-| Run evidence | [`run.py`](amazon_scraper/run.py) writes manifests, discovery JSONL, and redacted compressed PDPs; `reextract` replays pages offline and can preserve feed lineage. | Strong foundation, but incomplete artifact identity and failure evidence. |
-| Extraction | [`PdpExtractor`](amazon_scraper/extraction/pdp.py) composes structural parsers and marketplace profiles. It retains raw tables/content, normalized attributes, quantities, prices, nutrition, variations, and review data, with block errors. | Correct boundary: faithfully extract what the source says, independent of product preference. Current extraction schema is **6**. |
-| Validation | [`validate`](amazon_scraper/validation/contract.py) reconciles quantities/pricing, checks nutrition and reviews, and reads variation families. `Value` separates status, source, quotes, and notes. | Preserve this deterministic core and its ordering. Current validated contract is **1**. Category plausibility profiles are data. |
-| Category analysis | [`category.py`](amazon_scraper/analysis/category.py) defines axes, claims, profiles, and evaluation. Dry pasta, tyre mounting paste, and basmati have separate modules. | Reusable seam, although purchase preferences and external observations are partly embedded in category code. |
-| Comparison/output | [`analysis` CLI](amazon_scraper/analysis/__main__.py) merges feeds and exposes summary, rank, card(s), compare, and validated output. [`report.py`](amazon_scraper/analysis/report.py) formats evidence cards and groups pack variants. | Useful analysis primitives. It does not assemble or validate a complete purchase-advice report from a persisted brief. |
+| Acquisition | [`amazon_product.py`](shopping_advisor/spiders/amazon_product.py) runs sequential query pagination and direct ASIN fetches, logs sightings before deduplication, detects challenge pages, and emits dictionaries through Scrapy feeds. | A useful bounded acquisition tool, not an end-to-end research workflow. The separate `amazon_search` spider is legacy code. |
+| Run evidence | [`run.py`](shopping_advisor/run.py) writes manifests, discovery JSONL, and redacted compressed PDPs; `reextract` replays pages offline and can preserve feed lineage. | Strong foundation, but incomplete artifact identity and failure evidence. |
+| Extraction | [`PdpExtractor`](shopping_advisor/extraction/pdp.py) composes structural parsers and marketplace profiles. It retains raw tables/content, normalized attributes, quantities, prices, nutrition, variations, and review data, with block errors. | Correct boundary: faithfully extract what the source says, independent of product preference. Current extraction schema is **6**. |
+| Validation | [`validate`](shopping_advisor/validation/contract.py) reconciles quantities/pricing, checks nutrition and reviews, and reads variation families. `Value` separates status, source, quotes, and notes. | Preserve this deterministic core and its ordering. Current validated contract is **1**. Category plausibility profiles are data. |
+| Category analysis | [`category.py`](shopping_advisor/analysis/category.py) defines axes, claims, profiles, and evaluation. Dry pasta, tyre mounting paste, and basmati have separate modules. | Reusable seam, although purchase preferences and external observations are partly embedded in category code. |
+| Comparison/output | [`analysis` CLI](shopping_advisor/analysis/__main__.py) merges feeds and exposes summary, rank, card(s), compare, and validated output. [`report.py`](shopping_advisor/analysis/report.py) formats evidence cards and groups pack variants. | Useful analysis primitives. It does not assemble or validate a complete purchase-advice report from a persisted brief. |
 | Testing/maintenance | `unittest`, saved-page extraction and validation snapshots, category cases, and a committed dependency lock. `ROADMAP.md`, `CONTRACT.md`, and postmortems document important decisions. | Substantial regression protection and unusually useful rationale. No tracked CI workflow or repository agent entry points were found. |
 
 The shared structures are **Amazon** structures. `extraction/marketplaces.py`
@@ -225,7 +225,7 @@ neutral-validation option if needed rather than relying on an implicit default.
 ### 3.2 A small research brief and study manifest
 
 Introduce a study entry point alongside the existing `run` and `analysis`
-commands, with implementation under `amazon_scraper/research/`. This placement
+commands, with implementation under `shopping_advisor/research/`. This placement
 reflects an actual missing layer: `run.py` describes one crawl, while research
 needs several crawls, external sources, and an answer. Keep orchestration in
 thin functions calling existing APIs; do not move working parsers into it.

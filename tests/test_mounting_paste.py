@@ -23,14 +23,14 @@ import unittest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
-from amazon_scraper.analysis import report  # noqa: E402
-from amazon_scraper.analysis.categories.mounting_paste import (  # noqa: E402
+from shopping_advisor.analysis import report  # noqa: E402
+from shopping_advisor.analysis.categories.mounting_paste import (  # noqa: E402
     CATEGORY, KEY, classify, evaluate)
-from amazon_scraper.validation import (  # noqa: E402
+from shopping_advisor.validation import (  # noqa: E402
     NOT_CLAIMED, TRUSTED, UNKNOWN, UNVERIFIED, nutrition)
 
 CASES = pathlib.Path(__file__).resolve().parent / 'cases' / 'mounting_paste_v1.jsonl.gz'
-MODULE = (pathlib.Path(__file__).resolve().parent.parent / 'amazon_scraper' /
+MODULE = (pathlib.Path(__file__).resolve().parent.parent / 'shopping_advisor' /
           'analysis' / 'categories' / 'mounting_paste.py')
 
 
@@ -41,8 +41,8 @@ def load_cases():
 
 class AttributedClaims(unittest.TestCase):
     def claims(self, text):
-        from amazon_scraper.analysis.categories import mounting_paste
-        from amazon_scraper.validation import validate
+        from shopping_advisor.analysis.categories import mounting_paste
+        from shopping_advisor.validation import validate
         return mounting_paste.claims(validate({
             'title': 'Reifenmontagepaste',
             'content': {'feature_bullets': [text]},

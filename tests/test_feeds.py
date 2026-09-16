@@ -20,8 +20,8 @@ import unittest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
-from amazon_scraper.analysis import feeds  # noqa: E402
-from amazon_scraper.analysis.__main__ import (one_marketplace,  # noqa: E402
+from shopping_advisor.analysis import feeds  # noqa: E402
+from shopping_advisor.analysis.__main__ import (one_marketplace,  # noqa: E402
                                               split_arguments)
 
 

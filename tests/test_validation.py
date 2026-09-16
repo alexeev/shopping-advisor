@@ -18,7 +18,7 @@ import unittest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
-from amazon_scraper.validation import (  # noqa: E402
+from shopping_advisor.validation import (  # noqa: E402
     ATTRIBUTES, CONTRACT_VERSION, CategoryProfile, DERIVED, DISPUTED,
     PUBLISHED, STRUCTURED, TEXT, TRUSTED, UNKNOWN, UNVERIFIED, nutrition,
     pricing, quantity, validate)
@@ -426,7 +426,7 @@ class Contract(unittest.TestCase):
         json.dumps(data)
 
     def test_every_value_names_a_status_from_the_vocabulary(self):
-        from amazon_scraper.validation import STATUSES
+        from shopping_advisor.validation import STATUSES
         validated = validate(record(food=food({'protein_g': 13.0,
                                                'fat_g': 2.0})), PASTA)
         for value in ([validated.quantity, validated.price,

@@ -25,10 +25,10 @@ in a history.
 ## Reading them
 
 ```bash
-uv run python -m amazon_scraper.analysis summary \
+uv run python -m shopping_advisor.analysis summary \
     data/evidence/validation-amazon-de-2026-09-14.jsonl.gz
 
-uv run python -m amazon_scraper.analysis rank \
+uv run python -m shopping_advisor.analysis rank \
     data/evidence/validation-amazon-de-mounting-paste-2026-09-15-v4.jsonl.gz \
     --category tyre_mounting_paste --unit g
 ```
@@ -39,7 +39,7 @@ one ordering over both would place a 50 ml tin among the tubs as though a
 density had been supplied.
 
 ```python
-from amazon_scraper import run
+from shopping_advisor import run
 occurrences = run.load_discovery('data/runs/<run_id>')   # a live run
 ```
 

@@ -15,9 +15,9 @@ import unittest
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
-from amazon_scraper.analysis import report  # noqa: E402
-from amazon_scraper.analysis.categories.dry_pasta import evaluate  # noqa: E402
-from amazon_scraper.validation import quantity as checks, variation  # noqa: E402
+from shopping_advisor.analysis import report  # noqa: E402
+from shopping_advisor.analysis.categories.dry_pasta import evaluate  # noqa: E402
+from shopping_advisor.validation import quantity as checks, variation  # noqa: E402
 from test_corpus import extract_dir  # noqa: E402
 
 

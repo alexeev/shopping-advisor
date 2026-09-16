@@ -11,10 +11,10 @@ import unittest
 
 from parsel import Selector
 
-from amazon_scraper.extraction import PdpExtractor, for_domain
-from amazon_scraper.extraction import blocks
-from amazon_scraper.extraction.marketplaces import UNITS
-from amazon_scraper.extraction.text import (clean, decode_entities, node_text,
+from shopping_advisor.extraction import PdpExtractor, for_domain
+from shopping_advisor.extraction import blocks
+from shopping_advisor.extraction.marketplaces import UNITS
+from shopping_advisor.extraction.text import (clean, decode_entities, node_text,
                                             parse_number, parse_quantity)
 
 DE = for_domain('www.amazon.de')

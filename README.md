@@ -1,8 +1,14 @@
-# Amazon product research with Scrapy
+# Shopping Advisor
 
-Collect Amazon product pages, preserve their evidence, validate extracted
-values, and compare products using category-specific rules. The active spider
-is **`amazon_product`**; it handles search, pagination, and direct ASIN fetches.
+Shopping Advisor turns a purchase question into an evidence-backed comparison:
+a written brief, retained source evidence, validated claims, category-specific
+analysis, and a saved study whose decisions can be replayed. The product vision
+is a shopping conversation that returns a recommendation, alternatives, and
+what would change the answer.
+
+Amazon.de acquisition through Scrapy is the current source integration. Its
+**`amazon_product`** spider handles search, pagination, and direct ASIN fetches.
+The supported scope below distinguishes shipped tools from the product vision.
 
 ## Start here
 
@@ -96,18 +102,45 @@ Start with the [offline research walkthrough](RESEARCH.md#offline-walkthrough).
 It uses committed evidence, requires no account, and shows both a usable
 comparison and a disputed value that must not decide a purchase.
 
+## Project name and migration
+
+The project is **shopping-advisor**, formerly **amazon-scrapy-scraper**.
+The Python package is now `shopping_advisor`; update imports, commands and
+any explicit `SCRAPY_SETTINGS_MODULE` values from `amazon_scraper` to
+`shopping_advisor`. The old Python namespace is no longer provided.
+
+Use the product entry point from the repository root:
+
+```text
+uv run --offline --locked python -m shopping_advisor --help
+uv run --offline --locked python -m shopping_advisor study check tests/studies/pasta-bronze-die.toml
+uv run --offline --locked python -m shopping_advisor analysis summary tests/cases/pasta_v1.jsonl.gz --category dry_pasta
+```
+
+`study`, `analysis`, and `run` dispatch to the existing layer CLIs; direct
+`python -m shopping_advisor.study` (and `.analysis` / `.run`) commands also
+work. Collection remains `scrapy crawl amazon_product` with the documented
+bounds. Scrapy profiles, source-specific names, feed fields, contract versions
+and study IDs retain their meanings. Existing evidence does not need rewriting;
+commands printed in older reports need the namespace substitution above.
+Historical documentation uses current module paths for navigation.
+
+The checkout directory may have any name; an existing directory named
+`amazon-scrapy-scraper` does not affect imports or commands. Repository hosting
+names and local checkout locations are managed separately from this code.
+
 ## Architecture
 
 | Layer | Entry points | Responsibility |
 |---|---|---|
-| Acquisition | `amazon_scraper/spiders/amazon_product.py` | Search and direct ASIN requests, deduplication, challenge detection, coverage stats |
-| Run evidence | `amazon_scraper/run.py` | Manifest, discovery log, retained PDPs and their fetch metadata, bounded failure samples, offline re-extraction |
-| Provenance | `amazon_scraper/provenance.py`, `amazon_scraper/redaction.py` | Code/settings identity, artefact digests, atomic manifest writes, page redaction |
-| Extraction | `amazon_scraper/extraction/` | Amazon structures and locale profiles; raw and normalized data, per-block diagnostics |
-| Validation | `amazon_scraper/validation/` | Quantity, pricing, nutrition, review and variation checks; evidence-bearing values |
-| Category analysis | `amazon_scraper/analysis/categories/` | Classification, meaningful claims and comparison axes; category plausibility profiles |
-| Analysis CLI | `amazon_scraper/analysis/__main__.py`, `report.py`, `feeds.py` | Feed merging, evidence cards, rankings, comparisons and summaries |
-| Study | `amazon_scraper/study/` | The written brief, its stated constraints, every candidate and its fate, the outcome, the report, and replay |
+| Acquisition | `shopping_advisor/spiders/amazon_product.py` | Search and direct ASIN requests, deduplication, challenge detection, coverage stats |
+| Run evidence | `shopping_advisor/run.py` | Manifest, discovery log, retained PDPs and their fetch metadata, bounded failure samples, offline re-extraction |
+| Provenance | `shopping_advisor/provenance.py`, `shopping_advisor/redaction.py` | Code/settings identity, artefact digests, atomic manifest writes, page redaction |
+| Extraction | `shopping_advisor/extraction/` | Amazon structures and locale profiles; raw and normalized data, per-block diagnostics |
+| Validation | `shopping_advisor/validation/` | Quantity, pricing, nutrition, review and variation checks; evidence-bearing values |
+| Category analysis | `shopping_advisor/analysis/categories/` | Classification, meaningful claims and comparison axes; category plausibility profiles |
+| Analysis CLI | `shopping_advisor/analysis/__main__.py`, `report.py`, `feeds.py` | Feed merging, evidence cards, rankings, comparisons and summaries |
+| Study | `shopping_advisor/study/` | The written brief, its stated constraints, every candidate and its fate, the outcome, the report, and replay |
 
 `items.py`, `pipelines.py`, and `middlewares.py` are inherited scaffolding;
 they are not the research data model. The product spider emits dictionaries.
@@ -160,17 +193,17 @@ still covers one marketplace: feeds spanning several stop the command until
 
 | Command | Output |
 |---|---|
-| `python -m amazon_scraper.analysis summary FEED --category CATEGORY` | Classification decisions, evidence availability and trust statuses; not classifier accuracy |
+| `python -m shopping_advisor.analysis summary FEED --category CATEGORY` | Classification decisions, evidence availability and trust statuses; not classifier accuracy |
 | `... rank FEED --category CATEGORY --limit 10` | One-axis ranking, pack variants and exclusions; `--json` emits the whole ranking with every exclusion and its reason code |
 | `... card FEED ASIN [ASIN ...] --category CATEGORY` | Text evidence cards; `--json` emits one pretty-printed object per ASIN |
 | `... cards FEED --category CATEGORY --json` | JSONL cards for category matches, including every section the category declares |
 | `... compare FEED ASIN ASIN --category CATEGORY` | Differences supported by comparable values and reasons for refusal |
 | `... validated FEED --category CATEGORY` | JSONL validation using that category's plausibility profile; no category claim evaluation |
-| `python -m amazon_scraper.run reextract RUN_DIR --feed ORIGINAL_FEED -o NEW_FEED` | Offline extraction from retained pages; refuses a feed belonging to another crawl or marketplace |
-| `python -m amazon_scraper.run inspect RUN_DIR` | What a run did, which code and settings produced it, how it ended, what it retained |
-| `python -m amazon_scraper.study check BRIEF` | Whether a brief is usable, and every default it will fall back to |
-| `python -m amazon_scraper.study run BRIEF` | Analyses the feeds the brief names and writes a study bundle; collects nothing |
-| `python -m amazon_scraper.study verify BUNDLE` | Re-derives the decisions from the bundle's own inputs and reports what moved |
+| `python -m shopping_advisor.run reextract RUN_DIR --feed ORIGINAL_FEED -o NEW_FEED` | Offline extraction from retained pages; refuses a feed belonging to another crawl or marketplace |
+| `python -m shopping_advisor.run inspect RUN_DIR` | What a run did, which code and settings produced it, how it ended, what it retained |
+| `python -m shopping_advisor.study check BRIEF` | Whether a brief is usable, and every default it will fall back to |
+| `python -m shopping_advisor.study run BRIEF` | Analyses the feeds the brief names and writes a study bundle; collects nothing |
+| `python -m shopping_advisor.study verify BUNDLE` | Re-derives the decisions from the bundle's own inputs and reports what moved |
 
 Run these with `uv run --offline --locked`. The analysis commands accept
 multiple JSONL or `.jsonl.gz` feeds. They merge by marketplace and ASIN and

@@ -3,7 +3,7 @@
 import re
 import unittest
 
-from amazon_scraper.validation import Evidence, search, validate
+from shopping_advisor.validation import Evidence, search, validate
 
 
 class SearchScope(unittest.TestCase):

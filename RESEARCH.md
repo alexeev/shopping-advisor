@@ -21,7 +21,7 @@ market discovery. The feed deliberately includes known defects and controls.
 ### 1. Inspect quality and exclusions
 
 ```text
-uv run --offline --locked python -m amazon_scraper.analysis summary tests/cases/pasta_v1.jsonl.gz --category dry_pasta
+uv run --offline --locked python -m shopping_advisor.analysis summary tests/cases/pasta_v1.jsonl.gz --category dry_pasta
 ```
 
 Expect a provenance line reading 25 records from one feed on `amazon.de`, then
@@ -33,7 +33,7 @@ counts rather than treating a populated numeric field as usable.
 ### 2. Rank on the declared axis
 
 ```text
-uv run --offline --locked python -m amazon_scraper.analysis rank tests/cases/pasta_v1.jsonl.gz --category dry_pasta --limit 3
+uv run --offline --locked python -m shopping_advisor.analysis rank tests/cases/pasta_v1.jsonl.gz --category dry_pasta --limit 3
 ```
 
 Expect price-per-kg ranking, 14 offers with a trusted ranking value, and eight
@@ -45,14 +45,14 @@ offer. Read the exclusion reasons below the ranking.
 ### 3. Inspect a card and its evidence
 
 ```text
-uv run --offline --locked python -m amazon_scraper.analysis card tests/cases/pasta_v1.jsonl.gz B08WJGD5Z5 --category dry_pasta
+uv run --offline --locked python -m shopping_advisor.analysis card tests/cases/pasta_v1.jsonl.gz B08WJGD5Z5 --category dry_pasta
 ```
 
 Locate the quantity, price-per-kg value, statuses, and source quotations.
 For this category the same card can be inspected as JSON:
 
 ```text
-uv run --offline --locked python -m amazon_scraper.analysis card tests/cases/pasta_v1.jsonl.gz B08WJGD5Z5 --category dry_pasta --json
+uv run --offline --locked python -m shopping_advisor.analysis card tests/cases/pasta_v1.jsonl.gz B08WJGD5Z5 --category dry_pasta --json
 ```
 
 The provenance summary goes to stderr and JSON goes to stdout. A single
@@ -66,7 +66,7 @@ where the text view stops at ten.
 ### 4. Compare two usable products
 
 ```text
-uv run --offline --locked python -m amazon_scraper.analysis compare tests/cases/pasta_v1.jsonl.gz B08WJGD5Z5 B0DQ2N5HRW --category dry_pasta
+uv run --offline --locked python -m shopping_advisor.analysis compare tests/cases/pasta_v1.jsonl.gz B08WJGD5Z5 B0DQ2N5HRW --category dry_pasta
 ```
 
 Expect a `Differences` section including the cheaper-per-kilogram comparison.
@@ -75,7 +75,7 @@ Read the individual axes and caveats before turning that into purchase advice.
 ### 5. Exercise a refusal
 
 ```text
-uv run --offline --locked python -m amazon_scraper.analysis compare tests/cases/pasta_v1.jsonl.gz B08JLSVW3J B08WJGD5Z5 --category dry_pasta
+uv run --offline --locked python -m shopping_advisor.analysis compare tests/cases/pasta_v1.jsonl.gz B08JLSVW3J B08WJGD5Z5 --category dry_pasta
 ```
 
 Expect `Price per kg` under `Cannot be compared`: the first product's pack
@@ -86,7 +86,7 @@ force a comparison.
 ### 6. Inspect the underlying validation
 
 ```text
-uv run --offline --locked python -m amazon_scraper.analysis validated tests/cases/pasta_v1.jsonl.gz --category dry_pasta
+uv run --offline --locked python -m shopping_advisor.analysis validated tests/cases/pasta_v1.jsonl.gz --category dry_pasta
 ```
 
 Expect 25 JSONL records with `contract_version: 2` and
@@ -122,7 +122,7 @@ Two briefs ship, both over the same committed feed and both offline:
 ### 1. Check the brief before spending anything on it
 
 ```text
-uv run --offline --locked python -m amazon_scraper.study check tests/studies/pasta-bronze-die.toml
+uv run --offline --locked python -m shopping_advisor.study check tests/studies/pasta-bronze-die.toml
 ```
 
 Expect a valid `pasta-bronze-die` brief for `dry_pasta` on `www.amazon.de`,
@@ -136,7 +136,7 @@ command names it rather than quietly ranking without one.
 ### 2. Run it
 
 ```text
-uv run --offline --locked python -m amazon_scraper.study run tests/studies/pasta-bronze-die.toml
+uv run --offline --locked python -m shopping_advisor.study run tests/studies/pasta-bronze-die.toml
 ```
 
 Expect study `pasta-bronze-die-501d864a1a0c` with outcome `recommendation`:
@@ -162,7 +162,7 @@ which is what the next command is for.
 ### 3. Verify it without collecting again
 
 ```text
-uv run --offline --locked python -m amazon_scraper.study verify data/studies/pasta-bronze-die-501d864a1a0c
+uv run --offline --locked python -m shopping_advisor.study verify data/studies/pasta-bronze-die-501d864a1a0c
 ```
 
 Expect `verified`: every artefact matches its digest, and every decision and
@@ -179,7 +179,7 @@ reproduces. Any finding exits non-zero.
 ### 4. Read the refusal
 
 ```text
-uv run --offline --locked python -m amazon_scraper.study run tests/studies/pasta-low-temperature-drying.toml
+uv run --offline --locked python -m shopping_advisor.study run tests/studies/pasta-low-temperature-drying.toml
 ```
 
 Expect outcome `insufficient_evidence` and an empty shortlist. Two listings
@@ -294,7 +294,7 @@ permission ritual.
 #### The brief itself
 
 Write it as a **brief file** — TOML or JSON — next to the feeds it will read.
-`amazon_scraper/study/brief.py` holds the schema; the two committed examples
+`shopping_advisor/study/brief.py` holds the schema; the two committed examples
 in [tests/studies](tests/studies/README.md) are the shape to copy. It
 carries:
 
@@ -311,7 +311,7 @@ carries:
 - `limits` and `unacceptable`: what the study does not establish, and what was
   ruled out before it started.
 
-Check it before running anything: `python -m amazon_scraper.study check BRIEF`
+Check it before running anything: `python -m shopping_advisor.study check BRIEF`
 prints every default it will fall back to. Unknown keys are refused rather
 than ignored, because a misspelt constraint that silently does nothing
 produces a study with no sign anything was asked. The brief is **data**: it
@@ -386,7 +386,7 @@ Record the logged run ID and the feed path together; the manifest also names
 the feed the crawl was told to write. Read the run back with:
 
 ```text
-uv run --offline --locked python -m amazon_scraper.run inspect data/runs/ACTUAL_RUN_ID
+uv run --offline --locked python -m shopping_advisor.run inspect data/runs/ACTUAL_RUN_ID
 ```
 
 It reports the run state (`complete`, `interrupted`, or `legacy` for a store
@@ -418,7 +418,7 @@ For a retained run, replace these paths with the actual run directory, original
 feed, and a new destination. The command works in either shell:
 
 ```text
-uv run --offline --locked python -m amazon_scraper.run reextract data/runs/ACTUAL_RUN_ID --feed data/research-example-01.jsonl -o data/research-example-01-reextracted.jsonl
+uv run --offline --locked python -m shopping_advisor.run reextract data/runs/ACTUAL_RUN_ID --feed data/research-example-01.jsonl -o data/research-example-01-reextracted.jsonl
 ```
 
 Supply the original feed so the discovery lineage — which query found the
@@ -467,7 +467,7 @@ product safety. A brief's `[[sources]]` are recorded and reproduced in the
 report under a heading that says they were not checked; applicability and
 claim-to-evidence links are T3.
 
-`python -m amazon_scraper.study run BRIEF` writes the report, and it is
+`python -m shopping_advisor.study run BRIEF` writes the report, and it is
 generated from the decisions rather than typed beside them: it cannot state a
 figure the analysis did not produce. Follow
 [reports/README.md](reports/README.md) for anything written by hand on top of

@@ -205,10 +205,10 @@ written and discarded in one afternoon. Nothing new was required, only
 exposing what exists.
 
 ```
-amazon_scraper.run reextract <run_dir> [--feed old.jsonl] -o new.jsonl
-amazon_scraper.analysis <cmd> feed1.jsonl feed2.jsonl ...   # merge by ASIN
-amazon_scraper.analysis shortlist <feeds> --category X --limit N
-amazon_scraper.analysis cards <feeds> ASIN ASIN ASIN
+shopping_advisor.run reextract <run_dir> [--feed old.jsonl] -o new.jsonl
+shopping_advisor.analysis <cmd> feed1.jsonl feed2.jsonl ...   # merge by ASIN
+shopping_advisor.analysis shortlist <feeds> --category X --limit N
+shopping_advisor.analysis cards <feeds> ASIN ASIN ASIN
 ```
 
 The first two were built. Multi-ASIN evidence output already exists as `card`

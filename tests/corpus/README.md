@@ -12,7 +12,7 @@ amazon_com/    1 page  + expected.jsonl.gz + validated.jsonl.gz
 redact.py                                    run before adding a page
 ```
 
-`redact.py` is now a command line over `amazon_scraper/redaction.py`. The rules
+`redact.py` is now a command line over `shopping_advisor/redaction.py`. The rules
 moved into runtime code because the crawler's page store depends on them, and a
 crawl's privacy handling must not depend on a test directory being importable.
 

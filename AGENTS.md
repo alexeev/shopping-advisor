@@ -19,11 +19,11 @@ than define separate research rules. Read this file, [README.md](README.md), and
   `extraction/` parses; `validation/` decides generic trust; `analysis/categories/`
   supplies category interpretation; `analysis/report.py` formats the results;
   `study/` holds the brief, the candidates, the decisions and the replay.
-  These paths are under `amazon_scraper/`.
+  These paths are under `shopping_advisor/`.
 - Use the existing CLIs and JSONL feeds. Do not recreate deterministic
   extraction, arithmetic, merging, or trust rules in prompts or scratch scripts.
 - A research question gets a **brief** and a saved study:
-  `python -m amazon_scraper.study check|run|verify`. The brief is data — it
+  `python -m shopping_advisor.study check|run|verify`. The brief is data — it
   names a category by its registry key, never by an import path — and it is
   where a constraint somebody chose stays distinguishable from a property of
   the product class. See [RESEARCH.md](RESEARCH.md#a-saved-study-end-to-end)

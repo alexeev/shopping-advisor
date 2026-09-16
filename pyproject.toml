@@ -1,7 +1,7 @@
 [project]
-name = "amazon-scrapy-scraper"
+name = "shopping-advisor"
 version = "0.2.0"
-description = "Amazon product-research crawler: search -> pagination -> PDP -> JSONL"
+description = "Evidence-backed shopping research: briefs, acquisition, validation, comparison and replayable studies"
 requires-python = ">=3.14,<3.15"
 dependencies = [
     # 2.19.x is the validated runtime. Scrapy's minor releases regularly move
@@ -12,16 +12,15 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Upstream ScrapeOps proxy/monitoring integration, used only by the default
-# `amazon_scraper.settings` profile. The validated local profile
-# (SCRAPY_PROJECT=baseline) is proxy-free and does not need these.
+# Optional ScrapeOps proxy/monitoring integration, used only by the opt-in
+# `shopping_advisor.settings_scrapeops` profile. The default profile is
+# proxy-free and does not need these.
 scrapeops = [
     "scrapeops-scrapy>=0.6.1",
     "scrapeops-scrapy-proxy-sdk>=1.1",
 ]
 
 [tool.uv]
-# This repository is a Scrapy project, not a distributable library: there is
-# nothing to build or publish, so uv manages the environment and the lock
-# without installing `amazon_scraper` as a package.
+# Run the application from the repository with python -m shopping_advisor.
+# uv manages the environment and lock without a package build/install step.
 package = false
