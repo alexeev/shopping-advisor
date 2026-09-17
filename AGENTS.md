@@ -91,6 +91,13 @@ convenience, never the authority.
   class; once both are in a category module nobody can tell them apart. The
   brief is where they stay apart, and the study report says of every decision
   whether the brief stated it or the category supplied the default.
+- Structured intake is plan v1: `study plan-check` validates before feeds or a
+  supported category exist; `plan-readback` renders the plan, and `plan-bind`
+  checks its translation into an executable brief. A bound brief requires
+  `check|run --plan`; replay consumes the mandatory bundle-internal snapshot.
+  Keep private working plans and archives out of committed fixtures. Preservation
+  is not semantic approval; bounded execution and conclusion gates remain stage 6.
+  See [the intake workflow](RESEARCH.md#retain-an-intake-plan-before-the-executable-brief).
 - Inspect before asking, then ask in one batched round. Ask before dependent work
   when unresolved information could invalidate the purchase decision or cause
   substantial avoidable work **and** existing context provides no defensible

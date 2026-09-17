@@ -24,6 +24,29 @@ every case so pinned. Those tests are expected to change when the stage that
 repairs them lands, and that diff is the measured effect. A case marked
 **awaits stage N** refers to [INTAKE.md §16](../../INTAKE.md#16-implementation-sequence).
 
+**Stage 5 structural coverage (2026-09-17).** The cases marked stage 5 below now
+have a contract and executable preservation boundary in
+[test_intake_plan.py](../test_intake_plan.py). This does not claim a conversational
+trial or arbitrary-language understanding. `supported-plan.json` is a sanitized
+synthetic exchange mapped to the existing historical pasta brief, including a
+user message not selected as requirement evidence. `unsupported-plan.json` retains
+the hedge-trimmer request, a capability gap, next step and consequential question
+without requiring a category module or feed. Both include deterministic read-back
+with **no response**, not fabricated user confirmation.
+
+```text
+uv run --offline --locked python -m shopping_advisor.study plan-check tests/intake/supported-plan.json
+uv run --offline --locked python -m shopping_advisor.study plan-readback tests/intake/unsupported-plan.json
+```
+
+The [runbook](../../RESEARCH.md#retain-an-intake-plan-before-the-executable-brief)
+contains the full bind/run/verify sequence. The test suite exercises those CLIs,
+checks the expected original decisions, and replays after deleting the originating
+plan. Mutation cases independently drop the bronze requirement or its executable
+claim filter: both refuse before feed processing. No generated plan is used as
+the oracle for what the user meant. Private conversations do not belong here;
+record only sanitized synthetic or explicitly reviewed examples.
+
 ---
 
 ## Requests that should simply work

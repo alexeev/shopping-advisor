@@ -71,3 +71,6 @@ reports/*
 # The maintenance gate's baseline. Tracked deliberately: it is the record of
 # what the gate is entitled to find, and a change to it has to be reviewable.
 !shopping_advisor/maintenance/*.json
+
+# Sanitized R13 intent/provenance fixtures, never private working conversations.
+!tests/intake/*.json

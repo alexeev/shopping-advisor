@@ -196,12 +196,14 @@ def _contract_versions():
     from ..study import audit
     from ..study.brief import BRIEF_VERSION
     from ..study.bundle import STUDY_MANIFEST_VERSION
+    from ..study.intake import PLAN_VERSION
     from ..validation.contract import CONTRACT_VERSION
 
     return {'extraction_schema': SCHEMA_VERSION,
             'validation_contract': CONTRACT_VERSION,
             'run_manifest': RUN_MANIFEST_VERSION,
             'brief': BRIEF_VERSION,
+            'intake_plan': PLAN_VERSION,
             'study_manifest': STUDY_MANIFEST_VERSION,
             'evidence_ledger': audit.LEDGER_VERSION,
             'study_audit': audit.AUDIT_VERSION,

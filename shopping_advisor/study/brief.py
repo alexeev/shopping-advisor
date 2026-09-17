@@ -52,7 +52,7 @@ ID_RE = re.compile(r'[a-z0-9][a-z0-9-]{0,63}')
 TOP_LEVEL = {
     'brief_version', 'id', 'question', 'use_case', 'category', 'marketplace',
     'delivery_region', 'inputs', 'constraints', 'freshness', 'assumptions',
-    'questions', 'sources', 'limits', 'unacceptable',
+    'questions', 'sources', 'limits', 'unacceptable', 'intake',
 }
 REQUIRED = ('brief_version', 'id', 'question', 'category', 'marketplace',
             'inputs')
@@ -173,6 +173,8 @@ class Brief:
     source_format: str = ''
     source_sha256: str = ''
     brief_version: int = BRIEF_VERSION
+    #: Optional R13 plan binding. Absent stays absent in legacy serialisation.
+    intake: dict = None
 
     @property
     def source_name(self):
@@ -185,7 +187,7 @@ class Brief:
         part of what it decided, and a bundle that stored only what the
         operator typed would not say which of them applied.
         """
-        return {
+        result = {
             'brief_version': self.brief_version,
             'id': self.id, 'question': self.question,
             'use_case': self.use_case, 'category': self.category,
@@ -218,6 +220,10 @@ class Brief:
                        'format': self.source_format,
                        'sha256': self.source_sha256},
         }
+        if self.intake is not None:
+            import copy
+            result['intake'] = copy.deepcopy(self.intake)
+        return result
 
 
 def parse(text, source='', fmt='toml', directory='.'):
@@ -319,6 +325,10 @@ def parse(text, source='', fmt='toml', directory='.'):
                       'an age measured against "today" would make the same '
                       'study decide differently tomorrow')
 
+    if 'intake' in data:
+        from .intake import check_binding
+        check_binding(data['intake'])
+
     return Brief(
         id=identifier, question=data['question'], category=category.key,
         marketplace=data['marketplace'], inputs=tuple(inputs),
@@ -352,6 +362,7 @@ def parse(text, source='', fmt='toml', directory='.'):
         unacceptable=tuple(_strings(source, data, 'unacceptable')),
         source_path=source, source_format=fmt, source_sha256=sha256_text(text),
         brief_version=version,
+        intake=data.get('intake'),
     )
 
 
@@ -416,4 +427,5 @@ def rehydrate(data, resolved_inputs):
         source_format=source.get('format', ''),
         source_sha256=source.get('sha256', ''),
         brief_version=version,
+        intake=data.get('intake'),
     )

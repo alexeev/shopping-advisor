@@ -44,7 +44,7 @@ from ..provenance import (code_identity, sha256_file, sha256_text,
 from ..analysis import report as report_module
 from ..analysis.category import is_match
 from ..run import read_jsonl
-from . import writeup, audit
+from . import writeup, audit, intake
 from .analysis import StudyError, analyse, brief_fault
 from .brief import BRIEF_VERSION, BriefError, load
 
@@ -136,7 +136,7 @@ def artifact_digests(directory):
     directory = pathlib.Path(directory)
     return {name: {'sha256': sha256_file(directory / name),
                    'bytes': (directory / name).stat().st_size}
-            for name in ARTIFACTS if (directory / name).is_file()}
+            for name in (*ARTIFACTS, intake.SNAPSHOT) if (directory / name).is_file()}
 
 
 def manifest(brief, result, identity, inputs, started_at, finished_at,
@@ -185,13 +185,15 @@ def load_manifest(directory):
 
 
 def run(brief_path, directory=None, root=DEFAULT_STUDY_ROOT, force=False,
-        started_at='', finished_at='', evidence=None):
+        started_at='', finished_at='', evidence=None, plan=None):
     """Validate a brief, analyse its inputs, and write the bundle.
 
     ``(directory, manifest)``. Nothing here collects: every byte it reads was
     already on disk when the command started.
     """
     brief = load(brief_path)
+    plan = intake.load(plan) if isinstance(plan, (str, pathlib.Path)) else plan
+    intake.check_transition(plan, brief)
     inputs = input_digests(brief)
     ledger = audit.read(evidence) if evidence else audit.empty()
     if brief.category == 'basmati_rice':
@@ -214,7 +216,7 @@ def run(brief_path, directory=None, root=DEFAULT_STUDY_ROOT, force=False,
                 f'--force to compute it again over the current code.')
         shutil.rmtree(target)
 
-    result, cards = analyse(brief)
+    result, cards = analyse(brief, plan=plan)
     fault = brief_fault(result)
     if fault:
         raise StudyError(f'{brief_path}: {fault} Nothing was written.')
@@ -222,6 +224,8 @@ def run(brief_path, directory=None, root=DEFAULT_STUDY_ROOT, force=False,
                for c in cards}
     audit.check_claims(ledger, records, brief.as_of)
     write(brief, result, cards, target)
+    if plan is not None:
+        write_json_atomically(target / intake.SNAPSHOT, plan)
     write_json_atomically(target / LEDGER, ledger)
     serialized = list(read_jsonl(target / CARDS))
     write_json_atomically(target / CLAIM_INDEX, audit.index(result, serialized, ledger))
@@ -322,7 +326,11 @@ def verify(directory, input_root=''):
         return data, findings
 
     unusable = set()
-    for name in ARTIFACTS:
+    # A snapshot must agree with both the manifest and the brief binding. Its
+    # presence is optional only for legacy studies, not for a bound brief.
+    optional = (intake.SNAPSHOT,) if (intake.SNAPSHOT in (data.get('artifacts') or {})
+                                     or (directory / intake.SNAPSHOT).exists()) else ()
+    for name in (*ARTIFACTS, *optional):
         path = directory / name
         recorded = (data.get('artifacts') or {}).get(name)
         if recorded is None:
@@ -371,6 +379,10 @@ def verify(directory, input_root=''):
                            f'file.'})
 
     persisted_brief = json.loads((directory / BRIEF).read_text(encoding='utf-8'))
+    if ('intake' in persisted_brief) != bool(optional):
+        findings.append({'code': 'intake_snapshot_missing',
+                         'message': 'brief binding and bundle-internal intake snapshot must accompany each other'})
+        return data, findings
     if persisted_brief.get('brief_version') != BRIEF_VERSION:
         findings.append({
             'code': 'unsupported_brief_version',
@@ -431,8 +443,9 @@ def verify(directory, input_root=''):
         from .brief import rehydrate
         brief = rehydrate(persisted_brief,
                           tuple(str(path) for _, path in resolved))
-        result, _cards = analyse(brief)
-    except (BriefError, StudyError) as exc:
+        plan = intake.load(directory / intake.SNAPSHOT) if optional else None
+        result, _cards = analyse(brief, plan=plan)
+    except (BriefError, StudyError, intake.PlanError) as exc:
         findings.append({'code': 'not_recomputable',
                          'message': f'{directory}: {exc}'})
         return data, findings

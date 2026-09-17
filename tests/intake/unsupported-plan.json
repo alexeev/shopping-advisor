@@ -1,0 +1,89 @@
+{
+  "plan_version": 1,
+  "id": "hedge-trimmer-intake",
+  "revision": 1,
+  "supersedes": "",
+  "question": "Which cordless hedge trimmer should I buy?",
+  "use_case": "Trim a small garden hedge; blade length and runtime requirements are unresolved.",
+  "category": "cordless_hedge_trimmer",
+  "marketplace": "",
+  "delivery_region": "",
+  "user_evidence": {
+    "conversation": "synthetic-case-10",
+    "start": "first purchase request",
+    "selection": "all_user_messages",
+    "missing_context": "",
+    "messages": [
+      {
+        "id": "u1",
+        "author": "user",
+        "text": "Which cordless hedge trimmer should I buy?",
+        "redactions": []
+      }
+    ]
+  },
+  "sources": [],
+  "requirements": [
+    {
+      "id": "suitability",
+      "statement": "Assess suitability for the garden hedge.",
+      "role": "objective",
+      "operative": true,
+      "decisive": true,
+      "settlement": "stated",
+      "priority": 1,
+      "tradeoff": "",
+      "provenance": {
+        "author": "user",
+        "wording": "Which cordless hedge trimmer should I buy?",
+        "refs": [
+          "u1"
+        ],
+        "basis": "user_statement",
+        "applicability": "This historical case comparison only.",
+        "rationale": "The request states this criterion.",
+        "if_wrong": "Revisit the scope and comparison before choosing."
+      },
+      "assessment": {
+        "path": "unsupported",
+        "state": "not_assessed",
+        "controls": [],
+        "evidence": [],
+        "reviews": [],
+        "gap": {
+          "kind": "category_interpretation",
+          "reason": "No hedge-trimmer classifier or comparison method has been validated.",
+          "next_step": "Clarify hedge and delivery context; inspect usable manufacturer evidence and scope any authorized maintenance separately."
+        },
+        "change": null
+      },
+      "effects": [
+        {
+          "stage": "comparison",
+          "consequence": "Assess suitability for the garden hedge."
+        }
+      ]
+    }
+  ],
+  "questions": [
+    {
+      "id": "hedge",
+      "text": "What hedge and delivery region is this for?",
+      "uncertainty": "Material and geography may change suitability and the available shelf.",
+      "expected_effect": "Determine requirements and source scope before collection.",
+      "requirement_ids": [
+        "suitability"
+      ],
+      "answer_message_ids": []
+    }
+  ],
+  "readback": {
+    "revision": 1,
+    "text": "Plan hedge-trimmer-intake, revision 1\nWhich cordless hedge trimmer should I buy?\nUse case: Trim a small garden hedge; blade length and runtime requirements are unresolved.\nCategory: cordless_hedge_trimmer; marketplace: unresolved; delivery: unresolved.\n- suitability: Assess suitability for the garden hedge.\n  Role: objective; operative: True; decisive: True; settlement: stated; introduced by: user.\n  Basis (user_statement): Which cordless hedge trimmer should I buy?\n  Rationale: The request states this criterion.\n  Applies to: This historical case comparison only.\n  If wrong: Revisit the scope and comparison before choosing.\n  Assessment: unsupported; state: not_assessed.\n  Priority: 1; tradeoff: none declared.\n  Gap: No hedge-trimmer classifier or comparison method has been validated.\n  Next step: Clarify hedge and delivery context; inspect usable manufacturer evidence and scope any authorized maintenance separately.\n  comparison: Assess suitability for the garden hedge.\nQuestion: What hedge and delivery region is this for?\n  Uncertainty: Material and geography may change suitability and the available shelf.\n  Expected effect: Determine requirements and source scope before collection.\n",
+    "response": {
+      "status": "no_response",
+      "message_ids": [],
+      "scope": ""
+    }
+  }
+}

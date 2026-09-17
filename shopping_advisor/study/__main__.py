@@ -25,12 +25,14 @@ Exit status is 0 when there is nothing to report, 1 when a check failed, and
 import argparse
 import json
 from pathlib import Path
-from . import audit
+from . import audit, intake
 from .controls import catalogue
 from ..provenance import write_json_atomically
 from .bundle import artifact_digests
 import datetime as _dt
 import sys
+import os
+from dataclasses import replace
 
 from ..analysis import categories  # noqa: F401  (registers the built-ins)
 from .analysis import StudyError
@@ -46,6 +48,7 @@ def _now():
 def check_command(args):
     """``check BRIEF`` -- is this brief usable, and what will it be read as."""
     brief = load(args.brief)
+    intake.check_transition(intake.load(args.plan) if args.plan else None, brief)
     print(f'{args.brief}: valid brief v{brief.brief_version} '
           f'`{brief.id}` · {brief.category} on {brief.marketplace}')
     print(f'  question      {brief.question}')
@@ -73,7 +76,8 @@ def run_command(args):
     started = _now()
     directory, manifest = run_study(args.brief, directory=args.output,
                                     root=args.root, force=args.force,
-                                    started_at=started, finished_at=_now(), evidence=args.evidence)
+                                    started_at=started, finished_at=_now(), evidence=args.evidence,
+                                    plan=args.plan)
     counts = manifest['counts']
     print(f'{manifest["study_id"]}  [{manifest["outcome"]}]')
     print(f'  brief         {manifest["brief_id"]} '
@@ -148,6 +152,46 @@ def controls_command(args):
     return 0
 
 
+def plan_check_command(args):
+    plan = intake.load(args.plan)
+    if args.brief:
+        intake.check_transition(plan, load(args.brief))
+    print(f'{plan["id"]}: valid intake plan v{plan["plan_version"]}, '
+          f'revision {plan["revision"]}; {len(plan["requirements"])} requirements.')
+    print('Structural preservation only; not semantic approval or execution authority.')
+    return 0
+
+
+def plan_readback_command(args):
+    plan = intake.load(args.plan)
+    text = intake.render_readback(plan)
+    if args.record:
+        if plan['readback']['response']['status'] != 'not_presented':
+            raise intake.PlanError('read-back already recorded; revise explicitly instead of overwriting a response')
+        plan['readback']['text'] = text
+        plan['readback']['response']['status'] = 'no_response'
+        intake.check(plan)
+        write_json_atomically(args.plan, plan)
+    print(text, end='')
+    return 0
+
+
+def plan_bind_command(args):
+    plan, brief = intake.load(args.plan), load(args.brief)
+    bound = replace(brief, intake=intake.binding(plan))
+    intake.check_transition(plan, bound)
+    output = Path(args.output)
+    if output.suffix != '.json' or output.exists():
+        raise intake.PlanError('choose a new .json output for the bound brief')
+    data = bound.as_dict()
+    data.pop('source')
+    data['inputs'] = [os.path.relpath(Path(path).resolve(), output.parent.resolve())
+                      for path in brief.resolved_inputs]
+    write_json_atomically(output, data)
+    print(f'{output}: requirements bound; existing brief controls were checked, not changed.')
+    return 0
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(
         prog='shopping_advisor.study',
@@ -160,9 +204,25 @@ def main(argv=None):
                           help='registered category key (no default)')
     controls.set_defaults(handler=controls_command)
 
+    planning = commands.add_parser('plan-check', help='validate an intake plan without feeds')
+    planning.add_argument('plan', help=f'JSON plan, conventionally under {intake.DEFAULT_PLAN_ROOT}/')
+    planning.add_argument('--brief', help='also check the plan-to-brief transition')
+    planning.set_defaults(handler=plan_check_command)
+    readback = commands.add_parser('plan-readback', help='render this plan revision for read-back')
+    readback.add_argument('plan')
+    readback.add_argument('--record', action='store_true',
+                          help='save presented bytes with no-response status; never confirms')
+    readback.set_defaults(handler=plan_readback_command)
+    binding = commands.add_parser('plan-bind', help='bind requirements after checking existing brief controls')
+    binding.add_argument('brief')
+    binding.add_argument('--plan', required=True)
+    binding.add_argument('-o', '--output', required=True, help='new JSON brief path')
+    binding.set_defaults(handler=plan_bind_command)
+
     checking = commands.add_parser(
         'check', help='validate a brief and show how it will be read')
     checking.add_argument('brief', help='a .toml or .json brief')
+    checking.add_argument('--plan', help='intake plan required by a bound brief')
     checking.set_defaults(handler=check_command)
 
     running = commands.add_parser(
@@ -175,6 +235,7 @@ def main(argv=None):
     running.add_argument('--force', action='store_true',
                          help='replace an existing bundle of the same study id')
     running.add_argument('--evidence', help='versioned external ledger with indexed claims (JSON)')
+    running.add_argument('--plan', help='intake plan to check and snapshot inside the bundle')
     running.set_defaults(handler=run_command)
 
     verifying = commands.add_parser(

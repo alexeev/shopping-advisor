@@ -108,12 +108,14 @@ def collect(brief):
     return [category.evaluate(record) for record in kept], provenance
 
 
-def analyse(brief):
+def analyse(brief, plan=None):
     """Every decision this brief's inputs support, as data.
 
     The return value is what the bundle persists and what ``verify`` recomputes
     and compares, so every number a report states has to be in here.
     """
+    from .intake import check_transition
+    check_transition(plan, brief)
     category = get(brief.category)
     cards, provenance = collect(brief)
     ranked = report.ranking(cards, axis_key=brief.axis or None,

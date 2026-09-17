@@ -1568,6 +1568,28 @@ This is partial R13 delivery: intake plans, stage gates and the later migration
 remain planned. The catalogue does not prove arbitrary-language understanding
 or turn an unsupported requirement into an executable predicate.
 
+**2026-09-17 — INTAKE §16 stage 5 shipped.** Plan v1 retains user messages by
+provenance, requirement roles and settlements, source/agent attribution, assessment
+paths, stage effects, prospective questions, deterministic read-back and separate
+response status. Unknown categories remain valid planning records. The explicit
+plan-to-brief binding is consumed by `check`, `analyse` and `run` before analysis;
+a missing bronze-die requirement or filter now refuses at that boundary. Changed
+roles, units, caps, axis attribution and unrecorded extra filters also refuse.
+
+Storage decision: private working plans under `data/plans/` or an explicit private
+location, mandatory bundle-internal snapshots at study time, sanitized committed
+examples under `tests/intake/`, and durable private archiving even for plans that
+never become studies. Replay works after the originating plan is deleted.
+
+Measured effect: 38 new offline tests cover the contract, transition, read-back,
+CLI and snapshot replay, including the independently specified dropped-requirement
+case. The baseline adds `intake_plan: 1` and raises the test floor from 515 to 553;
+the four pinned study IDs/decisions and both completed semantic reviews remain
+unchanged. No extraction or validation behavior changed. This is preservation
+machinery, not a measured natural-language interpretation capability. Stage 6
+will add bounded execution and comparison/conclusion gates; stages 7–10 remain
+planned. A structurally valid plan is not semantic approval or engineering authority.
+
 ### Scope
 
 Make the existing coding-agent conversation the tested product entry point.

@@ -925,14 +925,17 @@ byte-identical, so stages 1–9 cannot move a committed example.
 | 9 | Intake review artifact | no | no | M |
 | 10 | **Migration**: manifest v3, identity projection, review v2 | **once** | **once** | L |
 
-**Implementation status (2026-09-17): stages 1–4 shipped.** Stage 3 uses
+**Implementation status (2026-09-17): stages 1–5 shipped.** Stage 3 uses
 `LEDGER_VERSION`, `AUDIT_VERSION` and `REVIEW_VERSION`, each still 1 and tracked
 independently by the gate. Stage 4 is
 [study/controls.py](shopping_advisor/study/controls.py), exposed by
 `study controls --category CATEGORY`; its resolver reads the live registry and
 covers the five mechanisms in §4. The catalogue is inspection, not an intake
-plan, execution authorisation or a semantic adequacy check. Stage 5 onward
-remains planned; existing study identities and report bytes stay unchanged.
+plan, execution authorisation or a semantic adequacy check. Stage 5 adds
+[plan v1 and the preservation boundary](CONTRACT.md#9-intake-plan-and-brief-preservation-r13-stage-5),
+retained user evidence, deterministic read-back and response status, explicit brief
+bindings, and bundle-internal snapshots used in replay. Stage 6 onward remains
+planned; the four existing study identities and report bytes stay unchanged.
 
 **1 — Worked cases and characterisation tests.** The referent, written before any
 field name. The cases in §14 become committed fixtures with their intent and
@@ -1015,13 +1018,14 @@ Decided here: optional-plan inertness; one migration rather than three;
 scope-declared rather than clock-driven freshness; the intake review as a separate
 artifact.
 
-Open: **where a plan lives before a study exists.** §12 settles that the snapshot
-travels inside the bundle, but a plan for a request that never becomes a study has
-no bundle, and the default location is gitignored — not diffed, not distributed and
-not protected from loss, which is the wrong home for the artifact that owns intent
-and holds the reviewer's referent. The choice is a tracked plan directory or
-untracked working plans with a mandatory bundle-internal snapshot at study time.
-Stage 5 is where it binds.
+**Decided in stage 5 (2026-09-17): where a plan lives before a study exists.**
+Private working plans use `data/plans/` or an explicit private location; a
+mandatory bundle-internal snapshot accompanies every plan-backed study. Sanitized
+examples are tracked under `tests/intake/`. Plans that never become studies and
+their revisions/dependencies must also be durably archived. Ignored working
+storage is not a backup, and the CLI does not claim that it has archived anything.
+This keeps private conversations out of the repository by default while retaining
+the executable study's intent without an external-file dependency.
 
 ### On estimating this
 
@@ -1051,5 +1055,6 @@ and the same `recommendation` outcome, with the renderer's historical/incomplete
 banner placed above the headline. These observations establish current behaviour,
 not completed work.
 
-No runtime implementation, canonical operating instruction, contract or baseline
-was changed in producing this document.
+The original assessment changed no runtime implementation, canonical operating
+instruction, contract or baseline. Subsequent implementation status and storage
+decisions are recorded in §16, with adopted semantics in CONTRACT.md.

@@ -230,6 +230,9 @@ still covers one marketplace: feeds spanning several stop the command until
 | `python -m shopping_advisor.run inspect RUN_DIR` | What a run did, which code and settings produced it, how it ended, what it retained |
 | `python -m shopping_advisor.study check BRIEF` | Whether a brief is usable, and every default it will fall back to |
 | `python -m shopping_advisor.study controls --category CATEGORY` | JSON catalogue of the live category's candidate controls, parameters and limits; no feed required |
+| `python -m shopping_advisor.study plan-check PLAN` | Validate an intake plan before category support or feeds exist; optional `--brief BRIEF` checks preservation |
+| `python -m shopping_advisor.study plan-readback PLAN` | Render the authoritative plan revision; `--record` saves presented bytes with no-response status |
+| `python -m shopping_advisor.study plan-bind BRIEF --plan PLAN -o NEW.json` | Check existing brief controls and bind the plan's requirements into a new brief |
 | `python -m shopping_advisor.study run BRIEF` | Analyses the feeds the brief names and writes a study bundle; collects nothing |
 | `python -m shopping_advisor.study validate-report BUNDLE --require-review` | Validate indexed claims, replay decisions and require a separate completed semantic review |
 | `python -m shopping_advisor.study verify BUNDLE` | Re-derives the decisions from the bundle's own inputs and reports what moved |
@@ -255,6 +258,12 @@ version, or a decision that moved. `run` exits non-zero only when the brief or
 the bundle cannot be used — an insufficient-evidence outcome is a result, not
 a failure. Two worked examples, one of each outcome, are in
 [tests/studies](tests/studies/README.md).
+
+For a plan-backed study, `study check` and `study run` require `--plan PLAN`.
+The full plan snapshot travels inside its bundle and is checked during replay.
+The [intake workflow](RESEARCH.md#retain-an-intake-plan-before-the-executable-brief)
+explains capture, read-back, storage and structural preservation. Full-request
+conclusion gates and intake semantic review remain later R13 stages.
 
 The `validated` CLI always supplies a category profile (default `dry_pasta`).
 For neutral validation, the Python API is `validate(record)` with no profile;

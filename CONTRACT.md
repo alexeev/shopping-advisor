@@ -566,3 +566,73 @@ milling/origin/vendor-safety bonuses; existing adverse review adjustments remain
 category heuristics. Missing verified external evidence remains a reported score
 gap. This is a conservative trust correction and versioned category method,
 not a change to generic status meanings. See the measured T3 result in ROADMAP.
+
+## 9. Intake plan and brief preservation (R13 stage 5)
+
+**Plan v1** is defined by `study/intake.py:check` and tracked as `intake_plan`
+by the maintenance gate. It is JSON data with closed fields and no executable
+expressions, imports or provider-specific state. A plan may name an unregistered
+category key and may exist before feeds. A brief still requires a registered
+category and readable inputs. Complete sanitized examples are
+[supported-plan.json](tests/intake/supported-plan.json) and
+[unsupported-plan.json](tests/intake/unsupported-plan.json).
+
+| Plan part | Contract |
+|---|---|
+| Identity and scope | Slug `id`, positive integer `revision`, `supersedes` canonical digest for later revisions; question, use case, category key, marketplace and delivery region. Unresolved geography may be empty in a plan. |
+| `user_evidence` | Conversation locator and start boundary, missing context, `selection = all_user_messages`, and user-authored messages with unique IDs. Capture the whole stated user exchange, including corrections and messages not mapped to a requirement. Tool/source text is not user authority. |
+| Redactions | Each message records removed content by description/reason and a `limits_review` flag. Removed wording cannot be presented as retained supporting wording. |
+| `sources` | Distinct IDs, locators and retained text for cited-source provenance; these are untrusted data, not verified external findings. |
+| Requirements | Unique ID, statement, role (`hard_constraint`, `preference`, `objective`, `context`), operative/decisive flags and independent settlement (`stated`, `delegated`, `assumed`, `unresolved`). Hard constraints remain decisive when assumed; only context may be non-operative. |
+| Provenance | Author (`user`, `cited_source`, `agent`), wording and references, basis (`user_statement`, `source`, `hypothesis`, `reasonableness`), applicability, rationale and if-wrong consequence. User/source quotations must occur in referenced retained text. Resolved delegation requires a user reference. |
+| Assessment | Path (`control`, `evidence_review`, `unsupported`, `revised`, `withdrawn`, or `not_applicable` for non-operative context); state (`not_assessed`, `supported`, `failed`, `unknown`); resolved controls, evidence/review digest references, gap or authorized change. Resolving a control does not make evidence assessed. |
+| Controls | Full resolver results, rechecked against the live category interface. Changed metadata refuses and requires reassessment. No narrative field is a control. |
+| Gaps and changes | Unsupported paths require a kind, reason and next step. Revision/withdrawal requires retained user authority and a reason; revisions name a retained replacement and cannot form cycles. Gap kinds are open text, not a capability index. |
+| Priorities and effects | Preferences/objectives have positive priorities (lower first); ties require a stated tradeoff. Operative requirements name affected stages and consequences. This records intent; it does not implement tradeoffs or acquisition rules. |
+| Questions | Uncertainty, expected effect, affected requirement IDs and retained answer-message IDs. These are prospective records, not an automatic questionnaire. |
+| Read-back | Exact deterministic rendering of the plan revision, kept separately from response status: `not_presented`, `no_response`, `confirmed`, `delegated`, `corrected`. Answered statuses require retained message references and scope. Rendering from an unregistered-category plan is supported. |
+
+The brief's optional **`intake` binding** contains plan version/ID/revision,
+canonical content SHA-256 and a lossless copy of the requirements. It is additive
+within brief v1 and absent from legacy serialization; older source-brief parsers
+reject the new field. Pre-stage-5 v2 bundle verifiers are not intake-aware: use
+this build's verifier for plan-backed bundles until the stage-10 manifest migration.
+At the transition, every requirement's
+meaning, role, settlement, provenance, assessment and effects must match exactly,
+including withdrawals. Scope fields must also match. The executable brief must
+implement all active mapped claim filters, selected axis, unit and cap, and cannot
+introduce an unrecorded claim filter or cap. Explicit axis selection cannot
+silently become category-default attribution.
+
+`analyse(brief, plan=...)`, `run(..., plan=...)` and `study check --plan` consume
+this boundary. A bound brief without its plan refuses, as does a plan supplied
+without a brief binding. Refusal precedes analysis and, in `run`, input digest
+reads and replacement of an existing output. No confirmation ritual is required:
+settled instructions and assumptions may proceed without a read-back response.
+Unreconciled corrections and unresolved decisive requirements refuse. Until stage
+6 adds bounded execution, decisive requirements without an executable control
+mapping remain plans and cannot cross this bridge.
+
+**Retention decision:** private working plans live under `data/plans/` or an
+explicit private location, with revisions and dependencies durably archived even
+when no study results. Gitignored storage is not a backup. A plan-backed study
+must carry `intake-plan.json` internally, digest-listed in its manifest, checked
+against `brief.intake` and consumed during replay. The original working plan is
+not needed to verify the study. Sanitized committed examples have a separate
+allowlist under `tests/intake/`.
+
+This is an optional addition to manifest v2; it does not migrate old bundles,
+change old report bytes or reissue reviews. Review v1 still checks its existing
+targets; the new brief binding indirectly pins the plan digest, but **does not
+constitute intake semantic approval**. Phase-aware review and manifest v3 remain
+stage 10. New bound briefs naturally have new source digests; the existing
+study-ID algorithm is unchanged. The operative identity projection is deferred
+to that migration.
+
+Structural preservation is not faithful language interpretation or semantic
+adequacy. Completeness of capture, whether wording authorizes a change, the truth
+and applicability of evidence/review references, and whether a control answers a
+requirement still need review. Stage 5 does not enforce assessment outcomes,
+acquisition effects, full-request conclusion gates, delivery freshness, session
+budgets or review invalidation. Those are later stages in
+[INTAKE §16](INTAKE.md#16-implementation-sequence).

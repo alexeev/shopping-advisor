@@ -210,6 +210,67 @@ a fact about the shelf.
 
 ## Live research workflow
 
+### Retain an intake plan before the executable brief
+
+R13 stage 5 provides a JSON plan contract and a checked plan-to-brief transition.
+Use [the sanitized supported example](tests/intake/supported-plan.json) as a shape
+reference, not as a source of purchasing constraints. Keep private working plans
+under `data/plans/` or an explicit private path. Record all user-authored messages
+in the stated exchange, including corrections and apparently irrelevant context;
+do not select retained excerpts based on which requirements were recognized.
+Record the start boundary, missing context and redactions that limit review.
+Source/tool text is not user authority.
+
+The plan preserves requirement role, settlement, provenance, assessment path/state,
+stage effects, prospective questions and live resolved controls. Its category may
+be unsupported and its feeds need not yet exist. The schema and limits are in
+[CONTRACT](CONTRACT.md#9-intake-plan-and-brief-preservation-r13-stage-5).
+
+```text
+uv run --offline --locked python -m shopping_advisor.study plan-check tests/intake/supported-plan.json
+uv run --offline --locked python -m shopping_advisor.study plan-readback tests/intake/unsupported-plan.json
+```
+
+For a private plan whose read-back status is `not_presented`, use
+`study plan-readback PATH --record` to present and retain the exact bytes, setting
+`no_response`. Without `--record`, the command only renders. Record an actual
+reply separately with its user-message reference and scope; silence is not
+confirmation. An already recorded response cannot be overwritten by `--record`.
+No response is required where existing instructions and defensible assumptions
+already settle the request.
+
+Once feeds and an executable brief exist, translate explicitly. These offline
+commands check the committed pasta brief against the plan, write a **new** brief
+under an existing directory, run it, and replay its internal snapshot:
+
+```text
+uv run --offline --locked python -m shopping_advisor.study plan-bind tests/studies/pasta-bronze-die.toml --plan tests/intake/supported-plan.json -o data/intake-example-brief.json
+uv run --offline --locked python -m shopping_advisor.study check data/intake-example-brief.json --plan tests/intake/supported-plan.json
+uv run --offline --locked python -m shopping_advisor.study run data/intake-example-brief.json --plan tests/intake/supported-plan.json -o data/intake-example-study
+uv run --offline --locked python -m shopping_advisor.study verify data/intake-example-study
+```
+
+Use fresh paths when repeating this example. `plan-bind` checks existing controls
+and scope; it does not rewrite them to make a mapping pass. It preserves feed
+resolution when moving the brief. A dropped or changed requirement, missing claim
+filter, changed unit/cap, or invented extra filter refuses before analysis. A
+bound brief requires its plan. `run --plan` retains the full snapshot internally;
+`verify` uses that copy even if the working plan is gone.
+
+Archive private plans with their dependencies, including plans that never become
+studies; `data/` is ignored and not a backup. Later revisions name the previous
+plan's canonical digest. A changed plan or response invalidates its old brief
+binding; revise explicitly and produce a new bound brief. Do not edit a committed
+semantic review to approve an intake change.
+
+This stage checks preservation, not full-request adequacy. Unsupported categories
+and requirements remain useful gap plans. Unresolved decisive requirements,
+unreconciled corrections, and decisive paths with no executable control cannot
+cross the current bridge. Stage 6 will distinguish bounded investigation from
+full-request selection. Assessment-state/conclusion gates, delivery freshness,
+resource accounting and intake semantic review remain planned. A passing
+`plan-check` is neither semantic approval nor authorization for engineering.
+
 ### Agree the brief
 
 A request arrives underspecified and that is normal: "I need a new vacuum
@@ -653,8 +714,10 @@ units, checked against cards during ranking, without conversion. Classification
 and grouping are fixed mechanisms with no buyer-supplied predicate parameters.
 
 `cost_basis`, `unacceptable` and `limits` remain narrative, and external claims
-remain outside candidate eligibility. This catalogue is R13 stage 4 inspection;
-intake plans and transition/conclusion gates are not yet implemented.
+remain outside candidate eligibility. This catalogue is R13 stage 4 inspection.
+Stage 5 consumes it for
+[intake plans and preservation](#retain-an-intake-plan-before-the-executable-brief);
+comparison-support and conclusion gates remain stage 6 work.
 
 ### Operational limits
 
