@@ -358,6 +358,20 @@ class PdpExtractor:
                 package[f'{key}_unit'] = unit
                 package[f'{key}_base'] = round(base, 4)
 
+        if not attributes.get('item_weight'):
+            # Only when the page has no Artikelgewicht row at all. A row that
+            # is present but unparsed ("1,1 Pfund", corpus page B0728HMWW5)
+            # keeps its own text rather than being overwritten by Amazon's
+            # conversion of it in the dimensions row.
+            derived = self._weight_from_dimensions(attributes.get('dimensions', ''))
+            if derived:
+                text, amount, unit, base = derived
+                package.update({'item_weight_text': text,
+                                'item_weight_amount': round(amount, 4),
+                                'item_weight_unit': unit,
+                                'item_weight_base': round(base, 4),
+                                'item_weight_origin': 'dimensions'})
+
         raw_count = attributes.get('item_count') or ''
         as_quantity = self._quantity(raw_count)
         if as_quantity and 'unit_count_base' not in package:
@@ -387,6 +401,31 @@ class PdpExtractor:
             package['total_quantity_unit'] = 'ml' if unit in VOLUME_UNITS else 'g'
             package['total_quantity_source'] = source
         return package
+
+    def _weight_from_dimensions(self, dimensions):
+        """The weight Amazon.de appends to its dimensions row, or ``None``.
+
+        Non-food listings often publish the item's weight only as the tail of
+        the dimensions row -- ``Produktabmessungen: 22 x 30 x 45 cm; 1,1
+        Kilogramm`` -- with no Artikelgewicht row at all. Measured on the
+        2026-09-17 school-backpack records: 5 of 43 state their weight
+        nowhere else, among them the two ergonomic brands the study was
+        about. Only a mass after the last semicolon is read, so ``30 x 44
+        cm`` never becomes 44 g, a volume never becomes a weight, and an
+        Artikelgewicht row always wins -- parsed or not -- because this is
+        consulted only when no such row exists. The origin is recorded on
+        the package block so a reader can tell the two rows apart.
+        """
+        if not dimensions or ';' not in dimensions:
+            return None
+        tail = dimensions.rsplit(';', 1)[1].strip()
+        if not tail or re.search(r'\d\s*[x×]\s*\d', tail):
+            return None
+        parsed = self._quantity(tail)
+        if not parsed or parsed[1] in VOLUME_UNITS:
+            return None
+        amount, unit, base = parsed
+        return tail, amount, unit, base
 
     def _total_quantity(self, package, title):
         """Total content of the listing, as ``(base amount, source, unit)``.

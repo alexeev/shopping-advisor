@@ -295,6 +295,44 @@ class PackQuantity(unittest.TestCase):
                      'total_quantity_source': 'item_weight'}))
         self.assertEqual(value.status, UNVERIFIED)
 
+    def test_a_bare_weight_in_the_aplus_text_confirms_a_single_unit(self):
+        """"Gewicht 1200 g" in the A+ copy against a 1,1 kg dimensions row.
+
+        Two school backpacks stated their weight in a structured row and
+        again only in A+ copy; without this source both stayed unverified
+        with the confirmation on the page.
+        """
+        value = quantity.reconcile(record(
+            title='Satch Schulrucksack Pack',
+            package={'total_quantity_base': 1100.0, 'total_quantity_unit': 'g',
+                     'total_quantity_source': 'item_weight'},
+            content={'feature_bullets': [], 'description': '',
+                     'important_information': [],
+                     'aplus': {'text': 'Das macht den satch pack aus Gewicht '
+                                       '1200 g Volumen 30 l'}}))
+        self.assertEqual(value.status, TRUSTED)
+        self.assertTrue(any(e.field == 'content.aplus' for e in value.evidence))
+
+    def test_aplus_copy_that_claims_a_multipack_confirms_nothing(self):
+        value = quantity.reconcile(record(
+            title='Spaghetti',
+            package={'total_quantity_base': 500.0, 'total_quantity_unit': 'g',
+                     'total_quantity_source': 'item_weight'},
+            content={'feature_bullets': [], 'description': '',
+                     'important_information': [],
+                     'aplus': {'text': 'Auch als 6er Pack: 500 g pro Packung.'}}))
+        self.assertEqual(value.status, UNVERIFIED)
+
+    def test_aplus_copy_may_confirm_but_never_contradict(self):
+        value = quantity.reconcile(record(
+            title='Spaghetti',
+            package={'total_quantity_base': 500.0, 'total_quantity_unit': 'g',
+                     'total_quantity_source': 'item_weight'},
+            content={'feature_bullets': [], 'description': '',
+                     'important_information': [],
+                     'aplus': {'text': 'Unsere Familienpackung wiegt 5 kg.'}}))
+        self.assertEqual(value.status, UNVERIFIED)
+
 
 class Pricing(unittest.TestCase):
 

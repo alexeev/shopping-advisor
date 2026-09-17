@@ -251,6 +251,13 @@ def single_unit_weights(record):
                  for index, bullet in enumerate(
                      content.get('feature_bullets') or []))
     texts.append(('content.description', content.get('description') or ''))
+    # A+ copy is read on the same terms as the bullets: confirm only, never
+    # supply or contradict. Measured on 43 school-backpack records from
+    # 2026-09-17: two ergonomic bags state their weight in a structured row
+    # and again only in the A+ text ("Gewicht 1200 g", "Mit einem Gewicht von
+    # 1.250 Gramm"), so without this line both stayed unverified with the
+    # confirmation on the page.
+    texts.append(('content.aplus', (content.get('aplus') or {}).get('text') or ''))
     if _states_a_pack_count(record, [text for _, text in texts]):
         return []
 

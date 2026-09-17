@@ -500,7 +500,8 @@ chose, and make the report show what would change if that default were wrong.
 
 #### Say so when the category is not supported
 
-Three categories ship: `dry_pasta`, `tyre_mounting_paste`, `basmati_rice`. For
+Four categories ship: `dry_pasta`, `tyre_mounting_paste`, `basmati_rice` and
+`school_backpack`. For
 anything else — a vacuum cleaner, a display — the generic layer still works
 (price, pack quantity, contradictions between the vendor's own statements) but
 nothing in the repository knows what makes one *good*.
@@ -615,7 +616,8 @@ is indistinguishable from a result.
 > **User:** I need a new vacuum cleaner.
 >
 > **Agent:** Before I collect anything: this repository has category knowledge
-> for dry pasta, tyre mounting paste and basmati rice only. For vacuum cleaners
+> for dry pasta, tyre mounting paste, basmati rice and school backpacks only.
+> For vacuum cleaners
 > I can check prices, pack/unit quantities and contradictions in the vendors'
 > own statements, but nothing here knows what makes a vacuum cleaner good, so I
 > cannot rank suitability yet. Two options: I build and test a vacuum-cleaner

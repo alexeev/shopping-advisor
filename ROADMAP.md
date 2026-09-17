@@ -1487,6 +1487,27 @@ It stays in `basmati_rice.py`.
 This is the first category application of the general adaptation loop, not a
 standalone generator project.
 
+**2026-09-17 — First category written mid-study, as reviewed maintenance
+(school backpack).** The intake conversation recorded under R13 ended with the
+buyer asking for the category and a full comparison; with no R15 gate shipped it
+was built under the maintenance workflow, on the authorisation the conversation
+already carried, and this entry is the record. Measured: 43 unique records from
+two bounded probes, 23 classified school backpacks and 20 other, each with its
+reason; a positional title classifier separating a secondary-school backpack
+from a first-grader's satchel set, an adult's laptop pack and a trekking pack;
+four vendor statements (reflectors 13 of 23, manufacturer warranty 4, adjustable
+back 10, hip or chest strap 13). The category needed two generic changes, each
+confirm-only and each with zero effect on the 39 committed corpus pages: the
+extractor reads the weight Amazon.de appends to the dimensions row when no
+Artikelgewicht row exists (`item_weight_origin`), and A+ copy joins bullets and
+description as a source that may confirm a single-unit weight and never
+contradict one. Usable bag weights went from 3 to 10 of 43. Not established:
+classifier accuracy beyond these 43 titles, anything about durability, or fit
+for a given child — the body-height range a vendor states is shown and ranked on
+by nobody. This does not make synthesis a default step; the R15 gates are still
+the missing piece, and the case set is in
+[tests/cases](tests/cases/README.md).
+
 ### Scope
 
 Use a maintained category where it fits the brief; otherwise create the smallest
@@ -1609,6 +1630,25 @@ provider. A passing gate protects the tested machinery; it does not establish
 understanding of arbitrary purchase requests, and no fixture in this repository
 claims to.
 
+
+**2026-09-17 — Observation from the first unsupported-category conversation
+(school backpack).** One requirement that neither the buyer's request nor the
+agent's reading of it produced came from a professional test's criteria list:
+Stiftung Warentest's satchel test rates traffic visibility against DIN 58124,
+the agent asked whether that mattered, and the parent confirmed it as a hard
+constraint. The two bounded probes then found the criterion stated in the
+listings of every in-class ergonomic brand and in none of the daypacks, so it
+separated the shelf where the request alone would not have. **Proposal, not
+adopted:** when a category is unsupported or new, read the criteria lists of
+professional tests for the class or an adjacent one as a source of *candidate*
+requirements to ask the buyer about, recorded as agent-authored questions that
+name their source; a criterion enters the plan only when the buyer confirms it.
+This is [R11](#r11--category-synthesis-as-a-default-step)'s synthesis applied to
+the questions rather than the classifier, under the runbook's rule that
+[questions are revised from what decided past answers](RESEARCH.md#improve-the-questions-not-only-the-code).
+Not established: that a test's criteria transfer across classes — the same
+test's durability drum is specified for satchels, not backpacks — or that the
+retailer "tests" dominating search results are usable sources.
 ### Scope
 
 Make the existing coding-agent conversation the tested product entry point.

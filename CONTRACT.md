@@ -60,7 +60,7 @@ disappearing, so consumers can index without guards.
 | envelope | `schema_version`, `fetched_at` |
 | lineage | `marketplace`, `asin`, `product_url`, `canonical_url`, `search_query`, `search_page`, `search_position`, `run_id`, `locale`, `accept_language` |
 | core | `title`, `brand`, `byline_text`, `brand_url`, `price{amount,currency,text,range?}`, `unit_price{amount,unit,text}`, `rating{value,count,text,count_text}`, `availability`, `seller`, `breadcrumbs[]` |
-| package | `item_weight_*`, `package_weight_*`, `unit_count_*`, `volume_*`, `item_count`, `size_name`, `dimensions`, `total_quantity_base`, `total_quantity_unit`, `total_quantity_source` |
+| package | `item_weight_*`, `package_weight_*`, `unit_count_*`, `volume_*`, `item_count`, `size_name`, `dimensions`, `total_quantity_base`, `total_quantity_unit`, `total_quantity_source`; `item_weight_origin` = `dimensions` when no Artikelgewicht row exists and the weight was read from the tail of the dimensions row ("22 x 30 x 45 cm; 1,1 Kilogramm"), absent otherwise |
 | content | `feature_bullets[]`, `description`, `important_information[{heading,text}]`, `aplus{module_types,headings,text,text_length,images,tables}` |
 | food | `ingredients{text,source}`, `allergens[]`, `nutrition{source,basis_text,per_100g,rows,derived}` |
 | attributes | `attributes{}` (canonical), `raw_tables{}` (verbatim), `attribute_sources{}` |
@@ -314,6 +314,16 @@ carrying a single nutrient, which has nothing on the page to confirm it.
 Amazon's own dimension names, never inferred.
 
 ---
+
+**Added 2026-09-17, within the version.** Two more places a single-unit
+weight may be *confirmed* from, both asymmetric like the bullet rule above:
+the extractor reads the weight Amazon.de appends to the dimensions row when the
+page has no Artikelgewicht row at all (`package.item_weight_origin =
+"dimensions"`; a present but unparsed Artikelgewicht row keeps its own text),
+and A+ copy joins the bullets and the description as text whose bare weight may
+confirm an attribute total and never contradict or supply one. Measured: zero
+change on the 39 corpus pages; on 43 school-backpack records, usable weights
+went from 3 to 10.
 
 ## 5. What a category supplies, and what it may not
 

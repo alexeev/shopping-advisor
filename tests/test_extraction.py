@@ -319,5 +319,58 @@ class PdpComposition(unittest.TestCase):
         self.assertEqual(package['total_quantity_unit'], 'ml')
 
 
+class PackageWeightFromDimensions(unittest.TestCase):
+    """Amazon.de appends a non-food item's weight to its dimensions row.
+
+    "Produktabmessungen: 22 x 30 x 45 cm; 1,1 Kilogramm" was the only weight
+    statement on 5 of 43 school-backpack records collected on 2026-09-17,
+    including the two ergonomic brands the study was about. The rule reads a
+    mass after the last semicolon and nothing else.
+    """
+
+    def package(self, **attributes):
+        return PdpExtractor(DE)._package(attributes, 'Satch Schulrucksack Pack')
+
+    def test_a_weight_after_the_semicolon_becomes_the_item_weight(self):
+        package = self.package(dimensions='22 x 30 x 45 cm; 1,1 Kilogramm')
+        self.assertEqual(package['item_weight_base'], 1100.0)
+        self.assertEqual(package['item_weight_unit'], 'kg')
+        self.assertEqual(package['item_weight_text'], '1,1 Kilogramm')
+        self.assertEqual(package['item_weight_origin'], 'dimensions')
+        self.assertEqual(package['total_quantity_base'], 1100.0)
+        self.assertEqual(package['total_quantity_source'], 'item_weight')
+
+    def test_a_dimensions_row_without_a_weight_states_none(self):
+        package = self.package(dimensions='23 x 30 x 44 cm')
+        self.assertNotIn('item_weight_base', package)
+        self.assertNotIn('total_quantity_base', package)
+
+    def test_a_volume_after_the_semicolon_is_not_a_weight(self):
+        package = self.package(dimensions='10 x 5 x 20 cm; 500 Milliliter')
+        self.assertNotIn('item_weight_base', package)
+
+    def test_a_dimension_that_happens_to_end_in_a_unit_is_not_read(self):
+        # "30 x 44 g" never occurs, but a defensive rule costs nothing: a
+        # tail that still multiplies dimensions is not a weight statement.
+        package = self.package(dimensions='22 cm; 30 x 44 g')
+        self.assertNotIn('item_weight_base', package)
+
+    def test_an_explicit_artikelgewicht_row_always_wins(self):
+        package = self.package(item_weight='1250 Gramm',
+                               dimensions='21 x 27 x 43 cm; 1,3 Kilogramm')
+        self.assertEqual(package['item_weight_base'], 1250.0)
+        self.assertNotIn('item_weight_origin', package)
+
+    def test_an_unparsed_artikelgewicht_row_is_not_overwritten(self):
+        """Corpus page B0728HMWW5: "Artikelgewicht: 1,1 Pfund" beside a
+        dimensions row ending in Amazon's conversion, "498,95 Gramm". The
+        row's own text stays; the conversion is not read behind its back."""
+        package = self.package(item_weight='1,1 Pfund',
+                               dimensions='20 x 10 x 5 cm; 498,95 Gramm')
+        self.assertEqual(package['item_weight_text'], '1,1 Pfund')
+        self.assertNotIn('item_weight_base', package)
+        self.assertNotIn('item_weight_origin', package)
+
+
 if __name__ == '__main__':
     unittest.main()

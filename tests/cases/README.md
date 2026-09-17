@@ -2,8 +2,9 @@
 
 Product records taken verbatim from real validation crawls, one JSON object
 per line, as written by the `amazon_product` spider. Each file is the evidence
-one category's rules were built against, and `../test_analysis.py` and
-`../test_mounting_paste.py` assert the verdict on every record in it.
+one category's rules were built against, and `../test_analysis.py`,
+`../test_mounting_paste.py` and `../test_school_backpack.py` assert the verdict
+on every record in it.
 
 They are here because `data/` is gitignored, so the evidence every validation
 rule was written against would otherwise live on one machine.
@@ -11,6 +12,7 @@ rule was written against would otherwise live on one machine.
 ```
 pasta_v1.jsonl.gz           25 records · dry pasta
 mounting_paste_v1.jsonl.gz  34 records · tyre mounting paste
+school_backpack_v1.jsonl.gz 43 records · school backpack
 ```
 
 ## `pasta_v1.jsonl.gz`
@@ -42,6 +44,31 @@ three latent defects in the generic layer visible.
 | A title that names nothing | `B086BX8M3C` | "Rema Tip Top 501004 - Schwammdose, Transparent, 50 ml" — container, colour, volume, and never the product class. Thirteen queries across five crawls never surfaced it, and the title-based classifier filed it as "other" when it finally arrived. It is a bicycle tyre mounting gel, and its description says so. The only record in the corpus classified on body text rather than on its title. |
 | The pack size a ranking dropped | `B087WQJQDS` | A 5 g tube — the smallest pack in a 127-record corpus, and the only listing that states both "trocknend" and freedom from mineral oil. Its title ends "Schwarz Einheitsgröße" and its size field says "Einheitsgröße", so the 5 g exist only in a feature bullet; until bullets were read for corroboration, the quantity stayed unverified and unverified values are not ranked. The product the ranking exists to surface was the one it hid. |
 | A drying claim and its own negation | `B0BJRG3K8Y` | "TROCKNET NICHT EIN IM EIMER UND AM PINSEL" and "Abtrocknungsverhalten: schnell trocknend", on one page, with the negated bullet printed first. Both are true of the product; only the second answers this category's question. |
+
+## `school_backpack_v1.jsonl.gz`
+
+The fourth category, and the first non-consumable, written on 2026-09-17
+during an intake conversation under the unsupported-category rule. The 43
+unique records are what two bounded Amazon.de probes returned for
+"Schulrucksack Mädchen", "Schulrucksack Jugendliche" and eight brand queries
+(Satch, Coocazoo, Deuter, Dakine, Eastpak, Jack Wolfskin, 4YOU, Beckmann),
+re-extracted from their retained pages after the extractor learned to read the
+weight Amazon.de appends to the dimensions row. Titles here stuff
+"Schulrucksack" and "Schulranzen" into one line, and Amazon files Satch and a
+first-grader's set under the same node, so the classifier is positional on the
+title the way mounting paste is.
+
+| Group | ASINs | Why |
+|---|---|---|
+| School backpacks | `B0GM19PXKV` `B0DXJJ861V` `B0DXJLY2L2` `B0DWXLM44P` `B0DXJDZDB9` `B09MCRN848` `B09MCT66NR` `B0GGJHD7M6` `B0GGV5ZNFC` `B09MCSCQGD` `B0F8NJ5TGL` `B0DVTDG2G2` `B07V3FR8V3` `B003OSUDOS` `B00JPZ0B2S` `B0DY8BN2BJ` `B08Y5WHP98` `B0DNZBZSR6` `B099PLV2F4` `B0C1BVTCR1` `B0DTD4KXGD` `B0G6KJYRSB` `B0GCHZ4RYR` | Five colour variants of one Satch Pack, three Coocazoo listings, a Deuter "ab der 5. Klasse", two Beckmann, three daypacks sold as school bags, and the low-price shelf the generic queries returned. |
+| An adult's pack with a school word stuffed in | `B0BRKHTWB1` `B07RW36W3K` `B0CYBW4V5H` `B0DSPQ96PH` `B0B2RC7F6M` | "Rucksack Herren, Schulrucksack Jungen Teenager, Laptop Rucksack": the head noun comes first in a German title, and it is a men's laptop pack. |
+| First-grader's set, and the satchel-set node | `B0GYS582DH` `B0CYZKT2V5` | A "Schulranzen Set 5-TLG. ... 1. Klasse", and a satchel whose title says nothing and whose node says primary school. |
+| Other backpack classes | `B0D5R73HZ2` `B0FHKWFVDR` `B0FHL3BH68` `B0F8W25VDC` `B000RE5A4U` `B07DNZCRVX` `B07P6M89HV` `B0DCH9D4H9` `B0B1VXPQF9` `B0CKTHQVXF` `B0B6H24C3H` `B0GPNQ54YZ` `B0HCPS1THW` | Trekking, hiking, leisure and adults' daypacks the brand queries returned. None names a school use in its title. |
+| Weight only in the dimensions row | `B0GM19PXKV` `B0DXJJ861V` `B0DXJLY2L2` `B0DWXLM44P` `B0DXJDZDB9` `B09MCSCQGD` `B07V3FR8V3` `B099PLV2F4` | "Produktabmessungen: 22 x 30 x 45 cm; 1,1 Kilogramm" and no Artikelgewicht row. The A+ copy confirms the Satch and Porter weights; the other two stay unverified. |
+| Weight only in prose | `B09MCRN848` | "Mit einem Gewicht von 1.250 Gramm" in the A+ copy and no structured row anywhere: unverified, never promoted. |
+| The warranty row | `B0GGV5ZNFC` `B0GGJHD7M6` `B00JPZ0B2S` `B003OSUDOS` `B0CKTHQVXF` | "Garantie für das Produkt: 4 Jahre" / "20+ Jahre" state a manufacturer warranty; "Gesetzlich" on the Puma states only the statutory right and is not one. |
+| Body-height ranges | `B0GM19PXKV` `B09MCRN848` `B09MCSCQGD` | "1,40 - 1,80 m" and "von 135 cm bis 180 cm": shown on the card, ranked on by nobody. |
+| A weight in pounds | `B00JPZ0B2S` `B0B6H24C3H` | "1,32 Pfund" and "1,5 Pfund" in the Artikelgewicht row, which the extractor keeps as text and does not yet convert. |
 
 ## Privacy
 

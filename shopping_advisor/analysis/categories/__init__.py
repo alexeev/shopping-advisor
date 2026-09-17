@@ -11,10 +11,17 @@ whose decisive evidence is partly *not on the page at all*. It reads buyer
 reviews as a separate evidence class, and it carries a small table of
 published laboratory results, because "what is known about this product from
 outside Amazon" is category knowledge and has nowhere else to live.
+
+The fourth, school backpacks, is the first non-consumable and the first
+written during an intake conversation. Its ranking axis is the bag's own
+weight, which the generic layer already read as a pack quantity; what the
+category had to add was a positional title classifier and four vendor
+statements, and what the generic layer had to learn was that Amazon.de appends
+an item's weight to its dimensions row and that A+ copy may confirm one.
 """
 
-from . import basmati_rice, dry_pasta, mounting_paste  # noqa: F401  (registration side effect)
+from . import basmati_rice, dry_pasta, mounting_paste, school_backpack  # noqa: F401  (registration side effect)
 from ..category import get, known, REGISTRY
 
 __all__ = ['REGISTRY', 'basmati_rice', 'dry_pasta', 'get', 'known',
-           'mounting_paste']
+           'mounting_paste', 'school_backpack']

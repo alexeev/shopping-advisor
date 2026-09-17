@@ -40,8 +40,9 @@ credential required for crawling, analysis, or tests.
   Amazon.it profile entries are not validated support. The `.it` profile uses
   German labels; unknown domains fall back to English. Do not treat successful
   parsing or a profile entry as proof that a marketplace is supported.
-- Three category analyzers ship: `dry_pasta`, `tyre_mounting_paste`, and
-  `basmati_rice`. Their defaults reflect particular use cases; a ranking alone
+- Four category analyzers ship: `dry_pasta`, `tyre_mounting_paste`,
+  `basmati_rice` and `school_backpack`. Their defaults reflect particular use
+  cases; a ranking alone
   does not establish suitability for a new question.
 - Study reports now have deterministic evidence checks and a separate semantic
   review. The researcher still establishes requirements, verifies sources and

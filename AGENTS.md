@@ -133,7 +133,8 @@ convenience, never the authority.
   authorization; confirming a brief is not a new permission ritual.
   [RESEARCH.md](RESEARCH.md#agree-the-brief) has the procedure and an example.
 - Say when a category is not supported instead of working around it. Only
-  `dry_pasta`, `tyre_mounting_paste` and `basmati_rice` ship. Explain what is
+  `dry_pasta`, `tyre_mounting_paste`, `basmati_rice` and `school_backpack`
+  ship. Explain what is
   missing and what it costs in time, confidence or the answer, and give the
   evidence and gap plan; do not make the user choose an implementation module.
   Answering within stated generic limits stays available, and is not a
