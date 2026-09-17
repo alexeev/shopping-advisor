@@ -175,6 +175,12 @@ CLAIMS = (
         r'|\d+\+?\s*(?:jahre?|years?|monate?|months?)\s*'
         r'(?:hersteller[\s-]?)?(?:garantie|warranty)\b'
         r'|\d+\+?\s*(?:jahre?|years?)\s+manufacturer'
+        # Written out, or counted from the purchase: "ein Jahr Garantie",
+        # "innerhalb von 12 Monaten nach dem Kauf ... deckt die Garantie". Found
+        # on two of the 192 listings the widened collection returned; the first
+        # version missed both.
+        r'|(?:ein|zwei|drei|vier|f[üu]nf|zehn)\s+jahre?\s+(?:hersteller[\s-]?)?garantie\b'
+        r'|\d+\s*(?:monaten|jahren)\s+nach\s+dem\s+kauf[^.]{0,60}\bgarantie\b'
         r'|hersteller[\s-]?garantie|lebenslange\s+garantie|lifetime\s+warranty',
         why='the nearest thing on the page to a durability commitment'),
     cat.Claim(
@@ -329,8 +335,8 @@ def body_height(validated):
     return Value.unknown('no body-height range stated')
 
 
-YEARS_RE = re.compile(r'(\d+)\s*\+?\s*(?:jahre?|years?)\b|(\d+)\s*(?:monate?|months?)\b'
-                      r'|(lebenslang|lifetime)', re.I)
+YEARS_RE = re.compile(r'(\d+)\s*\+?\s*(?:jahre?n?|years?)\b|(\d+)\s*(?:monate?n?|months?)\b'
+                      r'|(lebenslang|lifetime)|(?:\b(ein)\s+jahr\b)', re.I)
 
 
 def warranty_years(found):
@@ -349,6 +355,8 @@ def warranty_years(found):
     if match.group(2):
         return Value(int(match.group(2)) / 12.0, UNVERIFIED, 'years',
                      [claim.evidence[0]], source=TEXT)
+    if match.group(4):
+        return Value(1.0, UNVERIFIED, 'years', [claim.evidence[0]], source=TEXT)
     return Value(float(match.group(1)), UNVERIFIED, 'years', [claim.evidence[0]],
                  source=TEXT)
 

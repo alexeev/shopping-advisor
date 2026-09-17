@@ -180,6 +180,19 @@ class Claims(unittest.TestCase):
                     'du ein 30-tägiges Rückgaberecht.'})
         self.assertEqual(card['claims']['manufacturer_warranty'].status, NOT_CLAIMED)
 
+    def test_a_written_out_year_and_a_month_count_are_warranties(self):
+        """"ein Jahr Garantie" and "innerhalb von 12 Monaten nach dem Kauf ...
+        deckt die Garantie": two of 192 collected listings, both missed by
+        the first pattern, which wanted a digit next to the noun."""
+        card = self.card(['Qualitätssicherung: Auf jeden Kinderrucksack gibt es '
+                          'ein Jahr Garantie.'])
+        self.assertEqual(card['claims']['manufacturer_warranty'].status, TRUSTED)
+        self.assertEqual(card['axes']['warranty_years'].value, 1.0)
+        card = self.card(['Innerhalb von 12 Monaten nach dem Kauf des Produkts '
+                          'deckt die Garantie die kostenlose Reparatur ab.'])
+        self.assertEqual(card['claims']['manufacturer_warranty'].status, TRUSTED)
+        self.assertEqual(card['axes']['warranty_years'].value, 1.0)
+
     def test_an_adjustable_back_in_the_title_counts(self):
         card = evaluate(record(title='coocazoo Schulrucksack Mate, ergonomischer '
                                      '& anpassbarer Tornister, höhen- & '

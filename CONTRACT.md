@@ -1030,7 +1030,7 @@ The intake review, the session snapshot and a delivery move nothing.
 **Delivery review v1** is `study/delivery_review.py`, tracked as
 `delivery_review`; the bundle holds `delivery-review.json` with one review per
 reviewed event. It is the scoped re-check INTAKE §8 describes: at a later
-delivery event the semantic findings are not rewritten, the new event is.
+delivery event the semantic findings are not rewritten, the new event is. A review whose bindings no longer hold is a `delivery_review_invalid` finding; because the record keeps one review per event and a new review replaces the old one, `delivery-review-template` and `review-delivery` for that same event proceed past that one finding and restore a verified bundle, while a stale review of any other event, or any other finding, still blocks them (added 2026-09-17, found in use).
 
 | Part | Contract |
 |---|---|

@@ -523,6 +523,10 @@ def delivery_review_template_command(args):
     """``delivery-review-template BUNDLE -o OUT`` -- a pending review bound to one event."""
     directory = Path(args.bundle)
     manifest, findings = verify_bundle(directory, args.input_root)
+    # A stale review of the very event being reviewed is what the new review
+    # replaces, not a reason to refuse it; everything else still blocks.
+    findings = delivery_review.blocking(
+        findings, directory, delivery_review.event_position(directory, args.event))
     if findings:
         raise delivery_review.DeliveryReviewError(
             'Repair the bundle before reviewing a delivery: ' + '; '.join(f['code'] for f in findings))
@@ -546,6 +550,8 @@ def review_delivery_command(args):
     """``review-delivery BUNDLE REVIEW`` -- attach a delivery review to the event it binds."""
     directory = Path(args.bundle)
     manifest, findings = verify_bundle(directory, args.input_root)
+    findings = delivery_review.blocking(
+        findings, directory, delivery_review.read(args.review)['event'])
     if findings:
         raise delivery_review.DeliveryReviewError(
             'Repair the bundle before attaching a delivery review: '

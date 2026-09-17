@@ -343,6 +343,42 @@ class WhatConsumesIt(DeliveryReviewCase):
         self.assertEqual([f['code'] for f in findings], ['delivery_review_invalid'])
         self.assertIn('two reviews', findings[0]['message'])
 
+    def test_a_superseded_review_of_the_same_event_can_be_replaced(self):
+        """The semantic review is reissued after the delivery review bound it.
+
+        Found in use on 2026-09-17: two counts in a completed semantic review
+        were corrected and `review` replaced it, so the delivery review of
+        event 0 no longer bound -- and both the template and the attach
+        refused because the bundle did not verify, on account of the very
+        review they were about to replace. A stale review of the event being
+        reviewed is not a reason to refuse its replacement; a stale review of
+        another event still is, and so is any other finding.
+        """
+        directory, _ = self.run_study()
+        self.deliver(directory, BUILT)
+        status, text = self.cli('review-delivery', directory, self.write(
+            'r0.json', self.completed(delivery_review.template(directory))))
+        self.assertEqual(status, 0, text)
+        self.deliver(directory, LATER)            # event 1, never reviewed
+        self.approve_final(directory)             # supersedes event 0's review
+        self.assertEqual([f['code'] for f in bundle.verify(directory)[1]],
+                         ['delivery_review_invalid'])
+        status, text = self.cli('delivery-review-template', directory,
+                                '-o', self.directory / 't1.json', '--event', '1')
+        self.assertEqual(status, 2, text)
+        self.assertIn('Repair the bundle', text)
+        status, text = self.cli('delivery-review-template', directory,
+                                '-o', self.directory / 't0.json', '--event', '0')
+        self.assertEqual(status, 0, text)
+        template = json.loads((self.directory / 't0.json').read_text())
+        self.assertEqual(template['semantic_review']['status'], 'pass')
+        status, text = self.cli('review-delivery', directory,
+                                self.write('r0b.json', self.completed(template)))
+        self.assertEqual(status, 0, text)
+        self.assertEqual(bundle.verify(directory)[1], [])
+        record = delivery_review.read_record(directory / delivery_review.RECORD)
+        self.assertEqual([r['event'] for r in record['reviews']], [0])
+
     def test_the_bundle_must_verify_before_a_review_is_attached(self):
         directory, _ = self.run_study()
         self.deliver(directory, BUILT)

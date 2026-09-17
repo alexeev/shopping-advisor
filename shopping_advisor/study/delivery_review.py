@@ -159,6 +159,44 @@ def binding(directory, position=None):
     }
 
 
+def event_position(directory, position=None):
+    """The event ``binding`` will read: the latest one when none is named."""
+    from . import delivery
+    path = directory / delivery.RECORD
+    if position is None and path.is_file():
+        return len(delivery.read(path)['events']) - 1
+    return position
+
+
+def blocking(findings, directory, position):
+    """The verify findings that still stand in the way of reviewing ``position``.
+
+    A review of that same event which no longer binds is not one of them. The
+    record keeps one review per event and :func:`attach` replaces it, so the
+    stale review is exactly what the new one is for; refusing the replacement
+    because the bundle carries the stale one would leave a bundle whose
+    semantic review was reissued with no way back to a verified state. Found
+    in use on 2026-09-17, when two counts in a completed semantic review were
+    corrected after the delivery review had bound it. A stale review of any
+    *other* event still blocks, and so does every other finding.
+    """
+    if not any(f['code'] == 'delivery_review_invalid' for f in findings):
+        return list(findings)
+    kept = [f for f in findings if f['code'] != 'delivery_review_invalid']
+    try:
+        record = read_record(directory / RECORD)
+    except DeliveryReviewError as exc:
+        return kept + [{'code': 'delivery_review_invalid', 'message': str(exc)}]
+    for review in record['reviews']:
+        try:
+            check_binding(review, directory)
+        except DeliveryReviewError as exc:
+            if review['event'] != position:
+                kept.append({'code': 'delivery_review_invalid',
+                             'message': f'review of delivery event {review["event"]}: {exc}'})
+    return kept
+
+
 def template(directory, position=None):
     """A pending review bound to one event of this bundle."""
     return {
