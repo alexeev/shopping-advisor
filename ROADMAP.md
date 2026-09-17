@@ -77,6 +77,28 @@ invented certainty.
 - A universal product ontology, scoring engine or agent framework. Shared
   abstractions earn their place through demonstrated use.
 
+### Two kinds of request, one interface
+
+The same coding interface receives engineering and maintenance requests, and
+an engineering dialogue often ends in a roadmap or architectural decision rather
+than a change. Neither kind gets an intake artifact of its own inside the
+repository. The agentic harness already records the request, authorises each
+action and keeps the transcript; git keeps the diff and the review; the
+maintenance gate and its tracked baseline are the acceptance check. A parallel
+record would duplicate all three and would be the free-form memory store
+[R16](#r16--capability-lifecycle-and-architectural-review) prohibits.
+
+What the repository retains is the decision and its measured effect: a dated
+entry here for a discussion that changed direction, a commit whose baseline
+diff is argued in its message for a change. That is what property 6 below
+demands of engineering exactly as it demands it of research — another agent
+resumes from the files, never from a private chat. The one place the harness's
+affordances do not suffice is engineering the agent spawns *inside a study*,
+where scope, authority and effect must bind to the study and survive replay.
+That is [R15](#r15--controlled-task-driven-capability-adaptation), not a new
+milestone. Decided 2026-09-17; the rejected alternative is recorded under
+[deferred and rejected work](#deferred-and-rejected-work).
+
 ### Architectural properties that make this possible
 
 1. **Local change.** Source adapters acquire and extract; generic validation
@@ -1883,6 +1905,7 @@ it, within budget and authorization. Revisit the evidence, not just the label.
 | Framework / runtime upgrade | **DEFERRED (maintenance)** | A product goal is blocked by the runtime. The last upgrade silently dropped an attribute table from two corpus pages; the corpus test is the gate. Never mix an upgrade with product work. |
 | `amazon_search.py` | **REMOVED in T0** | No supported code/test consumer found in the tracked-reference inventory. Use `amazon_product`; see the [migration note](README.md#legacy-search-spider-migration) for its different feed shape and acquisition scope. |
 | Nutrition coverage beyond validation | **DEFERRED** | Never as a coverage goal. 44% is Amazon's ceiling, not the parser's. |
+| Engineering intake record, symmetric to the R13 plan | **REJECTED (2026-09-17)** | Proposed after R13 stage 6 as a retained artifact for maintenance requests: request kind, interpreted scope, acceptance criteria written before the change, authorisation scope, retention decision. Rejected because the harness, git and the maintenance gate already hold each of those, and a repository copy would be the parallel memory store R16 forbids; see [two kinds of request, one interface](#two-kinds-of-request-one-interface). Reconsider only for engineering spawned inside a study, which is R15's binding problem, not an intake problem. |
 
 ---
 

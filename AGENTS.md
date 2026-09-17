@@ -50,6 +50,17 @@ than define separate research rules. Read this file, [README.md](README.md), and
   R14 tests the complete loop. **These are planned capabilities, not runtime
   authority.** Until R11 and R15 gates ship, follow the unsupported-category
   rule below; a category written mid-study remains reviewed maintenance.
+- The same conversation is the entry point for engineering and maintenance
+  requests, and their intake belongs to the harness, not to this repository:
+  the coding interface records the request, authorises each action and keeps
+  the transcript; git keeps the diff and the review; the maintenance gate is
+  the acceptance check. Do not build a repository record of those. What enters
+  the repository is the decision and its measured effect — a dated ROADMAP
+  entry for a discussion that changed direction, a commit whose message argues
+  its baseline diff for a change — so that another agent resumes from the
+  files without the chat. Engineering the agent spawns inside a study is the
+  exception and is R15's: its scope and authority bind to the study. See
+  [two kinds of request, one interface](ROADMAP.md#two-kinds-of-request-one-interface).
 
 ## Environment and checks
 
