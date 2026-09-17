@@ -153,8 +153,13 @@ class PlanContract(PlanCase):
             intake.check(self.plan)
         assessment['reviews'] = [dict(id='declared-review', sha256='b'*64)]
         intake.check(self.refreshed())
-        with self.assertRaisesRegex(intake.PlanError, 'no executable brief mapping'):
+        # Stage 6: the bridge admits it into bounded execution, but the brief
+        # may no longer carry the filter no active requirement maps to.
+        with self.assertRaisesRegex(intake.PlanError, 'no active requirement'):
             intake.check_transition(self.plan, self.bound())
+        result, _ = analyse(replace(self.bound(), require_claims=()), plan=self.plan)
+        self.assertEqual(result['stop'], 'requirement_unsupported')
+        self.assertEqual(result['shortlist'], [])
 
     def test_withdrawal_needs_user_authority_and_reason(self):
         assessment = self.plan['requirements'][0]['assessment']
@@ -310,8 +315,10 @@ class Preservation(PlanCase):
         req['assessment'].update(path='unsupported', controls=[], gap=dict(kind='external_evidence_eligibility',
                 reason='No external finding eligibility control.', next_step='Plan the necessary evidence and method.'))
         self.refreshed()
-        with self.assertRaisesRegex(intake.PlanError, 'no executable brief mapping'):
-            intake.check_transition(self.plan, self.bound())
+        bound = replace(self.bound(), require_claims=())
+        intake.check_transition(self.plan, bound)   # stage 6: bounded execution, not a refusal
+        result, _ = analyse(bound, plan=self.plan)
+        self.assertEqual(result['gates']['conclusion']['stop'], 'requirement_unsupported')
         req['settlement'] = 'unresolved'
         self.refreshed()
         with self.assertRaisesRegex(intake.PlanError, 'unresolved'):
@@ -419,10 +426,22 @@ class BundleAndCLI(PlanCase):
     def test_bound_plan_preserves_legacy_decisions_and_report_rendering(self):
         plain, _ = analyse(self.brief)
         bound, _ = analyse(self.bound(), plan=self.plan)
-        for key in plain.keys() - {'brief'}:
+        for key in plain.keys() - {'brief', 'gates'}:
             self.assertEqual(plain[key], bound[key], key)
+        self.assertIsNone(plain['gates'])
+        self.assertEqual(plain['stop'], '')
+        # Stage 6 adds a requirements section to a plan-backed report and
+        # moves nothing else: headline, result and every other section are
+        # the same bytes.
         from shopping_advisor.study.writeup import render
-        self.assertEqual(render(plain, 'same-id', []), render(bound, 'same-id', []))
+        before, after = render(plain, 'same-id', []), render(bound, 'same-id', [])
+        self.assertNotIn('## Requirements and their dispositions', before)
+        start = after.index('## Requirements and their dispositions')
+        end = after.index('## Result')
+        self.assertEqual(after[:start] + after[end:],
+                         before.replace('<path to pasta-bronze-die.toml>',
+                                        '<path to pasta-bronze-die.toml> --plan <bundle directory>/intake-plan.json'))
+        self.assertTrue(after.startswith('# ' + self.brief.question + '\n\n**Recommendation.**'))
 
     def test_plan_contract_is_discovered_and_pinned(self):
         from shopping_advisor import maintenance

@@ -20,6 +20,7 @@
     "intake_plan": 1,
     "run_manifest": 2,
     "semantic_review": 1,
+    "stage_gates": 1,
     "study_audit": 1,
     "study_manifest": 2,
     "validation_contract": 2
@@ -51,6 +52,7 @@
         "offers": 5,
         "outcome": "recommendation",
         "shortlisted": 3,
+        "stop": "",
         "study_id": "pasta-bronze-die-46127870314d"
       },
       "name": "pasta-bronze-die",
@@ -63,6 +65,7 @@
         "offers": 0,
         "outcome": "insufficient_evidence",
         "shortlisted": 0,
+        "stop": "",
         "study_id": "pasta-low-temperature-drying-d309972b3bd0"
       },
       "name": "pasta-low-temperature-drying",
@@ -76,6 +79,7 @@
         "offers": 3,
         "outcome": "recommendation",
         "shortlisted": 3,
+        "stop": "",
         "study_id": "basmati-audit-positive-571cca1a2d4b"
       },
       "name": "t3-positive",
@@ -90,22 +94,51 @@
         "offers": 3,
         "outcome": "insufficient_evidence",
         "shortlisted": 0,
+        "stop": "",
         "study_id": "basmati-audit-insufficient-18b88dc2bd3c"
       },
       "name": "t3-insufficient",
       "review": "tests/studies/t3/insufficient-review.json",
       "why": "T3's audited insufficient-evidence outcome, reviewed and still a refusal."
+    },
+    {
+      "brief": "tests/intake/delivered-cost-brief.json",
+      "expect": {
+        "excluded": 3,
+        "offers": 5,
+        "outcome": "recommendation",
+        "shortlisted": 0,
+        "stop": "requirement_unsupported",
+        "study_id": "pasta-delivered-cost-608160f72d15"
+      },
+      "name": "pasta-delivered-cost",
+      "plan": "tests/intake/delivered-cost-plan.json",
+      "why": "R13 stage 6's delivered-cost trap: the recommendation is withheld and the item-price finding survives under its own heading."
+    },
+    {
+      "brief": "tests/intake/budget-brief.json",
+      "expect": {
+        "excluded": 3,
+        "offers": 5,
+        "outcome": "recommendation",
+        "shortlisted": 0,
+        "stop": "requirement_unsupported",
+        "study_id": "pasta-purchase-budget-85064fcacd0e"
+      },
+      "name": "pasta-purchase-budget",
+      "plan": "tests/intake/budget-plan.json",
+      "why": "R13 stage 6's budget-plus-unit-price case: the unsupported purchase budget is detected without changing its units, and nothing is put forward."
     }
   ],
   "note": "What the maintenance gate is entitled to find. Tracked on purpose: a task-local change that lowers a floor, drops a check or moves an example's decision has to say so here, in a reviewable diff. Re-record with `maintenance baseline --update` from a tree that passes.",
-  "recorded_at": "2026-09-17T08:06:39+00:00",
+  "recorded_at": "2026-09-17T10:03:36+00:00",
   "runtime": {
     "lock_sha256": "e24bc67da2dba6c49538700bc8bce61658748c715e9103603f537c15694a32cd",
     "python": "3.14",
     "scrapy": "2.19"
   },
   "tests": {
-    "minimum": 553,
+    "minimum": 587,
     "modules": [
       "test_analysis",
       "test_attributed_search",
@@ -116,6 +149,7 @@
       "test_corpus",
       "test_extraction",
       "test_feeds",
+      "test_gates",
       "test_intake",
       "test_intake_plan",
       "test_maintenance",

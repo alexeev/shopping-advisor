@@ -774,9 +774,11 @@ purchase budget. The characterisation test holding that description is
 `tests/test_intake.py`: it asserts that two briefs differing only in those fields
 produce identical **eligibility, ordering and outcome**, and deliberately not
 identical report bytes or study ids, which legitimately differ and would be the
-wrong invariant to freeze. The negative test that keeps the new conclusion
-controls from mistaking those fields for enforcement belongs to stage 6, where
-those controls arrive.
+wrong invariant to freeze. The negative test that keeps the conclusion gates
+from mistaking those fields for enforcement is in `tests/test_gates.py`:
+rewriting `cost_basis` on a fully supported plan causes no stop, rewriting it on
+the delivered-cost plan lifts none, and a budget written into `unacceptable`
+satisfies nothing.
 
 ---
 
@@ -925,7 +927,7 @@ byte-identical, so stages 1–9 cannot move a committed example.
 | 9 | Intake review artifact | no | no | M |
 | 10 | **Migration**: manifest v3, identity projection, review v2 | **once** | **once** | L |
 
-**Implementation status (2026-09-17): stages 1–5 shipped.** Stage 3 uses
+**Implementation status (2026-09-17): stages 1–6 shipped.** Stage 3 uses
 `LEDGER_VERSION`, `AUDIT_VERSION` and `REVIEW_VERSION`, each still 1 and tracked
 independently by the gate. Stage 4 is
 [study/controls.py](shopping_advisor/study/controls.py), exposed by
@@ -934,8 +936,14 @@ covers the five mechanisms in §4. The catalogue is inspection, not an intake
 plan, execution authorisation or a semantic adequacy check. Stage 5 adds
 [plan v1 and the preservation boundary](CONTRACT.md#9-intake-plan-and-brief-preservation-r13-stage-5),
 retained user evidence, deterministic read-back and response status, explicit brief
-bindings, and bundle-internal snapshots used in replay. Stage 6 onward remains
-planned; the four existing study identities and report bytes stay unchanged.
+bindings, and bundle-internal snapshots used in replay. Stage 6 is
+[study/gates.py](shopping_advisor/study/gates.py) and
+[CONTRACT §10](CONTRACT.md#10-stage-gates-r13-stage-6): the intake, comparison-
+support and conclusion gates, three stop kinds kept apart from the analytical
+outcomes, the bounded-finding rendering, the attribution sentence from the
+response status, and two plan-backed examples replayed by the maintenance gate.
+Stages 7 onward remain planned; the four pre-existing study identities, decisions
+and report bytes stay unchanged, and both committed reviews stand.
 
 **1 — Worked cases and characterisation tests.** The referent, written before any
 field name. The cases in §14 become committed fixtures with their intent and

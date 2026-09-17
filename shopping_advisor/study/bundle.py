@@ -44,7 +44,7 @@ from ..provenance import (code_identity, sha256_file, sha256_text,
 from ..analysis import report as report_module
 from ..analysis.category import is_match
 from ..run import read_jsonl
-from . import writeup, audit, intake
+from . import writeup, audit, intake, gates
 from .analysis import StudyError, analyse, brief_fault
 from .brief import BRIEF_VERSION, BriefError, load
 
@@ -121,14 +121,18 @@ def write(brief, result, cards, directory):
                  [report_module.card_json(card)
                   for card in sorted((card for card in cards if is_match(card)),
                                      key=lambda card: card['asin'])])
-    write_json_atomically(directory / RANKING,
-                          {'ranking': result['ranking'],
-                           'constraints': result['constraints'],
-                           'classification': result['classification'],
-                           'freshness': result['freshness'],
-                           'outcome': result['outcome'],
-                           'claims': result['claims'],
-                           'shortlist': result['shortlist']})
+    ranking = {'ranking': result['ranking'],
+               'constraints': result['constraints'],
+               'classification': result['classification'],
+               'freshness': result['freshness'],
+               'outcome': result['outcome'],
+               'claims': result['claims'],
+               'shortlist': result['shortlist']}
+    if result.get('gates') is not None:
+        # Plan-backed only, so a legacy bundle's bytes do not move.
+        ranking['stop'] = result['stop']
+        ranking['gates'] = result['gates']
+    write_json_atomically(directory / RANKING, ranking)
     return directory
 
 
@@ -141,7 +145,7 @@ def artifact_digests(directory):
 
 def manifest(brief, result, identity, inputs, started_at, finished_at,
              directory):
-    return {
+    written = {
         'manifest_version': STUDY_MANIFEST_VERSION,
         'study_id': identity,
         'brief_id': brief.id,
@@ -167,6 +171,13 @@ def manifest(brief, result, identity, inputs, started_at, finished_at,
         # up. Everything not named here is a finding.
         'volatile': list(VOLATILE),
     }
+    if result.get('gates') is not None:
+        # The analytical outcome above is a fact about the evidence; the stop
+        # is a fact about the request. A manifest reading `recommendation`
+        # with no stop beside it would be the label INTAKE §1 warns about.
+        written['stop'] = result['stop']
+        written['permits'] = result['gates']['conclusion']['permits']
+    return written
 
 
 def load_manifest(directory):
@@ -451,6 +462,17 @@ def verify(directory, input_root=''):
         return data, findings
 
     stored = json.loads((directory / RANKING).read_text(encoding='utf-8'))
+    if plan is not None and 'gates' not in stored:
+        findings.append({
+            'code': 'stage_gates_missing',
+            'message': f'{RANKING} records no stage gates for a plan-backed '
+                       f'study: the bundle predates R13 stage 6. Regenerate it '
+                       f'from its brief and snapshot; its conclusion was never '
+                       f'gated.'})
+        return data, findings
+    if 'gates' in stored:
+        _compare(stored['stop'], result['stop'], 'the stop', findings)
+        _compare(stored['gates'], result['gates'], 'the stage gates', findings)
     _compare(stored['outcome'], result['outcome'], 'the outcome', findings)
     _compare(stored['claims'], result['claims'], 'a numeric claim', findings,
              key='id')

@@ -1,0 +1,307 @@
+{
+  "plan_version": 1,
+  "id": "pasta-budget-intake",
+  "revision": 1,
+  "supersedes": "",
+  "question": "Among the committed dry-pasta case records, which bronze-die pasta under 100 EUR in total is cheapest per kilogram?",
+  "use_case": "A household buying dry pasta for regular weekday cooking with a hundred-euro purchase budget, who wants the cheapest bronze-die pasta by weight among the packs that budget admits. Eligibility on one dimension and ordering on another; the point of this study is that the budget has no executable control and must not be routed through the per-kilogram cap.",
+  "category": "dry_pasta",
+  "marketplace": "www.amazon.de",
+  "delivery_region": "DE",
+  "user_evidence": {
+    "conversation": "synthetic-case-7",
+    "start": "first purchase request",
+    "selection": "all_user_messages",
+    "missing_context": "",
+    "messages": [
+      {
+        "id": "u1",
+        "author": "user",
+        "text": "Under 100 EUR in total, then cheapest per kilogram. Bronze-die dry pasta only, Amazon.de with delivery in Germany, any pack size. Historical comparison over the committed case records.",
+        "redactions": []
+      }
+    ]
+  },
+  "sources": [],
+  "requirements": [
+    {
+      "id": "bronze",
+      "statement": "Require the vendor bronze-die claim, not independent certification.",
+      "role": "hard_constraint",
+      "operative": true,
+      "decisive": true,
+      "settlement": "stated",
+      "priority": null,
+      "tradeoff": "",
+      "provenance": {
+        "author": "user",
+        "wording": "Bronze-die",
+        "refs": [
+          "u1"
+        ],
+        "basis": "user_statement",
+        "applicability": "This historical case comparison only.",
+        "rationale": "The request states this criterion.",
+        "if_wrong": "Revisit the scope and comparison before choosing."
+      },
+      "assessment": {
+        "path": "control",
+        "state": "not_assessed",
+        "controls": [
+          {
+            "category": "dry_pasta",
+            "control": "require_claims",
+            "metadata": {
+              "parameters": {
+                "claims": "list of category claim keys"
+              },
+              "stage": "candidate_filter",
+              "optional": true,
+              "implementation": "shopping_advisor.analysis.report.ranking",
+              "effect": "Every named claim must have trusted status on the category card, before grouping.",
+              "limits": "Requires a vendor statement, not external proof or absence of an adverse claim. Adverse keys still require presence."
+            },
+            "parameters": {
+              "claims": [
+                "bronze_die"
+              ]
+            },
+            "claims": [
+              {
+                "key": "bronze_die",
+                "label": "Bronze die",
+                "adverse": false,
+                "why": "a rough surface the sauce holds on to"
+              }
+            ]
+          }
+        ],
+        "evidence": [],
+        "reviews": [],
+        "gap": null,
+        "change": null
+      },
+      "effects": [
+        {
+          "stage": "candidate_assessment",
+          "consequence": "Require the vendor bronze-die claim, not independent certification."
+        }
+      ]
+    },
+    {
+      "id": "budget",
+      "statement": "Exclude offers whose pack price exceeds 100 EUR in total.",
+      "role": "hard_constraint",
+      "operative": true,
+      "decisive": true,
+      "settlement": "stated",
+      "priority": null,
+      "tradeoff": "",
+      "provenance": {
+        "author": "user",
+        "wording": "Under 100 EUR in total",
+        "refs": [
+          "u1"
+        ],
+        "basis": "user_statement",
+        "applicability": "This historical case comparison only.",
+        "rationale": "The request states a purchase budget, in euros per purchase.",
+        "if_wrong": "A nine-kilogram case above the budget could lead the ranking, as it does on price per kilogram."
+      },
+      "assessment": {
+        "path": "unsupported",
+        "state": "not_assessed",
+        "controls": [],
+        "evidence": [],
+        "reviews": [],
+        "gap": {
+          "kind": "independent_constraint",
+          "reason": "No purchase-price control exists for dry pasta: max_axis_value caps the ranked EUR/kg axis and would read 100 as a hundred euros per kilogram. The budget is not applied and its units are not changed",
+          "next_step": "A pack-price control as scoped maintenance under R15, or a comparison whose limits state that the budget was not enforced"
+        },
+        "change": null
+      },
+      "effects": [
+        {
+          "stage": "candidate_assessment",
+          "consequence": "Exclude offers whose pack price exceeds 100 EUR before ordering."
+        }
+      ]
+    },
+    {
+      "id": "price",
+      "statement": "Rank by listed price per kilogram, lower first.",
+      "role": "objective",
+      "operative": true,
+      "decisive": true,
+      "settlement": "stated",
+      "priority": 1,
+      "tradeoff": "",
+      "provenance": {
+        "author": "user",
+        "wording": "then cheapest per kilogram",
+        "refs": [
+          "u1"
+        ],
+        "basis": "user_statement",
+        "applicability": "This historical case comparison only.",
+        "rationale": "The request states this criterion.",
+        "if_wrong": "Revisit the scope and comparison before choosing."
+      },
+      "assessment": {
+        "path": "control",
+        "state": "not_assessed",
+        "controls": [
+          {
+            "category": "dry_pasta",
+            "control": "value_usability",
+            "metadata": {
+              "parameters": {
+                "axis": "rankable category axis; omitted uses category default",
+                "unit": "optional exact measured unit; no conversion"
+              },
+              "stage": "ranking",
+              "optional": false,
+              "implementation": "shopping_advisor.analysis.report.ranking.ranked_value",
+              "effect": "Requires a present usable selected-axis value in the ranking unit. A directionless axis or mixed units without a selected unit refuses ranking.",
+              "limits": "Unit availability is checked against evidence at execution; resolving a unit string does not establish availability."
+            },
+            "parameters": {
+              "axis": "price_per_base",
+              "unit": "EUR/kg"
+            },
+            "axis": {
+              "key": "price_per_base",
+              "label": "Price per kg",
+              "better": "lower",
+              "rankable": true,
+              "why": "",
+              "caveat": ""
+            },
+            "axis_source": "explicit"
+          }
+        ],
+        "evidence": [],
+        "reviews": [],
+        "gap": null,
+        "change": null
+      },
+      "effects": [
+        {
+          "stage": "comparison",
+          "consequence": "Rank by listed price per kilogram, lower first."
+        }
+      ]
+    },
+    {
+      "id": "dry",
+      "statement": "Exclude products the dry-pasta classifier does not accept.",
+      "role": "hard_constraint",
+      "operative": true,
+      "decisive": true,
+      "settlement": "stated",
+      "priority": null,
+      "tradeoff": "",
+      "provenance": {
+        "author": "user",
+        "wording": "dry pasta",
+        "refs": [
+          "u1"
+        ],
+        "basis": "user_statement",
+        "applicability": "This historical case comparison only.",
+        "rationale": "The request states this criterion.",
+        "if_wrong": "Revisit the scope and comparison before choosing."
+      },
+      "assessment": {
+        "path": "control",
+        "state": "not_assessed",
+        "controls": [
+          {
+            "category": "dry_pasta",
+            "control": "classification",
+            "metadata": {
+              "parameters": {},
+              "stage": "candidate_filter",
+              "optional": false,
+              "implementation": "shopping_advisor.analysis.category.is_match",
+              "effect": "Only cards whose classification value equals the category key enter ranking.",
+              "limits": "The existing classifier decides category membership; this is not an arbitrary buyer exclusion or a classifier-accuracy guarantee."
+            },
+            "parameters": {}
+          }
+        ],
+        "evidence": [],
+        "reviews": [],
+        "gap": null,
+        "change": null
+      },
+      "effects": [
+        {
+          "stage": "candidate_assessment",
+          "consequence": "Exclude products the dry-pasta classifier does not accept."
+        }
+      ]
+    },
+    {
+      "id": "packs",
+      "statement": "Fold pack-size variants, preserving other product differences.",
+      "role": "context",
+      "operative": true,
+      "decisive": true,
+      "settlement": "stated",
+      "priority": null,
+      "tradeoff": "",
+      "provenance": {
+        "author": "user",
+        "wording": "any pack size",
+        "refs": [
+          "u1"
+        ],
+        "basis": "user_statement",
+        "applicability": "This historical case comparison only.",
+        "rationale": "The request states this criterion.",
+        "if_wrong": "Revisit the scope and comparison before choosing."
+      },
+      "assessment": {
+        "path": "control",
+        "state": "not_assessed",
+        "controls": [
+          {
+            "category": "dry_pasta",
+            "control": "offer_grouping",
+            "metadata": {
+              "parameters": {},
+              "stage": "ranking",
+              "optional": false,
+              "implementation": "shopping_advisor.validation.variation.group_offers",
+              "effect": "Folds size variants using pooled marketplace-scoped family matrices and non-size dimensions; the best usable selected-axis member represents each row.",
+              "limits": "Unknown family identity stays separate. Does not enforce a maximum pack size or arbitrary variant restriction."
+            },
+            "parameters": {}
+          }
+        ],
+        "evidence": [],
+        "reviews": [],
+        "gap": null,
+        "change": null
+      },
+      "effects": [
+        {
+          "stage": "comparison",
+          "consequence": "Fold pack-size variants, preserving other product differences."
+        }
+      ]
+    }
+  ],
+  "questions": [],
+  "readback": {
+    "revision": 1,
+    "text": "Plan pasta-budget-intake, revision 1\nAmong the committed dry-pasta case records, which bronze-die pasta under 100 EUR in total is cheapest per kilogram?\nUse case: A household buying dry pasta for regular weekday cooking with a hundred-euro purchase budget, who wants the cheapest bronze-die pasta by weight among the packs that budget admits. Eligibility on one dimension and ordering on another; the point of this study is that the budget has no executable control and must not be routed through the per-kilogram cap.\nCategory: dry_pasta; marketplace: www.amazon.de; delivery: DE.\n- bronze: Require the vendor bronze-die claim, not independent certification.\n  Role: hard_constraint; operative: True; decisive: True; settlement: stated; introduced by: user.\n  Basis (user_statement): Bronze-die\n  Rationale: The request states this criterion.\n  Applies to: This historical case comparison only.\n  If wrong: Revisit the scope and comparison before choosing.\n  Assessment: control; state: not_assessed.\n  Control: require_claims {\"claims\": [\"bronze_die\"]}\n  Control limits: Requires a vendor statement, not external proof or absence of an adverse claim. Adverse keys still require presence.\n  candidate_assessment: Require the vendor bronze-die claim, not independent certification.\n- budget: Exclude offers whose pack price exceeds 100 EUR in total.\n  Role: hard_constraint; operative: True; decisive: True; settlement: stated; introduced by: user.\n  Basis (user_statement): Under 100 EUR in total\n  Rationale: The request states a purchase budget, in euros per purchase.\n  Applies to: This historical case comparison only.\n  If wrong: A nine-kilogram case above the budget could lead the ranking, as it does on price per kilogram.\n  Assessment: unsupported; state: not_assessed.\n  Gap: No purchase-price control exists for dry pasta: max_axis_value caps the ranked EUR/kg axis and would read 100 as a hundred euros per kilogram. The budget is not applied and its units are not changed\n  Next step: A pack-price control as scoped maintenance under R15, or a comparison whose limits state that the budget was not enforced\n  candidate_assessment: Exclude offers whose pack price exceeds 100 EUR before ordering.\n- price: Rank by listed price per kilogram, lower first.\n  Role: objective; operative: True; decisive: True; settlement: stated; introduced by: user.\n  Basis (user_statement): then cheapest per kilogram\n  Rationale: The request states this criterion.\n  Applies to: This historical case comparison only.\n  If wrong: Revisit the scope and comparison before choosing.\n  Assessment: control; state: not_assessed.\n  Priority: 1; tradeoff: none declared.\n  Control: value_usability {\"axis\": \"price_per_base\", \"unit\": \"EUR/kg\"}\n  Control limits: Unit availability is checked against evidence at execution; resolving a unit string does not establish availability.\n  comparison: Rank by listed price per kilogram, lower first.\n- dry: Exclude products the dry-pasta classifier does not accept.\n  Role: hard_constraint; operative: True; decisive: True; settlement: stated; introduced by: user.\n  Basis (user_statement): dry pasta\n  Rationale: The request states this criterion.\n  Applies to: This historical case comparison only.\n  If wrong: Revisit the scope and comparison before choosing.\n  Assessment: control; state: not_assessed.\n  Control: classification {}\n  Control limits: The existing classifier decides category membership; this is not an arbitrary buyer exclusion or a classifier-accuracy guarantee.\n  candidate_assessment: Exclude products the dry-pasta classifier does not accept.\n- packs: Fold pack-size variants, preserving other product differences.\n  Role: context; operative: True; decisive: True; settlement: stated; introduced by: user.\n  Basis (user_statement): any pack size\n  Rationale: The request states this criterion.\n  Applies to: This historical case comparison only.\n  If wrong: Revisit the scope and comparison before choosing.\n  Assessment: control; state: not_assessed.\n  Control: offer_grouping {}\n  Control limits: Unknown family identity stays separate. Does not enforce a maximum pack size or arbitrary variant restriction.\n  comparison: Fold pack-size variants, preserving other product differences.\n",
+    "response": {
+      "status": "no_response",
+      "message_ids": [],
+      "scope": ""
+    }
+  }
+}

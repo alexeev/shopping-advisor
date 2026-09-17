@@ -1590,6 +1590,31 @@ machinery, not a measured natural-language interpretation capability. Stage 6
 will add bounded execution and comparison/conclusion gates; stages 7–10 remain
 planned. A structurally valid plan is not semantic approval or engineering authority.
 
+**2026-09-17 — INTAKE §16 stage 6 shipped.** The refusal matrix of INTAKE §3 now
+runs at intake, comparison support and conclusion for plan-backed studies. A
+decisive requirement with no executable control no longer refuses at the bridge:
+it enters bounded execution, the purchasing recommendation is withheld, no
+candidate is shortlisted, and the ranking on the available axis is rendered under
+its own `Bounded finding` heading that names the narrower question — never in the
+place a recommendation occupies. Three stop kinds (`requirement_failed`,
+`requirement_unsupported`, `requirement_unassessed`) are recorded apart from the
+three analytical outcomes; an insufficient-evidence outcome under a fully enforced
+plan is diagnosed as coverage, not a capability gap. Plan-backed reports render
+each requirement's role, settlement, author and disposition, per-stage effects,
+and an attribution sentence derived from the retained response status alone.
+
+Measured effect: the delivered-cost recommendation is withheld while the bounded
+item-price finding survives with identical eligibility and ordering; the
+budget-plus-unit-price case is detected without changing its units, and routing
+the budget through the per-kilogram cap refuses. Both are committed plan-backed
+examples replayed by the maintenance gate, which gains `stage_gates: 1`. 34 new
+offline tests cover cases 6–9, 11, 14 and 19 including placement and wording,
+raising the floor from 553 to 587; the four pre-existing study ids, decisions,
+report bytes and both completed reviews are unchanged. Not established: that a
+plan captured every requirement, or that an `enforced` control answers the
+requirement it is mapped to — a budget mapped onto the per-kilogram cap passes,
+and the report says so. Stages 7–10 remain planned.
+
 ### Scope
 
 Make the existing coding-agent conversation the tested product entry point.

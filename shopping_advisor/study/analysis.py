@@ -115,6 +115,7 @@ def analyse(brief, plan=None):
     and compares, so every number a report states has to be in here.
     """
     from .intake import check_transition
+    from . import gates as gates_module
     check_transition(plan, brief)
     category = get(brief.category)
     cards, provenance = collect(brief)
@@ -219,11 +220,20 @@ def analyse(brief, plan=None):
             stale += 1
 
     outcome = _decide(brief, ranked, eligible)
+    # The stage gates read the plan's recorded semantics and nothing else;
+    # without a plan they do not run and `stop` stays empty. A stop is kept
+    # apart from the analytical outcome: the leader on the available axis is
+    # still computed, and the report presents it as a bounded finding.
+    gates = (gates_module.evaluate(plan, brief, category, outcome)
+             if plan is not None else None)
+    stop = gates['conclusion']['stop'] if gates else ''
     # A study that refuses puts nobody forward. `no_decisive_winner` still
     # names its shortlist -- the point of that outcome is that both are
     # defensible -- but `insufficient_evidence` with three products under it
     # is a recommendation wearing a disclaimer, and it will be read as one.
-    shortlist = ([] if outcome['code'] == INSUFFICIENT_EVIDENCE
+    # A withheld recommendation puts nobody forward either: its ranked rows
+    # stay `ranked`, and the bounded finding names them under its own heading.
+    shortlist = ([] if outcome['code'] == INSUFFICIENT_EVIDENCE or stop
                  else eligible[:brief.shortlist])
     for entry in shortlist:
         entry['decision'] = SHORTLISTED
@@ -251,6 +261,8 @@ def analyse(brief, plan=None):
         'shortlist': [entry['asin'] for entry in shortlist],
         'freshness': freshness,
         'outcome': outcome,
+        'stop': stop,
+        'gates': gates,
         'claims': _claims(brief, ranked, eligible, classification, provenance),
     }, cards
 

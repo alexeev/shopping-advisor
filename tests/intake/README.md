@@ -39,6 +39,22 @@ uv run --offline --locked python -m shopping_advisor.study plan-check tests/inta
 uv run --offline --locked python -m shopping_advisor.study plan-readback tests/intake/unsupported-plan.json
 ```
 
+**Stage 6 gate coverage (2026-09-17).** The cases marked stage 6 below are
+exercised by [test_gates.py](../test_gates.py), against the expectations stated
+here and never against a produced plan. `delivered-cost-plan.json` with
+`delivered-cost-brief.json` is case 6: the user's delivered-cost objective is
+recorded as unsupported, the agent's listed-price axis is recorded as the agent's
+own non-decisive choice, and the study withholds the recommendation while the
+item-price ranking survives as a bounded finding. `budget-plan.json` with
+`budget-brief.json` is case 7: the hundred-euro purchase budget is an unsupported
+hard constraint, is never routed through the per-kilogram cap, and nothing is put
+forward. Both are baseline examples the maintenance gate replays.
+
+```text
+uv run --offline --locked python -m shopping_advisor.study plan-check tests/intake/delivered-cost-plan.json --brief tests/intake/delivered-cost-brief.json
+uv run --offline --locked python -m shopping_advisor.study run tests/intake/budget-brief.json --plan tests/intake/budget-plan.json -o data/intake-budget-study
+```
+
 The [runbook](../../RESEARCH.md#retain-an-intake-plan-before-the-executable-brief)
 contains the full bind/run/verify sequence. The test suite exercises those CLIs,
 checks the expected original decisions, and replays after deleting the originating
@@ -90,7 +106,10 @@ it answers; the gap stated. Not acceptable: an item-price winner presented as
 the answer to a delivered-cost question, with the limitation in prose beside
 it. **Characterised**: rewriting `cost_basis` to say *delivered cost* moves
 only the echo of that text in `constraints`; eligibility, ordering and outcome
-are identical. Repaired by stage 6.
+are identical — and that stays true, because prose is not a requirement.
+**Stage 6**: with the objective recorded in the plan as unsupported, the
+recommendation is withheld, the leader appears only under the bounded-finding
+heading, and its ordering is the legacy ordering unchanged.
 
 **7 — A budget and an ordering on different dimensions.** *"Under 100 EUR in
 total, then cheapest per kilogram."* — Acceptable: a supported independent
@@ -103,20 +122,29 @@ Routing the budget through `unacceptable` instead moves no recorded decision at
 all. Dry pasta and basmati publish no price axis to move the cap to; mounting
 paste does, which is why this is not a fact about every category — and it still
 orders on pack size, so the cap would land on the wrong quantity there too.
-Repaired by stage 6.
+**Stage 6**: the budget recorded as an unsupported hard constraint withholds the
+recommendation; the brief carries no cap; adding one refuses at the transition
+as a cap no requirement maps to; writing the budget into `unacceptable`
+satisfies nothing. A plan that maps the budget onto the cap passes as enforced,
+which is the semantic-review limit, stated in the report.
 
 **8 — An external finding as a hard condition.** *"Only ones an independent
 test rated well."* — Acceptable: the finding is retained, the absence of any
 path from it to candidate eligibility is named, full-request selection is
 withheld, and bounded investigation continues. Not acceptable: manually
 removing candidates, or transferring a narrative approval into a filter so that
-it looks enforced. Awaits stage 6.
+it looks enforced. **Stage 6**: an `evidence_review` hard constraint withholds
+selection whether its state is `supported` (a scoped explanation, not
+selection) or `not_assessed` (routed to collection or a coverage stop, not a
+gap); candidate accounting is untouched.
 
 **9 — A supported method with the evidence missing.** — Acceptable:
 insufficient evidence, with candidate accounting preserved and a statement that
 describes the inspected sources. Not acceptable: reporting a coverage failure
 as a fact about the market, or diagnosing it as a capability gap and spending
-engineering budget on an absence. Awaits stage 6.
+engineering budget on an absence. **Stage 6**: under a fully enforced plan the
+insufficient-evidence outcome stands with no stop, its diagnosis reads
+"coverage", and the candidates are the plain study's candidates.
 
 **10 — An unknown category.** *"Which cordless hedge trimmer should I buy?"* —
 Acceptable: a useful evidence and gap plan that explains the missing capability
@@ -133,7 +161,10 @@ five-kilogram workshop tub. — Acceptable: the mismatch between the stated use
 case and the declared axis is caught. Not acceptable: **inventing a universal
 smallest-pack rule to make this testable** — that rule is the original failure.
 A structured contradiction can be asserted mechanically; recognising it from
-natural language is semantic review. Awaits stage 6.
+natural language is semantic review. **Stage 6**: the one-tyre objective
+recorded as decisive and unsupported is refused at comparison support and the
+price ordering is a bounded finding; the category's smallest-pack default is
+left exactly as it is.
 
 **12 — An agent-invented criterion.** A requirement that neither the buyer
 stated nor the category carries, introduced by the agent's own reading of the
@@ -154,7 +185,9 @@ Acceptable: the effect is recorded at each stage it applies to — discovery,
 acquisition, eligibility — and they are not assumed identical. Incidentally
 acquiring an unsuitable product is not automatically a scope violation. Not
 acceptable: reading every constraint as a universal acquisition ban, or
-enforcing it only at the last stage. Awaits stage 6.
+enforcing it only at the last stage. **Stage 6**: discovery and collection
+effects render as recorded with a note that this study performs neither, the
+candidate-assessment effect as unsupported, and the recommendation is withheld.
 
 ## Process and delivery
 
@@ -196,4 +229,7 @@ bounded observations survive elsewhere. Not acceptable: a differently-labelled
 field directly under the refusal — that is the disclaimer the repository
 already rejected by name when it decided that a refusal "with three products
 under it is a recommendation wearing a disclaimer, and it will be read as one".
-Awaits stage 6.
+**Stage 6**: a decisive hard constraint whose assessment `failed` headlines
+"Requirement cannot be met", the result slot holds no table, and the bounded
+observations appear only under their own heading — asserted on the rendered
+text, not on a field.

@@ -609,9 +609,11 @@ this boundary. A bound brief without its plan refuses, as does a plan supplied
 without a brief binding. Refusal precedes analysis and, in `run`, input digest
 reads and replacement of an existing output. No confirmation ritual is required:
 settled instructions and assumptions may proceed without a read-back response.
-Unreconciled corrections and unresolved decisive requirements refuse. Until stage
-6 adds bounded execution, decisive requirements without an executable control
-mapping remain plans and cannot cross this bridge.
+Unreconciled corrections and unresolved decisive requirements refuse. A settled
+decisive requirement without an executable control crosses this bridge into
+**bounded execution** under [§10](#10-stage-gates-r13-stage-6): the analysis
+runs, the recommendation is withheld, and the brief still may not carry a filter,
+cap or ordering that no active requirement maps to.
 
 **Retention decision:** private working plans live under `data/plans/` or an
 explicit private location, with revisions and dependencies durably archived even
@@ -632,7 +634,89 @@ to that migration.
 Structural preservation is not faithful language interpretation or semantic
 adequacy. Completeness of capture, whether wording authorizes a change, the truth
 and applicability of evidence/review references, and whether a control answers a
-requirement still need review. Stage 5 does not enforce assessment outcomes,
-acquisition effects, full-request conclusion gates, delivery freshness, session
-budgets or review invalidation. Those are later stages in
+requirement still need review. Stage 5 does not enforce assessment outcomes or
+acquisition effects; stage 6 consumes them at the conclusion (§10). Delivery
+freshness, session budgets and review invalidation are later stages in
 [INTAKE §16](INTAKE.md#16-implementation-sequence).
+
+## 10. Stage gates (R13 stage 6)
+
+**Stage gates v1** are `study/gates.py`, tracked as `stage_gates` by the
+maintenance gate. They run inside `analyse(brief, plan=...)` for a plan-backed
+study only and read the plan's recorded semantics — role, decisiveness,
+settlement, assessment path and state, stage effects — and the brief's declared
+axis. They read no narrative field and no marketplace content. Without a plan
+they do not run: `gates` is `null`, `stop` is empty, and every legacy artifact is
+byte-identical. Two committed plan-backed examples,
+[delivered-cost](tests/intake/delivered-cost-plan.json) and
+[purchase budget](tests/intake/budget-plan.json), are replayed by the gate.
+
+| Gate | Decides | Output |
+|---|---|---|
+| **Intake** | Whether dependent work may proceed and which next action is justified. Reads the plan alone, before a category module or feed exists. | `readiness`: `blocked` (a decisive requirement is unresolved, or a correction is unreconciled), `bounded` (a decisive requirement restricts the conclusion) or `full_request`; `next_action` text; one row per requirement with its disposition, routing and per-stage effect status. |
+| **Comparison support** | Whether the declared axis answers every decisive preference and objective. | The axis with its source; `answers`; `unanswered` with reasons; `refused = substitution` when any decisive preference or objective is not enforced; the `bounded_question` the axis does answer. |
+| **Conclusion** | Whether the full request supports a recommendation, a tie, a bounded finding or a refusal. | `stop`, `statement`, `permits`, `withheld` ids, the `analytical_outcome` kept separately, and a `diagnosis` for an insufficient-evidence outcome under a fully enforced plan. |
+
+**Dispositions**, one per active requirement, derived from the assessment path:
+`enforced` (`control`), `assessed` (`evidence_review` with an outcome state),
+`awaiting_evidence` (`evidence_review`, `not_assessed`), `unsupported`
+(`unsupported`), `non_operative` (`not_applicable`) and `inactive` (`withdrawn`,
+`revised`). **Routing** follows INTAKE §3: `execute`, `collect_or_stop` for an
+awaiting assessment, `gap_plan` for an unsupported one. A decisive requirement
+**restricts the conclusion** unless it is enforced, or it is an enforced or
+assessed hard constraint whose state is `failed`. A non-decisive requirement
+restricts nothing, whatever its disposition. **Stage effects** are reported per
+declared stage: `enforced` where the resolved control takes effect
+(`candidate_filter` and `ranked_row_filter` at candidate assessment, `ranking` at
+comparison), the requirement's disposition at the other stages this offline
+study performs (candidate assessment, comparison, conclusion), and `recorded`
+with a note at every stage it does not perform (intake, probe, discovery,
+collection, delivery, revision). Recorded is not executed and is not claimed.
+
+**Stops** are a vocabulary separate from the three analytical outcomes and do
+not map onto them:
+
+| `stop` | Condition | Headline | Presentation |
+|---|---|---|---|
+| `requirement_failed` | A decisive hard constraint's bound assessment state is `failed` | **Requirement cannot be met.** | No candidate put forward; bounded observations under their own heading |
+| `requirement_unsupported` | A decisive requirement is `unsupported` or `assessed` (a reviewed finding supports a scoped explanation, not selection) | **Recommendation withheld.** | As above; the statement names each requirement, its reason and its next step, and says "a gap plan, not an evidence finding" |
+| `requirement_unassessed` | A decisive requirement is `awaiting_evidence` | **Recommendation withheld.** | As above; the statement says the method exists and this is not a capability gap |
+| empty | Every decisive requirement is enforced | The analytical outcome's headline | Unchanged from a plan-less study |
+
+Precedence is failed, then unsupported, then unassessed; `withheld` lists every
+restricting requirement. Under any stop `shortlist` is empty, no candidate is
+`shortlisted`, ranked rows stay `ranked`, and `permits` is `bounded_finding`. The
+analytical `outcome` is computed and persisted unchanged, and the report renders
+it under `## Bounded finding: <axis label> only`, which states the narrower
+question it answers, names the requirements it leaves unenforced and unanswered,
+and says it is not a recommendation. The `## Result` slot reads "No candidate is
+put forward." followed by the withheld requirements. An insufficient-evidence
+outcome under a stop renders no table. Placement and wording are tested, not only
+the fields.
+
+**Report inputs.** A plan-backed report gains `## Requirements and their
+dispositions`: plan id, revision and digest; the read-back **attribution
+sentence**, a function of the retained response status alone (`not_presented`
+and `no_response` state that nothing is described as user-confirmed; `confirmed`
+and `delegated` name the scope and message ids and say what they do not waive);
+readiness and next action; the requirement table with role, settlement, author,
+disposition and whether it restricts the conclusion; stage effects; and the
+comparison-support sentence. The reproduction block adds `--plan`.
+
+**Persistence.** `ranking.json` gains `stop` and `gates` for a plan-backed study
+only, `manifest.json` gains `stop` and `permits`, and `verify` recomputes and
+compares both; a plan-backed bundle without a `gates` block predates this stage
+and is reported as `stage_gates_missing`. The study-id algorithm is unchanged;
+`gates` is a function of the plan digest and brief already pinned. `stage_gates`
+follows the version rules in §6: a change to what a disposition, routing or stop
+means is a bump; a rendering change alone is not.
+
+**Limits.** The gates enforce what the plan recorded. They cannot detect a
+requirement the plan never captured, a decisive requirement recorded as
+non-decisive, or a control that runs correctly and answers the wrong question —
+a purchase budget mapped onto the per-kilogram cap passes as `enforced`, and the
+report says beside the table that enforced does not mean adequate. Those are
+intake semantic review (stage 9) and the semantic-execution question of INTAKE
+§12. The gates do not apply discovery or acquisition effects, check delivery
+freshness (stage 7), account for session resources (stage 8) or invalidate
+reviews (stage 10).

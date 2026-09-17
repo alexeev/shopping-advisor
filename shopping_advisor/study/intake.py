@@ -3,8 +3,10 @@
 This is a data contract, not a language interpreter, source verifier or grant of
 authority. It checks retained structure and live control mappings. It cannot
 detect an instruction omitted from both capture and interpretation, or prove
-that an executable mapping is semantically adequate. Stage 6 adds staged gates;
-until then only settled, control-backed decisive requirements cross this bridge.
+that an executable mapping is semantically adequate. Settled decisive
+requirements without an executable control cross this bridge into *bounded*
+execution: :mod:`shopping_advisor.study.gates` withholds the full-request
+recommendation and keeps the ranking on the available axis as a bounded finding.
 """
 import copy
 import json
@@ -396,9 +398,10 @@ def check_transition(plan, brief):
             continue
         if req['decisive'] and req['settlement'] == 'unresolved':
             _fail(req['id'], 'decisive requirement is unresolved')
-        if req['decisive'] and assessment['path'] != 'control':
-            _fail(req['id'], 'no executable brief mapping; retain the gap plan. '
-                  'Bounded execution with unsupported decisive requirements awaits stage 6')
+        # A decisive requirement with no executable control is not refused
+        # here: it enters bounded execution, and the conclusion gate withholds
+        # the recommendation. Refusing it outright would forbid the bounded
+        # item-price finding INTAKE §3 explicitly permits.
         for mapping in assessment['controls']:
             _check_control(req['id'], mapping, brief)
             applied.append(mapping)

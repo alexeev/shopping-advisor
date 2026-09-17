@@ -1,0 +1,313 @@
+{
+  "plan_version": 1,
+  "id": "pasta-delivered-intake",
+  "revision": 1,
+  "supersedes": "",
+  "question": "Among the committed dry-pasta case records, which bronze-die pasta is cheapest once delivered in Germany?",
+  "use_case": "A household buying dry pasta for regular weekday cooking, who has decided that bronze-die extrusion is worth paying for, and wants the cheapest of those once shipping is included. The point of this study is the delivered-cost trap: the records carry no shipping data, so the listed price ranking is a bounded finding and not the answer.",
+  "category": "dry_pasta",
+  "marketplace": "www.amazon.de",
+  "delivery_region": "DE",
+  "user_evidence": {
+    "conversation": "synthetic-case-6",
+    "start": "first purchase request",
+    "selection": "all_user_messages",
+    "missing_context": "",
+    "messages": [
+      {
+        "id": "u1",
+        "author": "user",
+        "text": "Which bronze-die dry pasta is cheapest once it is delivered? Amazon.de, delivery in Germany, any pack size. This is a historical comparison over the committed case records, not current buying advice.",
+        "redactions": []
+      }
+    ]
+  },
+  "sources": [],
+  "requirements": [
+    {
+      "id": "bronze",
+      "statement": "Require the vendor bronze-die claim, not independent certification.",
+      "role": "hard_constraint",
+      "operative": true,
+      "decisive": true,
+      "settlement": "stated",
+      "priority": null,
+      "tradeoff": "",
+      "provenance": {
+        "author": "user",
+        "wording": "bronze-die",
+        "refs": [
+          "u1"
+        ],
+        "basis": "user_statement",
+        "applicability": "This historical case comparison only.",
+        "rationale": "The request states this criterion.",
+        "if_wrong": "Revisit the scope and comparison before choosing."
+      },
+      "assessment": {
+        "path": "control",
+        "state": "not_assessed",
+        "controls": [
+          {
+            "category": "dry_pasta",
+            "control": "require_claims",
+            "metadata": {
+              "parameters": {
+                "claims": "list of category claim keys"
+              },
+              "stage": "candidate_filter",
+              "optional": true,
+              "implementation": "shopping_advisor.analysis.report.ranking",
+              "effect": "Every named claim must have trusted status on the category card, before grouping.",
+              "limits": "Requires a vendor statement, not external proof or absence of an adverse claim. Adverse keys still require presence."
+            },
+            "parameters": {
+              "claims": [
+                "bronze_die"
+              ]
+            },
+            "claims": [
+              {
+                "key": "bronze_die",
+                "label": "Bronze die",
+                "adverse": false,
+                "why": "a rough surface the sauce holds on to"
+              }
+            ]
+          }
+        ],
+        "evidence": [],
+        "reviews": [],
+        "gap": null,
+        "change": null
+      },
+      "effects": [
+        {
+          "stage": "candidate_assessment",
+          "consequence": "Require the vendor bronze-die claim, not independent certification."
+        }
+      ]
+    },
+    {
+      "id": "delivered",
+      "statement": "Choose the lowest delivered cost per kilogram: listed price plus shipping.",
+      "role": "objective",
+      "operative": true,
+      "decisive": true,
+      "settlement": "stated",
+      "priority": 1,
+      "tradeoff": "",
+      "provenance": {
+        "author": "user",
+        "wording": "cheapest once it is delivered",
+        "refs": [
+          "u1"
+        ],
+        "basis": "user_statement",
+        "applicability": "This historical case comparison only.",
+        "rationale": "The request states the cost basis.",
+        "if_wrong": "Listed price alone would be the question, and the ranking below would answer it."
+      },
+      "assessment": {
+        "path": "unsupported",
+        "state": "not_assessed",
+        "controls": [],
+        "evidence": [],
+        "reviews": [],
+        "gap": {
+          "kind": "evidence_and_method",
+          "reason": "The committed records carry no shipping data, and no delivered-cost control exists; listed price per kilogram does not answer delivered cost",
+          "next_step": "A bounded probe for shipping evidence on the ranked listings, or a delivered-cost method as scoped maintenance under R15; until then the recommendation is withheld"
+        },
+        "change": null
+      },
+      "effects": [
+        {
+          "stage": "collection",
+          "consequence": "Shipping cost per listing would have to be collected; these records carry none."
+        },
+        {
+          "stage": "comparison",
+          "consequence": "Order on delivered cost per kilogram, lower first."
+        },
+        {
+          "stage": "conclusion",
+          "consequence": "No delivered-cost recommendation without shipping evidence."
+        }
+      ]
+    },
+    {
+      "id": "listed",
+      "statement": "Order on listed price per kilogram as the available axis; this answers a narrower question than delivered cost.",
+      "role": "objective",
+      "operative": true,
+      "decisive": false,
+      "settlement": "assumed",
+      "priority": 2,
+      "tradeoff": "",
+      "provenance": {
+        "author": "agent",
+        "wording": "Order on listed price per kilogram as the available axis.",
+        "refs": [],
+        "basis": "reasonableness",
+        "applicability": "This historical case comparison only.",
+        "rationale": "The only price axis these records support; it is reported as a bounded finding, never as delivered cost.",
+        "if_wrong": "The bounded finding would be on the wrong axis; nothing above it changes."
+      },
+      "assessment": {
+        "path": "control",
+        "state": "not_assessed",
+        "controls": [
+          {
+            "category": "dry_pasta",
+            "control": "value_usability",
+            "metadata": {
+              "parameters": {
+                "axis": "rankable category axis; omitted uses category default",
+                "unit": "optional exact measured unit; no conversion"
+              },
+              "stage": "ranking",
+              "optional": false,
+              "implementation": "shopping_advisor.analysis.report.ranking.ranked_value",
+              "effect": "Requires a present usable selected-axis value in the ranking unit. A directionless axis or mixed units without a selected unit refuses ranking.",
+              "limits": "Unit availability is checked against evidence at execution; resolving a unit string does not establish availability."
+            },
+            "parameters": {
+              "axis": "price_per_base",
+              "unit": "EUR/kg"
+            },
+            "axis": {
+              "key": "price_per_base",
+              "label": "Price per kg",
+              "better": "lower",
+              "rankable": true,
+              "why": "",
+              "caveat": ""
+            },
+            "axis_source": "explicit"
+          }
+        ],
+        "evidence": [],
+        "reviews": [],
+        "gap": null,
+        "change": null
+      },
+      "effects": [
+        {
+          "stage": "comparison",
+          "consequence": "Orders the bounded finding on listed EUR/kg; does not answer delivered cost."
+        }
+      ]
+    },
+    {
+      "id": "dry",
+      "statement": "Exclude products the dry-pasta classifier does not accept.",
+      "role": "hard_constraint",
+      "operative": true,
+      "decisive": true,
+      "settlement": "stated",
+      "priority": null,
+      "tradeoff": "",
+      "provenance": {
+        "author": "user",
+        "wording": "dry pasta",
+        "refs": [
+          "u1"
+        ],
+        "basis": "user_statement",
+        "applicability": "This historical case comparison only.",
+        "rationale": "The request states this criterion.",
+        "if_wrong": "Revisit the scope and comparison before choosing."
+      },
+      "assessment": {
+        "path": "control",
+        "state": "not_assessed",
+        "controls": [
+          {
+            "category": "dry_pasta",
+            "control": "classification",
+            "metadata": {
+              "parameters": {},
+              "stage": "candidate_filter",
+              "optional": false,
+              "implementation": "shopping_advisor.analysis.category.is_match",
+              "effect": "Only cards whose classification value equals the category key enter ranking.",
+              "limits": "The existing classifier decides category membership; this is not an arbitrary buyer exclusion or a classifier-accuracy guarantee."
+            },
+            "parameters": {}
+          }
+        ],
+        "evidence": [],
+        "reviews": [],
+        "gap": null,
+        "change": null
+      },
+      "effects": [
+        {
+          "stage": "candidate_assessment",
+          "consequence": "Exclude products the dry-pasta classifier does not accept."
+        }
+      ]
+    },
+    {
+      "id": "packs",
+      "statement": "Fold pack-size variants, preserving other product differences.",
+      "role": "context",
+      "operative": true,
+      "decisive": true,
+      "settlement": "stated",
+      "priority": null,
+      "tradeoff": "",
+      "provenance": {
+        "author": "user",
+        "wording": "any pack size",
+        "refs": [
+          "u1"
+        ],
+        "basis": "user_statement",
+        "applicability": "This historical case comparison only.",
+        "rationale": "The request states this criterion.",
+        "if_wrong": "Revisit the scope and comparison before choosing."
+      },
+      "assessment": {
+        "path": "control",
+        "state": "not_assessed",
+        "controls": [
+          {
+            "category": "dry_pasta",
+            "control": "offer_grouping",
+            "metadata": {
+              "parameters": {},
+              "stage": "ranking",
+              "optional": false,
+              "implementation": "shopping_advisor.validation.variation.group_offers",
+              "effect": "Folds size variants using pooled marketplace-scoped family matrices and non-size dimensions; the best usable selected-axis member represents each row.",
+              "limits": "Unknown family identity stays separate. Does not enforce a maximum pack size or arbitrary variant restriction."
+            },
+            "parameters": {}
+          }
+        ],
+        "evidence": [],
+        "reviews": [],
+        "gap": null,
+        "change": null
+      },
+      "effects": [
+        {
+          "stage": "comparison",
+          "consequence": "Fold pack-size variants, preserving other product differences."
+        }
+      ]
+    }
+  ],
+  "questions": [],
+  "readback": {
+    "revision": 1,
+    "text": "Plan pasta-delivered-intake, revision 1\nAmong the committed dry-pasta case records, which bronze-die pasta is cheapest once delivered in Germany?\nUse case: A household buying dry pasta for regular weekday cooking, who has decided that bronze-die extrusion is worth paying for, and wants the cheapest of those once shipping is included. The point of this study is the delivered-cost trap: the records carry no shipping data, so the listed price ranking is a bounded finding and not the answer.\nCategory: dry_pasta; marketplace: www.amazon.de; delivery: DE.\n- bronze: Require the vendor bronze-die claim, not independent certification.\n  Role: hard_constraint; operative: True; decisive: True; settlement: stated; introduced by: user.\n  Basis (user_statement): bronze-die\n  Rationale: The request states this criterion.\n  Applies to: This historical case comparison only.\n  If wrong: Revisit the scope and comparison before choosing.\n  Assessment: control; state: not_assessed.\n  Control: require_claims {\"claims\": [\"bronze_die\"]}\n  Control limits: Requires a vendor statement, not external proof or absence of an adverse claim. Adverse keys still require presence.\n  candidate_assessment: Require the vendor bronze-die claim, not independent certification.\n- delivered: Choose the lowest delivered cost per kilogram: listed price plus shipping.\n  Role: objective; operative: True; decisive: True; settlement: stated; introduced by: user.\n  Basis (user_statement): cheapest once it is delivered\n  Rationale: The request states the cost basis.\n  Applies to: This historical case comparison only.\n  If wrong: Listed price alone would be the question, and the ranking below would answer it.\n  Assessment: unsupported; state: not_assessed.\n  Priority: 1; tradeoff: none declared.\n  Gap: The committed records carry no shipping data, and no delivered-cost control exists; listed price per kilogram does not answer delivered cost\n  Next step: A bounded probe for shipping evidence on the ranked listings, or a delivered-cost method as scoped maintenance under R15; until then the recommendation is withheld\n  collection: Shipping cost per listing would have to be collected; these records carry none.\n  comparison: Order on delivered cost per kilogram, lower first.\n  conclusion: No delivered-cost recommendation without shipping evidence.\n- listed: Order on listed price per kilogram as the available axis; this answers a narrower question than delivered cost.\n  Role: objective; operative: True; decisive: False; settlement: assumed; introduced by: agent.\n  Basis (reasonableness): Order on listed price per kilogram as the available axis.\n  Rationale: The only price axis these records support; it is reported as a bounded finding, never as delivered cost.\n  Applies to: This historical case comparison only.\n  If wrong: The bounded finding would be on the wrong axis; nothing above it changes.\n  Assessment: control; state: not_assessed.\n  Priority: 2; tradeoff: none declared.\n  Control: value_usability {\"axis\": \"price_per_base\", \"unit\": \"EUR/kg\"}\n  Control limits: Unit availability is checked against evidence at execution; resolving a unit string does not establish availability.\n  comparison: Orders the bounded finding on listed EUR/kg; does not answer delivered cost.\n- dry: Exclude products the dry-pasta classifier does not accept.\n  Role: hard_constraint; operative: True; decisive: True; settlement: stated; introduced by: user.\n  Basis (user_statement): dry pasta\n  Rationale: The request states this criterion.\n  Applies to: This historical case comparison only.\n  If wrong: Revisit the scope and comparison before choosing.\n  Assessment: control; state: not_assessed.\n  Control: classification {}\n  Control limits: The existing classifier decides category membership; this is not an arbitrary buyer exclusion or a classifier-accuracy guarantee.\n  candidate_assessment: Exclude products the dry-pasta classifier does not accept.\n- packs: Fold pack-size variants, preserving other product differences.\n  Role: context; operative: True; decisive: True; settlement: stated; introduced by: user.\n  Basis (user_statement): any pack size\n  Rationale: The request states this criterion.\n  Applies to: This historical case comparison only.\n  If wrong: Revisit the scope and comparison before choosing.\n  Assessment: control; state: not_assessed.\n  Control: offer_grouping {}\n  Control limits: Unknown family identity stays separate. Does not enforce a maximum pack size or arbitrary variant restriction.\n  comparison: Fold pack-size variants, preserving other product differences.\n",
+    "response": {
+      "status": "no_response",
+      "message_ids": [],
+      "scope": ""
+    }
+  }
+}

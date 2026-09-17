@@ -197,6 +197,7 @@ def _contract_versions():
     from ..study.brief import BRIEF_VERSION
     from ..study.bundle import STUDY_MANIFEST_VERSION
     from ..study.intake import PLAN_VERSION
+    from ..study.gates import STAGE_GATES_VERSION
     from ..validation.contract import CONTRACT_VERSION
 
     return {'extraction_schema': SCHEMA_VERSION,
@@ -204,6 +205,7 @@ def _contract_versions():
             'run_manifest': RUN_MANIFEST_VERSION,
             'brief': BRIEF_VERSION,
             'intake_plan': PLAN_VERSION,
+            'stage_gates': STAGE_GATES_VERSION,
             'study_manifest': STUDY_MANIFEST_VERSION,
             'evidence_ledger': audit.LEDGER_VERSION,
             'study_audit': audit.AUDIT_VERSION,
@@ -376,10 +378,11 @@ def _replay_example(example, directory, root):
         return status
 
     brief = Path(root) / example['brief']
-    if invoke('check', brief) != 0:
+    plan_argv = ['--plan', Path(root) / example['plan']] if example.get('plan') else []
+    if invoke('check', brief, *plan_argv) != 0:
         return findings, {'name': name}
 
-    run_argv = ['run', brief, '-o', directory]
+    run_argv = ['run', brief, '-o', directory, *plan_argv]
     if example.get('evidence'):
         run_argv += ['--evidence', Path(root) / example['evidence']]
     if invoke(*run_argv) != 0:
@@ -400,6 +403,7 @@ def _replay_example(example, directory, root):
 
     decisions = {'study_id': manifest.get('study_id'),
                  'outcome': manifest.get('outcome'),
+                 'stop': manifest.get('stop', ''),
                  'shortlisted': manifest.get('counts', {}).get('shortlisted'),
                  'offers': manifest.get('counts', {}).get('offers'),
                  'excluded': manifest.get('counts', {}).get('excluded')}

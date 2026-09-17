@@ -83,4 +83,6 @@ import path; nothing in it is imported, evaluated or interpolated into a
 command.
 
 T3 adds [two basmati audit examples](t3/README.md) with synthetic record/source
-fixtures, complete claim checks and separate digest-bound semantic reviews.
+fixtures, complete claim checks and separate digest-bound semantic reviews. R13
+stage 6 adds two plan-backed examples under [tests/intake](../intake/README.md),
+bound JSON briefs over the same pasta feed whose recommendation is withheld.

@@ -262,8 +262,11 @@ a failure. Two worked examples, one of each outcome, are in
 For a plan-backed study, `study check` and `study run` require `--plan PLAN`.
 The full plan snapshot travels inside its bundle and is checked during replay.
 The [intake workflow](RESEARCH.md#retain-an-intake-plan-before-the-executable-brief)
-explains capture, read-back, storage and structural preservation. Full-request
-conclusion gates and intake semantic review remain later R13 stages.
+explains capture, read-back, storage and structural preservation. When a
+decisive requirement has no executable control, the stage gates withhold the
+recommendation and keep the ranking on the available axis under a separate
+bounded-finding heading. Delivery freshness, resource accounting and intake
+semantic review remain later R13 stages.
 
 The `validated` CLI always supplies a category profile (default `dry_pasta`).
 For neutral validation, the Python API is `validate(record)` with no profile;

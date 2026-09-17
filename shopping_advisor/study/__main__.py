@@ -25,7 +25,7 @@ Exit status is 0 when there is nothing to report, 1 when a check failed, and
 import argparse
 import json
 from pathlib import Path
-from . import audit, intake
+from . import audit, gates, intake
 from .controls import catalogue
 from ..provenance import write_json_atomically
 from .bundle import artifact_digests
@@ -79,7 +79,11 @@ def run_command(args):
                                     started_at=started, finished_at=_now(), evidence=args.evidence,
                                     plan=args.plan)
     counts = manifest['counts']
-    print(f'{manifest["study_id"]}  [{manifest["outcome"]}]')
+    label = manifest['outcome']
+    if manifest.get('stop'):
+        label = (f'{manifest["outcome"]} on the available axis; recommendation '
+                 f'withheld: {manifest["stop"]}')
+    print(f'{manifest["study_id"]}  [{label}]')
     print(f'  brief         {manifest["brief_id"]} '
           f'({manifest["brief_source"]["path"]})')
     print(f'  inputs        ' + ', '.join(
@@ -100,8 +104,10 @@ def run_command(args):
 def verify_command(args):
     """``verify BUNDLE`` -- does this study still derive from its own inputs."""
     manifest, findings = verify_bundle(args.bundle, args.input_root)
-    print(f'{manifest.get("study_id") or args.bundle}  '
-          f'[{manifest.get("outcome")}]')
+    label = manifest.get('outcome')
+    if manifest.get('stop'):
+        label = f'{label} on the available axis; recommendation withheld: {manifest["stop"]}'
+    print(f'{manifest.get("study_id") or args.bundle}  [{label}]')
     if not findings:
         print('  verified      every artefact matches its digest, and every '
               'decision and numeric claim re-derives from the declared inputs')
@@ -158,6 +164,13 @@ def plan_check_command(args):
         intake.check_transition(plan, load(args.brief))
     print(f'{plan["id"]}: valid intake plan v{plan["plan_version"]}, '
           f'revision {plan["revision"]}; {len(plan["requirements"])} requirements.')
+    readiness = gates.intake_gate(plan)
+    for row in readiness['requirements']:
+        print(f'  {row["id"]:<14}{row["disposition"]:<18}{row["role"]}, '
+              f'{row["settlement"]}, by {row["author"]}'
+              + ('; restricts the conclusion' if row['restricts_conclusion'] else ''))
+    print(f'  readiness     {readiness["readiness"]}')
+    print(f'  next action   {readiness["next_action"]}')
     print('Structural preservation only; not semantic approval or execution authority.')
     return 0
 

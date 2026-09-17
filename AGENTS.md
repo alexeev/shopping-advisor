@@ -96,8 +96,12 @@ convenience, never the authority.
   checks its translation into an executable brief. A bound brief requires
   `check|run --plan`; replay consumes the mandatory bundle-internal snapshot.
   Keep private working plans and archives out of committed fixtures. Preservation
-  is not semantic approval; bounded execution and conclusion gates remain stage 6.
-  See [the intake workflow](RESEARCH.md#retain-an-intake-plan-before-the-executable-brief).
+  is not semantic approval. A decisive requirement with no executable control
+  enters bounded execution: the stage gates withhold the recommendation, put no
+  candidate forward, and report the ranking on the available axis as a bounded
+  finding under its own heading. Never map an unsupported objective onto the
+  axis that happens to exist. See
+  [the intake workflow](RESEARCH.md#retain-an-intake-plan-before-the-executable-brief).
 - Inspect before asking, then ask in one batched round. Ask before dependent work
   when unresolved information could invalidate the purchase decision or cause
   substantial avoidable work **and** existing context provides no defensible

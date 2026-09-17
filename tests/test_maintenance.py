@@ -42,7 +42,7 @@ class TrackedBaseline(unittest.TestCase):
 
     def test_declared_examples_and_documents_exist(self):
         for example in self.baseline['examples']:
-            for key in ('brief', 'evidence', 'review'):
+            for key in ('brief', 'plan', 'evidence', 'review'):
                 if example.get(key):
                     self.assertTrue((ROOT / example[key]).is_file(),
                                     f'{example["name"]}: missing {key}')

@@ -16,9 +16,19 @@ It is a report and not a recommendation engine: the refusal outcomes get the
 same structure, the same shortlist section and the same evidence as the
 positive one. An insufficient-evidence answer that looks like a failure will
 be rewritten by somebody into an answer that is not one.
+
+A plan-backed study adds two things and moves nothing else. A **stop** from
+the stage gates replaces the headline and empties the result: the ranking on
+the available axis survives, but under its own heading that names the narrower
+question it answers, because an analytical leader placed where a
+recommendation goes is read as one. And a **requirements** section renders the
+plan's roles, settlements, authors and dispositions, with what the report may
+say about user agreement taken from the retained response status and nothing
+else.
 """
 
 from ..analysis.category import get
+from . import gates as gates_module
 from .analysis import (EXCLUDED, FILTERED_OUT, INSUFFICIENT_EVIDENCE,
                        NOT_CATEGORY, NO_DECISIVE_WINNER, OVER_BUDGET,
                        RANKED, RECOMMENDATION, SHORTLISTED, VARIANT)
@@ -27,6 +37,26 @@ HEADLINE = {
     RECOMMENDATION: 'Recommendation',
     NO_DECISIVE_WINNER: 'No decisive winner',
     INSUFFICIENT_EVIDENCE: 'Insufficient evidence',
+}
+
+#: A stop is not one of the three outcomes and is not headlined as one.
+STOP_HEADLINE = {
+    gates_module.REQUIREMENT_UNSUPPORTED: 'Recommendation withheld',
+    gates_module.REQUIREMENT_UNASSESSED: 'Recommendation withheld',
+    gates_module.REQUIREMENT_FAILED: 'Requirement cannot be met',
+}
+
+#: What the report may say about user agreement, keyed by the retained
+#: response status. No response is not agreement, and a report claiming a
+#: confirmation the record does not hold is a structural failure.
+ATTRIBUTION = {
+    'not_presented': 'No read-back of this plan revision was presented to the '
+                     'user. Nothing in this report is described as user-confirmed.',
+    'no_response': 'The read-back of this plan revision was presented and '
+                   'received no response. Silence is not confirmation: nothing '
+                   'in this report is described as user-confirmed.',
+    'confirmed': 'The user confirmed the scope of this plan revision',
+    'delegated': 'The user delegated choices within this plan revision',
 }
 
 #: The order exclusion groups are explained in, and what to call each.
@@ -53,14 +83,140 @@ def _source(constraint):
         constraint, constraint)
 
 
+def _attribution(plan):
+    status = plan['response']
+    sentence = ATTRIBUTION[status]
+    if status in ('confirmed', 'delegated'):
+        ids = ', '.join(f'`{item}`' for item in plan['response_message_ids'])
+        sentence += (f' ({plan["response_scope"]}; message {ids}). '
+                     + ('Confirmation does not waive a failed structural check '
+                        'and authorises no unrelated engineering.'
+                        if status == 'confirmed' else
+                        'A delegated choice is recorded with its rationale and '
+                        'what changes if it is wrong; it is not a user-confirmed '
+                        'result.'))
+    return sentence
+
+
+def _requirements(gates):
+    """The plan's requirements: who said each, in what role, and its fate."""
+    plan, intake, comparison = gates['plan'], gates['intake'], gates['comparison']
+    lines = ['## Requirements and their dispositions', '',
+             f'Plan `{plan["id"]}`, revision {plan["revision"]}, digest '
+             f'`{plan["sha256"][:12]}`; the full snapshot is `intake-plan.json` '
+             f'in this bundle. {_attribution(plan)}', '',
+             f'Readiness at intake: **{intake["readiness"].replace("_", " ")}**. '
+             f'{intake["next_action"]}', '',
+             'Provenance says who introduced a requirement; role says what it '
+             'does to the decision; disposition says what this study did with '
+             'it. Enforced means an executable control ran at its stage. It does '
+             'not mean the control answers the requirement — that is semantic '
+             'review, and a control that runs correctly can answer the wrong '
+             'question.', '',
+             '| Requirement | Role | Settlement | Introduced by | Disposition | '
+             'Restricts the conclusion |', '|---|---|---|---|---|---|']
+    for row in intake['requirements']:
+        role = row['role'].replace('_', ' ')
+        if row['priority'] is not None:
+            role += f', priority {row["priority"]}'
+        if not row['decisive']:
+            role += ', not decisive'
+        word = row['disposition'].replace('_', ' ')
+        if row['controls']:
+            word += ' (' + ', '.join(f'`{c}`' for c in row['controls']) + ')'
+        if row['reason']:
+            word += f': {row["reason"]}'
+        lines.append(f'| `{row["id"]}` — {row["statement"]} | {role} | '
+                     f'{row["settlement"]} | {row["author"].replace("_", " ")} | '
+                     f'{word} | {"**yes**" if row["restricts_conclusion"] else "no"} |'
+                     .replace('\n', ' '))
+    lines.append('')
+    effects = [(row, stage) for row in intake['requirements'] for stage in row['stages']]
+    if effects:
+        lines += ['Stage effects, one line per stage a requirement names. A '
+                  'consequence at a stage this offline study does not perform is '
+                  'retained, not executed, and not claimed.', '']
+        for row, stage in effects:
+            lines.append(f'- `{row["id"]}` at {stage["stage"].replace("_", " ")}: '
+                         f'{stage["consequence"]} — {stage["status"].replace("_", " ")}'
+                         + (f'; {stage["note"]}' if stage['note'] else '') + '.')
+        lines.append('')
+    axis = comparison['axis']
+    sentence = (f'Comparison support: the declared axis is {axis["label"]} '
+                f'(`{axis["key"]}`, {axis["better"] or "no direction"} first'
+                + (f', {axis["unit"]}' if axis['unit'] else '') + '), '
+                + _source(axis['source']) + '.')
+    if comparison['answers']:
+        sentence += ' It answers ' + ', '.join(f'`{i}`' for i in comparison['answers']) + '.'
+    if comparison['unanswered']:
+        sentence += (' It does not answer '
+                     + ', '.join(f'`{u["id"]}`' for u in comparison['unanswered'])
+                     + ': the substitution is refused, and ordering on this axis '
+                       'is reported below as a bounded finding, not as the answer.')
+    lines += [sentence, '']
+    return lines
+
+
+def _withheld(gates):
+    """Under a stop: what was withheld and why, in the place the answer goes."""
+    conclusion = gates['conclusion']
+    rows = {row['id']: row for row in gates['intake']['requirements']}
+    lines = ['No candidate is put forward.', '',
+             f'Analytical outcome on the available axis: '
+             f'`{conclusion["analytical_outcome"]}`. It is not presented as the '
+             f'answer to the question above, because:', '']
+    for name in conclusion['withheld']:
+        row = rows[name]
+        line = (f'- `{name}` ({row["role"].replace("_", " ")}, {row["settlement"]}, '
+                f'introduced by {row["author"].replace("_", " ")}): '
+                f'{row["statement"]} — {row["disposition"].replace("_", " ")}'
+                + (f'; {row["reason"]}' if row['reason'] else '') + '.')
+        if row['gap']:
+            line += f' Next step: {row["gap"]["next_step"]}'
+        lines.append(line)
+    return lines + ['']
+
+
+def _bounded(result, gates):
+    """The finding that survives a stop, under a heading that says what it is."""
+    outcome, constraints = result['outcome'], result['constraints']
+    conclusion = gates['conclusion']
+    label = constraints['axis']['label']
+    lines = [f'## Bounded finding: {label} only', '',
+             f'This section answers a narrower question than the one this study '
+             f'was asked: *{conclusion["bounded_question"]}* It leaves '
+             + ', '.join(f'`{i}`' for i in conclusion['withheld'])
+             + ' unenforced and unanswered. It is not a recommendation and must '
+               'not be read as one.', '']
+    ranked = sorted((e for e in result['candidates'] if e['decision'] == RANKED),
+                    key=lambda e: e['rank'])
+    if outcome['code'] == INSUFFICIENT_EVIDENCE or not ranked:
+        lines += [f'On the narrower question too, the evidence is insufficient: '
+                  f'{outcome["statement"]}', '']
+        return lines
+    lines += [outcome['statement'], '',
+              f'| # | ASIN | Brand | Title | {label} |', '|---|---|---|---|---|']
+    lines += [_row(entry) for entry in ranked[:constraints['shortlist']]]
+    lines.append('')
+    if len(ranked) > constraints['shortlist']:
+        lines += [f'{len(ranked) - constraints["shortlist"]} further candidate(s) '
+                  f'were ranked on this axis and are in `candidates.jsonl`.', '']
+    return lines
+
+
 def render(result, study_id, inputs):
     """The study report as Markdown."""
     brief = result['brief']
     outcome, constraints = result['outcome'], result['constraints']
     ranked = result['ranking']
     category = get(result['category'])
-    lines = [f'# {brief["question"]}', '',
-             f'**{HEADLINE[outcome["code"]]}.** {outcome["statement"]}', '',
+    gates = result.get('gates')
+    stop = result.get('stop') or ''
+    if stop:
+        headline = f'**{STOP_HEADLINE[stop]}.** {gates["conclusion"]["statement"]}'
+    else:
+        headline = f'**{HEADLINE[outcome["code"]]}.** {outcome["statement"]}'
+    lines = [f'# {brief["question"]}', '', headline, '',
              '| | |', '|---|---|',
              f'| Study | `{study_id}` |',
              f'| Brief | `{brief["id"]}` · v{brief["brief_version"]} · '
@@ -113,11 +269,15 @@ def render(result, study_id, inputs):
               '']
     if constraints['cost_basis']:
         lines += [f'Cost basis: {constraints["cost_basis"]}', '']
+    if gates is not None:
+        lines += _requirements(gates)
 
     lines += ['## Result', '']
     shortlisted = [entry for entry in result['candidates']
                    if entry['decision'] == SHORTLISTED]
-    if shortlisted:
+    if stop:
+        lines += _withheld(gates)
+    elif shortlisted:
         lines += ['| # | ASIN | Brand | Title | '
                   f'{constraints["axis"]["label"]} |',
                   '|---|---|---|---|---|']
@@ -133,6 +293,8 @@ def render(result, study_id, inputs):
         lines += ['No candidate is put forward.', '']
     if ranked['refusal']:
         lines += [f'> {ranked["refusal"]["message"]}', '']
+    if stop:
+        lines += _bounded(result, gates)
 
     lines += ['## Why every other candidate is not here', '',
               'Complete, not truncated: a study that cannot say why the '
@@ -240,7 +402,8 @@ def render(result, study_id, inputs):
     lines += ['## Reproducing this study', '',
               'From the repository root, with no network:', '', '```text',
               f'uv run --offline --locked python -m shopping_advisor.study run '
-              f'<path to {brief["source"]["path"] or "the brief"}>',
+              f'<path to {brief["source"]["path"] or "the brief"}>'
+              + (' --plan <bundle directory>/intake-plan.json' if gates is not None else ''),
               f'uv run --offline --locked python -m shopping_advisor.study '
               f'verify <bundle directory>', '```', '',
               'The study id is derived from the brief, the input digests and '

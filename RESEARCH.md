@@ -263,13 +263,33 @@ plan's canonical digest. A changed plan or response invalidates its old brief
 binding; revise explicitly and produce a new bound brief. Do not edit a committed
 semantic review to approve an intake change.
 
-This stage checks preservation, not full-request adequacy. Unsupported categories
-and requirements remain useful gap plans. Unresolved decisive requirements,
-unreconciled corrections, and decisive paths with no executable control cannot
-cross the current bridge. Stage 6 will distinguish bounded investigation from
-full-request selection. Assessment-state/conclusion gates, delivery freshness,
-resource accounting and intake semantic review remain planned. A passing
-`plan-check` is neither semantic approval nor authorization for engineering.
+Preservation is not full-request adequacy. Unsupported categories and
+requirements remain useful gap plans. Unresolved decisive requirements and
+unreconciled corrections cannot cross the bridge; `plan-check` reports them as
+`blocked` and names the next action. A settled decisive requirement with **no
+executable control** does cross it, into a bounded study: the
+[stage gates](CONTRACT.md#10-stage-gates-r13-stage-6) withhold the purchasing
+recommendation, put no candidate forward, and keep the ranking on the available
+axis under its own `Bounded finding` heading that names the narrower question it
+answers. `plan-check` reports that plan as `bounded`, `run` prints the stop
+beside the analytical outcome, and the manifest records both. The committed
+delivered-cost case is the reference:
+
+```text
+uv run --offline --locked python -m shopping_advisor.study plan-check tests/intake/delivered-cost-plan.json --brief tests/intake/delivered-cost-brief.json
+uv run --offline --locked python -m shopping_advisor.study run tests/intake/delivered-cost-brief.json --plan tests/intake/delivered-cost-plan.json -o data/intake-delivered-study
+```
+
+Write the bounded axis into the plan as the agent's own requirement — author
+`agent`, not decisive, with its rationale — rather than mapping the user's
+unsupported objective onto it: the second is the substitution the comparison
+gate refuses when it can see it, and cannot see when the plan disguises it. A
+decisive hard constraint whose bound assessment `failed` renders as "Requirement
+cannot be met"; one still `awaiting_evidence` is routed to collection or a
+coverage stop, not to a capability gap. Delivery freshness, resource accounting
+and intake semantic review remain planned. A passing `plan-check` is neither
+semantic approval nor authorization for engineering, and a gate that reports
+every requirement `enforced` has not established that the controls answer them.
 
 ### Agree the brief
 
@@ -404,7 +424,10 @@ decision. Two briefs differing only in them produce identical eligibility,
 ordering and outcome — measured, and pinned by
 [tests/test_intake.py](tests/test_intake.py). A brief whose `cost_basis` says
 *delivered cost* still ranks on the listed price, and a budget written into
-`unacceptable` excludes nobody.
+`unacceptable` excludes nobody. The stage gates read none of them either: a
+requirement that exists only in those fields is one the plan never recorded, and
+[tests/test_gates.py](tests/test_gates.py) checks that rewriting them neither
+lifts nor causes a withheld recommendation.
 
 `max_axis_value` **is** enforced, and caps the axis being ranked rather than
 anything else. On a `EUR/kg` axis, a limit of 100 is a hundred euros per
@@ -716,8 +739,9 @@ and grouping are fixed mechanisms with no buyer-supplied predicate parameters.
 `cost_basis`, `unacceptable` and `limits` remain narrative, and external claims
 remain outside candidate eligibility. This catalogue is R13 stage 4 inspection.
 Stage 5 consumes it for
-[intake plans and preservation](#retain-an-intake-plan-before-the-executable-brief);
-comparison-support and conclusion gates remain stage 6 work.
+[intake plans and preservation](#retain-an-intake-plan-before-the-executable-brief),
+and stage 6's [gates](CONTRACT.md#10-stage-gates-r13-stage-6) withhold a
+recommendation when a decisive requirement resolves to no control at all.
 
 ### Operational limits
 
