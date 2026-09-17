@@ -60,7 +60,10 @@ REQUIRED = ('brief_version', 'id', 'question', 'category', 'marketplace',
 CONSTRAINT_KEYS = {'axis', 'unit', 'require_claims', 'max_axis_value',
                    'shortlist', 'minimum_candidates', 'decisive_margin',
                    'cost_basis'}
-FRESHNESS_KEYS = {'as_of', 'price_max_age_days', 'note'}
+FRESHNESS_KEYS = {'as_of', 'price_max_age_days', 'note', 'scope'}
+#: What a study may claim to be. Absent means historical: nobody claimed it
+#: was current, and the conservative reading of silence is that it is not.
+SCOPES = ('historical', 'current_advice')
 ASSUMPTION_KEYS = {'statement', 'default', 'if_wrong'}
 QUESTION_KEYS = {'question', 'answer', 'default_used', 'blocking'}
 SOURCE_KEYS = {'url', 'title', 'publisher', 'published', 'accessed', 'why'}
@@ -161,6 +164,8 @@ class Brief:
     as_of: str = ''
     price_max_age_days: int = None
     freshness_note: str = ''
+    #: Declared study scope, or empty for the historical default.
+    scope: str = ''
     assumptions: tuple = ()
     questions: tuple = ()
     sources: tuple = ()
@@ -220,6 +225,10 @@ class Brief:
                        'format': self.source_format,
                        'sha256': self.source_sha256},
         }
+        if self.scope:
+            # Only when declared, so a legacy brief's persisted bytes -- which
+            # a completed review is bound to -- do not move.
+            result['freshness']['scope'] = self.scope
         if self.intake is not None:
             import copy
             result['intake'] = copy.deepcopy(self.intake)
@@ -324,6 +333,17 @@ def parse(text, source='', fmt='toml', directory='.'):
         _fail(source, 'freshness.price_max_age_days needs freshness.as_of: '
                       'an age measured against "today" would make the same '
                       'study decide differently tomorrow')
+    scope = freshness.get('scope') or ''
+    if scope and scope not in SCOPES:
+        _fail(source, f'freshness.scope {scope!r} is not one of '
+                      f'{", ".join(SCOPES)}. Absent means historical')
+    if scope == 'current_advice' and (not as_of or max_age is None
+                                      or not (freshness.get('note') or '').strip()):
+        _fail(source, 'freshness.scope = "current_advice" needs freshness.as_of, '
+                      'freshness.price_max_age_days and a freshness.note stating '
+                      'why that age bound is adequate: current advice is a '
+                      'structural condition checked at delivery, and a bound '
+                      'without a rationale establishes nothing')
 
     if 'intake' in data:
         from .intake import check_binding
@@ -352,6 +372,7 @@ def parse(text, source='', fmt='toml', directory='.'):
                                 minimum=0),
         as_of=str(as_of), price_max_age_days=max_age,
         freshness_note=freshness.get('note') or '',
+        scope=scope,
         assumptions=tuple(_entries(source, data, 'assumptions',
                                    ASSUMPTION_KEYS, ('statement',))),
         questions=tuple(_entries(source, data, 'questions',
@@ -418,6 +439,7 @@ def rehydrate(data, resolved_inputs):
         as_of=freshness.get('as_of') or '',
         price_max_age_days=freshness.get('price_max_age_days'),
         freshness_note=freshness.get('note') or '',
+        scope=freshness.get('scope') or '',
         assumptions=tuple(data.get('assumptions') or ()),
         questions=tuple(data.get('questions') or ()),
         sources=tuple(data.get('sources') or ()),

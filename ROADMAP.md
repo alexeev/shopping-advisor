@@ -1637,6 +1637,32 @@ plan captured every requirement, or that an `enforced` control answers the
 requirement it is mapped to — a budget mapped onto the per-kilogram cap passes,
 and the report says so. Stages 7–10 remain planned.
 
+**2026-09-17 — INTAKE §16 stage 7 shipped.** A brief now declares its scope,
+`historical` or `current_advice`, and silence is read as historical, so the
+committed fixtures stay historical with their bytes and ids unchanged however
+fresh their dates look. `study deliver` is the delivery event: it verifies the
+bundle, reads the execution clock in UTC — or a declared instant it records as
+declared — and freezes it in `delivery.json`, assessing the shortlisted and
+ranked observations against that reference rather than against the brief's
+`as_of`. Under current-advice scope a stale, undated or future-dated decisive
+input, a reference before `as_of`, a missing policy or a stage 6 stop blocks
+current advice; `validate-report` fails a current-advice study without a passing
+record whatever its semantic review says. Replay recomputes every event from its
+frozen reference, so the maintenance gate delivers all six examples at a fixed
+reference and cannot fail with the passage of time.
+
+Measured effect: the case set delivered at its build date under current-advice
+scope is permitted, and thirty days on is blocked naming all five governed
+observations, while the same analysis is unchanged and still finds nothing stale
+against `as_of`; the frozen fixtures deliver as history at either reference. A
+completed semantic review does not lift the block. The gate gains
+`delivery_record: 1` and `current_advice` per example; 26 new offline tests raise
+the floor from 587 to 613, and the four pre-existing study ids, decisions, report
+bytes and both completed reviews are unchanged. Not established: that the clock
+was honest, or that a declared scope is true — a brief calling fixture evidence
+current advice has lied in a way no check here detects. Stages 8–10 remain
+planned.
+
 ### Scope
 
 Make the existing coding-agent conversation the tested product entry point.

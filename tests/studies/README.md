@@ -51,7 +51,12 @@ would mean ignoring a contradiction the page itself contains.
 uv run --offline --locked python -m shopping_advisor.study check tests/studies/pasta-bronze-die.toml
 uv run --offline --locked python -m shopping_advisor.study run tests/studies/pasta-bronze-die.toml
 uv run --offline --locked python -m shopping_advisor.study verify data/studies/pasta-bronze-die-46127870314d
+uv run --offline --locked python -m shopping_advisor.study deliver data/studies/pasta-bronze-die-46127870314d
 ```
+
+`deliver` records the instant the study is handed over and says what it is
+delivered as. These briefs declare no scope, so both are delivered as historical
+comparisons as of their `as_of` at any clock; neither can be current advice.
 
 The study id is derived from the brief, the input digests and the published
 schema/contract versions, so `run` lands in the same directory name on any

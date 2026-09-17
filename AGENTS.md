@@ -139,7 +139,12 @@ convenience, never the authority.
   the classifier said: the committed mounting-paste cases move 14 values, mostly
   `trusted` to `disputed`, under dry pasta's price band.
 - Prefer retained evidence and offline re-extraction for parser changes.
-  Historical fixture prices cannot support current buying advice.
+  Historical fixture prices cannot support current buying advice. A brief
+  declares `freshness.scope`; silence is historical. Current advice is a
+  structural condition checked by `study deliver` at each delivery event against
+  the execution clock, and a blocked or missing delivery record fails
+  `validate-report` whatever the semantic review says. See
+  [delivering the study](RESEARCH.md#deliver-the-study-and-say-what-it-is).
 - Keep runs sequential for now, with unique feed output paths, explicit locale,
   baseline pacing and finite query/product/time limits. Do not silently increase
   request rates or retries to get around challenges. Record partial results.

@@ -208,7 +208,14 @@ historical in scope however fresh its dates look. Not acceptable: a disclosure
 in place of a block. **Characterised**: moving the committed study's reference
 date thirty days on leaves five ranked candidates in breach at thirty-two days
 old, with an identical shortlist, an identical `recommendation`, and the leader
-still shortlisted while flagged stale. Repaired by stage 7.
+still shortlisted while flagged stale — and that analysis stays as it is, because
+it answers the historical question against `as_of`. **Stage 7**: the block moved
+to the delivery event, in [test_delivery.py](../test_delivery.py). A
+current-advice brief delivered at the build date is permitted and thirty days on
+is blocked naming every governed observation; a later delivery is a new event
+that blocks; the fixtures, whose briefs declare no scope, deliver as history at
+any reference with that reference stated; and a completed semantic review does
+not lift a block.
 
 **17 — A requirement changes after approval.** — Acceptable: the affected
 intake findings and any downstream approval are invalidated; an unresolved

@@ -25,7 +25,7 @@ Exit status is 0 when there is nothing to report, 1 when a check failed, and
 import argparse
 import json
 from pathlib import Path
-from . import audit, gates, intake
+from . import audit, delivery, gates, intake
 from .controls import catalogue
 from ..provenance import write_json_atomically
 from .bundle import artifact_digests
@@ -98,6 +98,39 @@ def run_command(args):
     print(f'  shortlisted   {counts["shortlisted"]}')
     print(f'  bundle        {directory}')
     print(f'  report        {directory / REPORT}')
+    print(f'  scope         {manifest["scope"]} ({manifest["scope_source"]})'
+          + ('; run `study deliver` before issuing current advice'
+             if manifest['scope'] == delivery.CURRENT_ADVICE else ''))
+    return 0
+
+
+def deliver_command(args):
+    """``deliver BUNDLE`` -- assess current advice at this delivery event."""
+    directory = Path(args.bundle)
+    manifest, findings = verify_bundle(directory, args.input_root)
+    if findings:
+        raise delivery.DeliveryError('Repair the bundle before delivering it: '
+                                     + '; '.join(f['code'] for f in findings))
+    if args.reference:
+        reference, source, supplied = delivery.parse_reference(args.reference), delivery.DECLARED, args.reference
+    else:
+        reference, source, supplied = _now(), delivery.EXECUTION_CLOCK, ''
+    path = directory / delivery.RECORD
+    record = delivery.read(path) if path.is_file() else delivery.empty()
+    event = delivery.assess_bundle(directory, reference, source, supplied)
+    record['events'].append(event)
+    write_json_atomically(path, record)
+    manifest['artifacts'] = artifact_digests(directory)
+    write_json_atomically(directory / 'manifest.json', manifest)
+    print(f'{manifest["study_id"]}  [{event["current_advice"]}]')
+    print(f'  reference     {event["reference"]} ({event["reference_source"]})')
+    print(f'  scope         {event["scope"]} ({event["scope_source"]})')
+    print(f'  governed      {event["counts"]["governed"]} observation(s), '
+          f'{event["counts"]["stale"]} stale, {event["counts"]["undated"]} undated')
+    for blocker in event['blockers']:
+        print(f'  blocked       {blocker}')
+    print(f'  statement     {event["statement"]}')
+    print(f'  events        {len(record["events"])} in {path}')
     return 0
 
 
@@ -125,6 +158,7 @@ def validate_command(args):
     except (ValueError, OSError, KeyError, TypeError) as exc:
         print(json.dumps({'valid': False, 'findings': [{'code': 'unreadable_bundle', 'message': str(exc)}]}))
         return 2
+    status = {'scope': manifest.get('scope'), 'current_advice': 'no_record', 'reference': ''}
     if not findings:
         try:
             review = json.loads((Path(args.bundle) / 'semantic-review.json').read_text())
@@ -133,7 +167,24 @@ def validate_command(args):
                 raise audit.AuditError('semantic review recorded failed checks')
         except (ValueError, OSError) as exc:
             findings.append({'code': 'semantic_review', 'message': str(exc)})
-    print(json.dumps({'valid': not findings, 'semantic': audit.review_status(review) if not findings else 'not_approved', 'findings': findings}, indent=2))
+        # Structural, and outside the review: a completed semantic review does
+        # not waive a freshness block, and cannot be edited to.
+        path = Path(args.bundle) / delivery.RECORD
+        event = delivery.latest(delivery.read(path)) if path.is_file() else None
+        if event:
+            status.update(current_advice=event['current_advice'], reference=event['reference'])
+        if manifest.get('scope') == delivery.CURRENT_ADVICE:
+            if event is None:
+                findings.append({'code': 'delivery_missing',
+                                 'message': 'current-advice scope needs a delivery record; '
+                                            'run `study deliver` at the delivery event'})
+            elif event['current_advice'] != delivery.PERMITTED:
+                findings.append({'code': 'current_advice_blocked',
+                                 'message': event['statement']})
+    semantic = audit.review_status(review) if not findings or findings[0]['code'] in (
+        'delivery_missing', 'current_advice_blocked') else 'not_approved'
+    print(json.dumps({'valid': not findings, 'semantic': semantic, 'delivery': status,
+                      'findings': findings}, indent=2))
     return 1 if findings else 0
 
 
@@ -251,6 +302,16 @@ def main(argv=None):
     running.add_argument('--plan', help='intake plan to check and snapshot inside the bundle')
     running.set_defaults(handler=run_command)
 
+    delivering = commands.add_parser(
+        'deliver', help='assess current advice at this delivery event and '
+                        'freeze the reference in the bundle')
+    delivering.add_argument('bundle', help='data/studies/<study_id>')
+    delivering.add_argument('--reference',
+                            help='ISO 8601 instant with offset to assess against, '
+                                 'recorded as declared; default reads the clock')
+    delivering.add_argument('--input-root', default='')
+    delivering.set_defaults(handler=deliver_command)
+
     verifying = commands.add_parser(
         'verify', help='re-derive a bundle from its own inputs and report '
                        'what moved')
@@ -272,7 +333,8 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try:
         return args.handler(args)
-    except (BriefError, BundleError, StudyError, audit.AuditError, OSError, ValueError) as exc:
+    except (BriefError, BundleError, StudyError, audit.AuditError,
+            delivery.DeliveryError, OSError, ValueError) as exc:
         print(f'{exc}', file=sys.stderr)
         return 2
 

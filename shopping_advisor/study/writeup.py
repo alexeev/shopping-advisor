@@ -83,6 +83,36 @@ def _source(constraint):
         constraint, constraint)
 
 
+def _scope_row(brief):
+    """A header row only when the brief declares a scope: legacy bytes stay."""
+    scope = brief['freshness'].get('scope')
+    if not scope:
+        return []
+    if scope == 'current_advice':
+        return ['| Scope | current buying advice, **only with a passing delivery '
+                'record** (`delivery.json`); this report alone is a historical '
+                f'comparison as of {brief["freshness"]["as_of"]} |']
+    return [f'| Scope | historical comparison as of {brief["freshness"]["as_of"] or "an unstated date"}; '
+            f'not current buying advice |']
+
+
+def _scope_lines(brief):
+    scope = brief['freshness'].get('scope')
+    if not scope:
+        return []
+    if scope == 'current_advice':
+        return ['Declared scope: **current advice**. That is a structural condition, '
+                'not a label: it is checked at each delivery event against a '
+                'reference the execution environment supplies, never against the '
+                'date above, and the result is frozen in `delivery.json`. Without a '
+                'delivery record whose latest event permits current advice, this '
+                f'report is a historical comparison as of '
+                f'{brief["freshness"]["as_of"]}.', '']
+    return ['Declared scope: **historical**. However recent these observations are, '
+            'they are not offered as current buying advice; a delivery record '
+            'states the reference date at which they were delivered as history.', '']
+
+
 def _attribution(plan):
     status = plan['response']
     sentence = ATTRIBUTION[status]
@@ -226,6 +256,7 @@ def render(result, study_id, inputs):
              + (f' · delivery {brief["delivery_region"]}'
                 if brief['delivery_region'] else '') + ' |',
              f'| As of | {brief["freshness"]["as_of"] or "not stated"} |',
+             *_scope_row(brief),
              f'| Inputs | '
              + '<br>'.join(f'`{item["declared"]}` · `{item["sha256"][:12]}` · '
                            f'{item["records"]} records' for item in inputs)
@@ -344,6 +375,7 @@ def render(result, study_id, inputs):
         if freshness['note']:
             lines.append(f'- {freshness["note"]}')
         lines.append('')
+    lines += _scope_lines(brief)
 
     if brief['assumptions']:
         lines += ['## Assumptions', '',

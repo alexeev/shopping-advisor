@@ -198,6 +198,7 @@ def _contract_versions():
     from ..study.bundle import STUDY_MANIFEST_VERSION
     from ..study.intake import PLAN_VERSION
     from ..study.gates import STAGE_GATES_VERSION
+    from ..study.delivery import DELIVERY_VERSION
     from ..validation.contract import CONTRACT_VERSION
 
     return {'extraction_schema': SCHEMA_VERSION,
@@ -206,6 +207,7 @@ def _contract_versions():
             'brief': BRIEF_VERSION,
             'intake_plan': PLAN_VERSION,
             'stage_gates': STAGE_GATES_VERSION,
+            'delivery_record': DELIVERY_VERSION,
             'study_manifest': STUDY_MANIFEST_VERSION,
             'evidence_ledger': audit.LEDGER_VERSION,
             'study_audit': audit.AUDIT_VERSION,
@@ -388,6 +390,11 @@ def _replay_example(example, directory, root):
     if invoke(*run_argv) != 0:
         return findings, {'name': name}
     invoke('verify', directory)
+    if example.get('deliver_at'):
+        # A fixed reference, so the gate fails with a change and never with
+        # the passage of time. The record says the reference was declared.
+        invoke('deliver', directory, '--reference', example['deliver_at'])
+        invoke('verify', directory)
     invoke('validate-report', directory)
     if example.get('review'):
         invoke('review', directory, Path(root) / example['review'])
@@ -401,9 +408,14 @@ def _replay_example(example, directory, root):
             'example_unreadable', f'{name}: no readable manifest ({exc})'))
         return findings, {'name': name}
 
+    current_advice = ''
+    if (directory / 'delivery.json').is_file():
+        from ..study import delivery
+        current_advice = delivery.latest(delivery.read(directory / 'delivery.json'))['current_advice']
     decisions = {'study_id': manifest.get('study_id'),
                  'outcome': manifest.get('outcome'),
                  'stop': manifest.get('stop', ''),
+                 'current_advice': current_advice,
                  'shortlisted': manifest.get('counts', {}).get('shortlisted'),
                  'offers': manifest.get('counts', {}).get('offers'),
                  'excluded': manifest.get('counts', {}).get('excluded')}

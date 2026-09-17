@@ -44,7 +44,7 @@ from ..provenance import (code_identity, sha256_file, sha256_text,
 from ..analysis import report as report_module
 from ..analysis.category import is_match
 from ..run import read_jsonl
-from . import writeup, audit, intake, gates
+from . import writeup, audit, intake, gates, delivery
 from .analysis import StudyError, analyse, brief_fault
 from .brief import BRIEF_VERSION, BriefError, load
 
@@ -140,7 +140,8 @@ def artifact_digests(directory):
     directory = pathlib.Path(directory)
     return {name: {'sha256': sha256_file(directory / name),
                    'bytes': (directory / name).stat().st_size}
-            for name in (*ARTIFACTS, intake.SNAPSHOT) if (directory / name).is_file()}
+            for name in (*ARTIFACTS, intake.SNAPSHOT, delivery.RECORD)
+            if (directory / name).is_file()}
 
 
 def manifest(brief, result, identity, inputs, started_at, finished_at,
@@ -156,6 +157,10 @@ def manifest(brief, result, identity, inputs, started_at, finished_at,
         'category': result['category'],
         'marketplace': result['marketplace'],
         'outcome': result['outcome']['code'],
+        # Declared, or the historical default. Current advice is a condition
+        # checked at each delivery event against delivery.json, never here.
+        'scope': brief.scope or delivery.HISTORICAL,
+        'scope_source': 'brief' if brief.scope else 'undeclared',
         'started_at': started_at,
         'finished_at': finished_at,
         'directory': str(directory),
@@ -339,8 +344,9 @@ def verify(directory, input_root=''):
     unusable = set()
     # A snapshot must agree with both the manifest and the brief binding. Its
     # presence is optional only for legacy studies, not for a bound brief.
-    optional = (intake.SNAPSHOT,) if (intake.SNAPSHOT in (data.get('artifacts') or {})
-                                     or (directory / intake.SNAPSHOT).exists()) else ()
+    optional = tuple(name for name in (intake.SNAPSHOT, delivery.RECORD)
+                     if name in (data.get('artifacts') or {})
+                     or (directory / name).exists())
     for name in (*ARTIFACTS, *optional):
         path = directory / name
         recorded = (data.get('artifacts') or {}).get(name)
@@ -390,7 +396,7 @@ def verify(directory, input_root=''):
                            f'file.'})
 
     persisted_brief = json.loads((directory / BRIEF).read_text(encoding='utf-8'))
-    if ('intake' in persisted_brief) != bool(optional):
+    if ('intake' in persisted_brief) != (intake.SNAPSHOT in optional):
         findings.append({'code': 'intake_snapshot_missing',
                          'message': 'brief binding and bundle-internal intake snapshot must accompany each other'})
         return data, findings
@@ -454,7 +460,8 @@ def verify(directory, input_root=''):
         from .brief import rehydrate
         brief = rehydrate(persisted_brief,
                           tuple(str(path) for _, path in resolved))
-        plan = intake.load(directory / intake.SNAPSHOT) if optional else None
+        plan = (intake.load(directory / intake.SNAPSHOT)
+                if intake.SNAPSHOT in optional else None)
         result, _cards = analyse(brief, plan=plan)
     except (BriefError, StudyError, intake.PlanError) as exc:
         findings.append({'code': 'not_recomputable',
@@ -501,4 +508,11 @@ def verify(directory, input_root=''):
             raise audit.AuditError('saved validation does not match the audit/review')
     except (audit.AuditError, ValueError, TypeError, KeyError) as exc:
         findings.append({'code': 'report_invalid', 'message': str(exc)})
+    if delivery.RECORD in optional:
+        # Recomputed from each event's own frozen reference. This is the one
+        # place a clock could leak into replay, and it does not.
+        try:
+            delivery.check(delivery.read(directory / delivery.RECORD), directory)
+        except delivery.DeliveryError as exc:
+            findings.append({'code': 'delivery_invalid', 'message': str(exc)})
     return data, findings

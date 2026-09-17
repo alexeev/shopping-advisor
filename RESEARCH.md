@@ -286,10 +286,42 @@ unsupported objective onto it: the second is the substitution the comparison
 gate refuses when it can see it, and cannot see when the plan disguises it. A
 decisive hard constraint whose bound assessment `failed` renders as "Requirement
 cannot be met"; one still `awaiting_evidence` is routed to collection or a
-coverage stop, not to a capability gap. Delivery freshness, resource accounting
-and intake semantic review remain planned. A passing `plan-check` is neither
+coverage stop, not to a capability gap. Resource accounting and intake semantic
+review remain planned; delivery freshness is the section below. A passing
+`plan-check` is neither
 semantic approval nor authorization for engineering, and a gate that reports
 every requirement `enforced` has not established that the controls answer them.
+
+### Deliver the study, and say what it is
+
+A report does not stay current because it was current once. The analysis
+measures every observation against the brief's `as_of`, which is the historical
+question and the one the brief's author controls; the
+[delivery record](CONTRACT.md#11-declared-scope-and-the-delivery-record-r13-stage-7)
+measures the shortlisted and ranked observations against the instant the answer
+is actually handed over, which they do not.
+
+Declare what the study is in the brief. `freshness.scope = "historical"` says
+these observations are not offered as current advice however recent they are —
+every committed example is historical, and a brief that says nothing is read as
+historical. `freshness.scope = "current_advice"` says the buyer will act on this
+now, and needs `as_of`, `price_max_age_days` and a `note` saying why that bound
+is adequate. Then, at each delivery event:
+
+```text
+uv run --offline --locked python -m shopping_advisor.study deliver data/studies/<study_id>
+uv run --offline --locked python -m shopping_advisor.study validate-report data/studies/<study_id> --require-review
+```
+
+`deliver` reads the execution clock, freezes it in `delivery.json` and records
+whether current advice is `permitted`, `blocked` or `not_in_scope`; pass
+`--reference ISO` only to replay or test, and the record then says the reference
+was declared rather than read. A blocked current-advice study fails
+`validate-report` whatever its semantic review says: deliver a separately scoped
+historical comparison with its reference date, or recollect. Delivering an old
+study again is a new event and a new assessment; `verify` recomputes every event
+from its frozen reference and never reads today's clock. None of this proves the
+clock honest, and none of it can tell that a declaration is false.
 
 ### Agree the brief
 
@@ -411,7 +443,11 @@ carries:
   two stopping criteria — `minimum_candidates` and `decisive_margin`.
 - `[freshness]`: an `as_of` date and how old a price may be. Age is measured
   against `as_of` and never against today, so the same study decides the same
-  way tomorrow.
+  way tomorrow. `scope` says what the study is: `historical`, or
+  `current_advice`, which also needs the policy and a `note` saying why the
+  bound is adequate. Absent means historical. Whether current advice may
+  actually be issued is decided at `study deliver`, against the clock, not here
+  — see [delivering the study](#deliver-the-study-and-say-what-it-is).
 - `[[assumptions]]`, `[[questions]]` and `[[sources]]`: the defaults taken and
   what changes if each is wrong, which questions were asked and which went
   unanswered, and the external sources named — declared, not verified.
@@ -594,7 +630,11 @@ as unverified, with no inferred URLs or current-batch applicability.
 listing matches and full replay including cards, scores and rendered prose.
 It emits JSON and exits 1 for failed checks, 2 for unreadable input. Positive
 and insufficient-evidence outcomes both pass when correctly framed. Stale or
-unknown-age observations produce an explicit historical/incomplete label.
+unknown-age observations produce an explicit historical/incomplete label
+against `as_of`; whether the study may be issued as current advice is the
+delivery record's question, and a current-advice study without a passing
+`delivery.json` fails validation with `delivery_missing` or
+`current_advice_blocked`, review or no review.
 
 Review `semantic-review.json` in a separate pass against the actual source,
 variant and user priorities. Fill each checklist finding, name the reviewer

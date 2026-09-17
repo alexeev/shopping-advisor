@@ -190,12 +190,16 @@ class PurchaseBudgetHasNoRepresentation(Variant):
 
 
 class FreshnessIsComputedAndUnconsumed(Variant):
-    """The declared age policy is measured, reported, and decides nothing.
+    """The declared age policy, measured against ``as_of``, decides nothing.
 
-    This is the sharpest of the three, because the presentation is already
-    right. The renderer puts a banner above the headline saying the comparison
-    is historical and that this is not current buying advice — and the
-    recommendation stands underneath it. Labelling is the whole mechanism.
+    This was the sharpest of the three, because the presentation was already
+    right: a banner above the headline said the comparison was historical, and
+    the recommendation stood underneath it. These assertions still hold and
+    are now correct rather than characterising a defect. The analysis answers
+    the historical question against the date the brief is about, and stage 7
+    moved the block to where a date the author does not control exists: the
+    delivery event, in ``test_delivery.py``. What follows pins that the
+    analysis is *not* re-decided by age.
     """
 
     def stale(self):
@@ -231,12 +235,12 @@ class FreshnessIsComputedAndUnconsumed(Variant):
         self.assertEqual(leader['decision'], SHORTLISTED)
 
     def test_the_reference_date_the_policy_is_measured_against_is_authored(self):
-        """A study cannot go stale unless its own brief says so.
+        """An analysis cannot go stale unless its own brief says so.
 
-        Every age is measured against `as_of`, which the brief's author
+        Every age here is measured against `as_of`, which the brief's author
         supplies — the test above had to move that dial to manufacture
-        staleness. That is why a delivery reference has to come from somewhere
-        the author does not control.
+        staleness. That is why the delivery reference comes from the execution
+        environment at `study deliver`, and why its block lives there.
         """
         brief = brief_module.load(BRONZE)
         self.assertEqual(brief.as_of, '2026-09-16')

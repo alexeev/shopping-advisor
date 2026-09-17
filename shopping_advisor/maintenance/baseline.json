@@ -15,6 +15,7 @@
   ],
   "contracts": {
     "brief": 1,
+    "delivery_record": 1,
     "evidence_ledger": 1,
     "extraction_schema": 6,
     "intake_plan": 1,
@@ -47,7 +48,9 @@
   "examples": [
     {
       "brief": "tests/studies/pasta-bronze-die.toml",
+      "deliver_at": "2026-09-17T00:00:00+00:00",
       "expect": {
+        "current_advice": "not_in_scope",
         "excluded": 3,
         "offers": 5,
         "outcome": "recommendation",
@@ -60,7 +63,9 @@
     },
     {
       "brief": "tests/studies/pasta-low-temperature-drying.toml",
+      "deliver_at": "2026-09-17T00:00:00+00:00",
       "expect": {
+        "current_advice": "not_in_scope",
         "excluded": 2,
         "offers": 0,
         "outcome": "insufficient_evidence",
@@ -73,8 +78,10 @@
     },
     {
       "brief": "tests/studies/t3/positive.toml",
+      "deliver_at": "2026-09-17T00:00:00+00:00",
       "evidence": "tests/studies/t3/evidence.json",
       "expect": {
+        "current_advice": "not_in_scope",
         "excluded": 0,
         "offers": 3,
         "outcome": "recommendation",
@@ -88,8 +95,10 @@
     },
     {
       "brief": "tests/studies/t3/insufficient.toml",
+      "deliver_at": "2026-09-17T00:00:00+00:00",
       "evidence": "tests/studies/t3/evidence.json",
       "expect": {
+        "current_advice": "not_in_scope",
         "excluded": 0,
         "offers": 3,
         "outcome": "insufficient_evidence",
@@ -103,7 +112,9 @@
     },
     {
       "brief": "tests/intake/delivered-cost-brief.json",
+      "deliver_at": "2026-09-17T00:00:00+00:00",
       "expect": {
+        "current_advice": "not_in_scope",
         "excluded": 3,
         "offers": 5,
         "outcome": "recommendation",
@@ -117,7 +128,9 @@
     },
     {
       "brief": "tests/intake/budget-brief.json",
+      "deliver_at": "2026-09-17T00:00:00+00:00",
       "expect": {
+        "current_advice": "not_in_scope",
         "excluded": 3,
         "offers": 5,
         "outcome": "recommendation",
@@ -131,14 +144,14 @@
     }
   ],
   "note": "What the maintenance gate is entitled to find. Tracked on purpose: a task-local change that lowers a floor, drops a check or moves an example's decision has to say so here, in a reviewable diff. Re-record with `maintenance baseline --update` from a tree that passes.",
-  "recorded_at": "2026-09-17T10:03:36+00:00",
+  "recorded_at": "2026-09-17T11:46:47+00:00",
   "runtime": {
     "lock_sha256": "e24bc67da2dba6c49538700bc8bce61658748c715e9103603f537c15694a32cd",
     "python": "3.14",
     "scrapy": "2.19"
   },
   "tests": {
-    "minimum": 587,
+    "minimum": 613,
     "modules": [
       "test_analysis",
       "test_attributed_search",
@@ -147,6 +160,7 @@
       "test_cli",
       "test_controls",
       "test_corpus",
+      "test_delivery",
       "test_extraction",
       "test_feeds",
       "test_gates",

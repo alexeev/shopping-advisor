@@ -717,6 +717,73 @@ non-decisive, or a control that runs correctly and answers the wrong question �
 a purchase budget mapped onto the per-kilogram cap passes as `enforced`, and the
 report says beside the table that enforced does not mean adequate. Those are
 intake semantic review (stage 9) and the semantic-execution question of INTAKE
-§12. The gates do not apply discovery or acquisition effects, check delivery
-freshness (stage 7), account for session resources (stage 8) or invalidate
-reviews (stage 10).
+§12. The gates do not apply discovery or acquisition effects, account for
+session resources (stage 8) or invalidate reviews (stage 10). Delivery
+freshness is §11.
+
+## 11. Declared scope and the delivery record (R13 stage 7)
+
+**Two references, two questions.** `analyse()` measures every observation
+against the brief's `as_of` and answers the historical question: how old was
+the evidence relative to the date the study is about. That block is computed on
+an author-chosen date and blocks nothing, by design — INTAKE §1 measured it. The
+**delivery record** answers the other question, whether the observations are
+recent enough for advice issued *now*, against a reference the brief's author
+does not supply. Nothing in the analysis, `ranking.json`, the report bytes or
+`study_id` changes when a study is delivered; the record is integrity-bound, not
+identity-bearing (INTAKE §8).
+
+**Declared scope.** `freshness.scope` in the brief is `historical` or
+`current_advice`. **Absent means historical**: nobody claimed the study was
+current, and fresh dates do not turn a regression fixture into buying evidence.
+The four legacy examples are historical on that reading with their bytes and ids
+unchanged; the key is additive within brief v1 and persisted in `brief.json` only
+when declared, so review-bound bytes do not move. `current_advice` requires
+`as_of`, `price_max_age_days` and a non-empty `note` stating why that age bound
+is adequate; the brief refuses otherwise. The manifest records `scope` and
+`scope_source` (`brief` or `undeclared`). A declared scope adds a `Scope` header
+row and a scope paragraph in the report's freshness section; a current-advice
+report says of itself that without a passing delivery record it is a historical
+comparison as of `as_of`.
+
+**The delivery event.** `study deliver BUNDLE [--reference ISO]` verifies the
+bundle, reads the execution clock in UTC — or a declared instant, which it
+records as declared — and appends one event to `delivery.json`, digest-listed in
+the manifest. **Delivery record v1** is `study/delivery.py`, tracked as
+`delivery_record`:
+
+| Field | Meaning |
+|---|---|
+| `reference`, `reference_source`, `reference_as_supplied`, `time_zone` | The frozen instant, normalised to UTC seconds; `execution_clock` or `declared`; a reference without an explicit offset is refused |
+| `study_id`, `report_sha256` | What was delivered; the record belongs to exactly those report bytes |
+| `scope`, `scope_source`, `as_of`, `price_max_age_days`, `rationale` | The declaration and policy the event was assessed under |
+| `analytical_outcome`, `stop` | Copied from the analysis, never re-decided |
+| `governed` | The `shortlisted` and `ranked` candidates — decisive comparison inputs, including a bounded finding's rows — each with its age in whole UTC days at the reference and a `stale` flag. Excluded, folded, over-budget and off-category records are not governed |
+| `counts`, `blockers`, `current_advice`, `statement`, `limits` | `permitted`, `blocked` or `not_in_scope`, with every reason |
+
+Under `current_advice` scope the event is **blocked** by any of: no age policy; a
+reference that precedes `as_of`; a governed observation older than the policy at
+the reference; a governed observation undated or dated after the reference
+(unknown is not current); a withheld recommendation (stage 6 stop). Otherwise it
+is **permitted for that event** — a later delivery is a new assessment. Under
+`historical` scope every event is `not_in_scope`: staleness at the reference is
+recorded, nothing is blocked, and the statement names the reference date it was
+delivered as history at.
+
+**Structural, not waivable.** `validate-report` reports the latest event and,
+for a current-advice study, fails with `delivery_missing` when no record exists
+and `current_advice_blocked` when the latest event is not permitted — whether or
+not `--require-review` is passed and whatever a completed semantic review says.
+`verify` recomputes every event from its own frozen reference and this bundle's
+persisted data and reports `delivery_invalid` when an event does not re-derive or
+belongs to different report bytes. Replay never reads the clock, so the
+maintenance gate replays every example with a fixed `deliver_at` and fails with a
+change, not with the passage of time.
+
+**Limits.** The execution clock is not a trusted time service: the record
+prevents silent backdating inside the declared workflow and does not prove a
+supplied reference true; every event says where its reference came from. The
+record does not yet carry session consumption, interruption or attestation facts
+(stage 8), is not yet bound into a delivery review (stage 10), and the declared
+scope is a declaration — a brief that calls frozen fixture evidence current advice
+has made a false declaration the software cannot detect.

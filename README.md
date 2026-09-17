@@ -265,8 +265,11 @@ The [intake workflow](RESEARCH.md#retain-an-intake-plan-before-the-executable-br
 explains capture, read-back, storage and structural preservation. When a
 decisive requirement has no executable control, the stage gates withhold the
 recommendation and keep the ranking on the available axis under a separate
-bounded-finding heading. Delivery freshness, resource accounting and intake
-semantic review remain later R13 stages.
+bounded-finding heading. A brief declares whether it is a historical comparison
+or current advice; `study deliver` freezes the delivery instant and blocks
+current advice on stale, undated or withheld decisive inputs, and
+`validate-report` refuses a current-advice study without a passing record.
+Resource accounting and intake semantic review remain later R13 stages.
 
 The `validated` CLI always supplies a category profile (default `dry_pasta`).
 For neutral validation, the Python API is `validate(record)` with no profile;
