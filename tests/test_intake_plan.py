@@ -375,7 +375,15 @@ class Preservation(PlanCase):
 
 class BundleAndCLI(PlanCase):
     def test_cli_binds_checks_runs_and_replays_without_external_plan(self):
-        bound_path = self.directory / 'bound.json'
+        # plan-bind records the feeds relative to the brief it writes, so the
+        # bound brief goes beside the committed ones (the ``tests/studies/.tmp-*``
+        # convention .gitignore names) and declares ``../cases/...`` like them.
+        # Written into the temp directory instead, it would declare a path that
+        # climbs to the filesystem root -- ``../../home/...`` under /tmp -- and
+        # ``input_root`` below would only land on the feed where that root
+        # happens to be at least as deep as the temp directory.
+        bound_path = HERE / 'studies' / f'.tmp-{self.directory.name}-bound.json'
+        self.addCleanup(bound_path.unlink, missing_ok=True)
         status, output = self.cli('plan-bind', BRIEF, '--plan', SUPPORTED, '-o', bound_path)
         self.assertEqual(status, 0, output)
         plan_path = self.write('working-plan.json', self.plan)
@@ -388,6 +396,8 @@ class BundleAndCLI(PlanCase):
         plan_path.unlink()
         bound_path.unlink()
         self.assertEqual(intake.load(output_path / intake.SNAPSHOT), self.plan)
+        self.assertEqual(json.loads((output_path / 'brief.json').read_text())['inputs'],
+                         ['../cases/pasta_v1.jsonl.gz'])
         self.assertEqual(bundle.verify(output_path, input_root=HERE / 'studies')[1], [])
 
     def test_invalid_transition_does_not_replace_an_existing_bundle(self):
