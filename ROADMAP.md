@@ -1649,6 +1649,22 @@ the questions rather than the classifier, under the runbook's rule that
 Not established: that a test's criteria transfer across classes — the same
 test's durability drum is specified for satchels, not backpacks — or that the
 retailer "tests" dominating search results are usable sources.
+
+**2026-09-17 — One conversational trial run end to end (school backpack).**
+The unsupported-category conversation recorded above continued through a
+buyer's six messages to a saved, audited, delivered outcome, within one
+provider and with the agent as reviewer. Measured: seven plan revisions, each
+read back with its response recorded (five corrections, no confirmation);
+five crawls in the session ledger, 285 of 400 responses; a category built as
+reviewed maintenance mid-study; four study bundles, of which the first three
+withheld the recommendation on a decisive requirement without a control and
+the fourth, after the buyer settled that requirement outside the study,
+delivered a no-decisive-winner shortlist as permitted current advice with
+`validate-report --require-review` valid. Two harness defects surfaced and
+were fixed with regression tests: a plan-check column overflow, and a stale
+delivery review blocking its own replacement. The first Done-when bullet is
+met once, by a user who wrote the documentation. Not established: a reader
+who had not; an independent reviewer; a second provider.
 ### Scope
 
 Make the existing coding-agent conversation the tested product entry point.
