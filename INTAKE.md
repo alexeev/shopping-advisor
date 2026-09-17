@@ -925,6 +925,15 @@ byte-identical, so stages 1–9 cannot move a committed example.
 | 9 | Intake review artifact | no | no | M |
 | 10 | **Migration**: manifest v3, identity projection, review v2 | **once** | **once** | L |
 
+**Implementation status (2026-09-17): stages 1–4 shipped.** Stage 3 uses
+`LEDGER_VERSION`, `AUDIT_VERSION` and `REVIEW_VERSION`, each still 1 and tracked
+independently by the gate. Stage 4 is
+[study/controls.py](shopping_advisor/study/controls.py), exposed by
+`study controls --category CATEGORY`; its resolver reads the live registry and
+covers the five mechanisms in §4. The catalogue is inspection, not an intake
+plan, execution authorisation or a semantic adequacy check. Stage 5 onward
+remains planned; existing study identities and report bytes stay unchanged.
+
 **1 — Worked cases and characterisation tests.** The referent, written before any
 field name. The cases in §14 become committed fixtures with their intent and
 acceptable outcomes stated independently of any produced plan, together with tests

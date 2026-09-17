@@ -203,7 +203,9 @@ def _contract_versions():
             'run_manifest': RUN_MANIFEST_VERSION,
             'brief': BRIEF_VERSION,
             'study_manifest': STUDY_MANIFEST_VERSION,
-            'evidence_ledger': audit.VERSION}
+            'evidence_ledger': audit.LEDGER_VERSION,
+            'study_audit': audit.AUDIT_VERSION,
+            'semantic_review': audit.REVIEW_VERSION}
 
 
 def check_contracts(baseline, root=ROOT):

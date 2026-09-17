@@ -26,6 +26,7 @@ import argparse
 import json
 from pathlib import Path
 from . import audit
+from .controls import catalogue
 from ..provenance import write_json_atomically
 from .bundle import artifact_digests
 import datetime as _dt
@@ -142,11 +143,22 @@ def review_command(args):
     return 0
 
 
+def controls_command(args):
+    print(json.dumps(catalogue(args.category), indent=2, ensure_ascii=False))
+    return 0
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(
         prog='shopping_advisor.study',
         description='Persist and replay a research study, offline.')
     commands = parser.add_subparsers(dest='command', required=True)
+
+    controls = commands.add_parser(
+        'controls', help='inspect live category controls and their limits as JSON')
+    controls.add_argument('--category', required=True,
+                          help='registered category key (no default)')
+    controls.set_defaults(handler=controls_command)
 
     checking = commands.add_parser(
         'check', help='validate a brief and show how it will be read')

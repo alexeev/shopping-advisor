@@ -9,7 +9,9 @@ from pathlib import Path
 
 from ..provenance import sha256_text, sha256_file
 
-VERSION = 1
+LEDGER_VERSION = 1
+AUDIT_VERSION = 1
+REVIEW_VERSION = 1
 REVIEW_CHECKS = ('citation_support', 'variant_applicability', 'user_priorities',
                  'coverage_and_limits')
 SCOPES = ('historical', 'current_batch', 'vendor_declaration', 'review_sample',
@@ -34,7 +36,7 @@ def pointer(document, path):
 
 
 def empty():
-    return {'ledger_version': VERSION, 'observations': [], 'claims': []}
+    return {'ledger_version': LEDGER_VERSION, 'observations': [], 'claims': []}
 
 
 def read(path):
@@ -47,8 +49,8 @@ def read(path):
 
 
 def check_ledger(data):
-    if not isinstance(data, dict) or type(data.get('ledger_version')) is not int or data.get('ledger_version') != VERSION:
-        raise AuditError('unsupported ledger_version; expected 1')
+    if not isinstance(data, dict) or type(data.get('ledger_version')) is not int or data.get('ledger_version') != LEDGER_VERSION:
+        raise AuditError(f'unsupported ledger_version; expected {LEDGER_VERSION}')
     if set(data) - {'ledger_version', 'observations', 'claims'}:
         raise AuditError('unknown ledger fields')
     rows = data.get('observations')
@@ -181,7 +183,7 @@ def index(result, cards, ledger):
                            'support': {'artifact': 'cards.jsonl', 'row': n,
                                        'pointer': '/score', 'computation': 'basmati-score-v2',
                                        'inputs': 'manifest.json#/inputs'}})
-    return {'audit_version': VERSION, 'method': {
+    return {'audit_version': AUDIT_VERSION, 'method': {
         'ranking': 'single-axis-v1', 'axis': result['constraints']['axis'],
         'score_shortlist': False}, 'claims': claims,
         'external_claims': ledger.get('claims', []),
@@ -216,7 +218,7 @@ def render(ledger):
 
 
 def validation_result(review):
-    return {'audit_version': VERSION, 'deterministic': 'pass',
+    return {'audit_version': AUDIT_VERSION, 'deterministic': 'pass',
             'semantic': review_status(review),
             'checks': ['ledger_schema', 'source_digests', 'claim_scope',
                        'listing_applicability', 'decision_replay'],
@@ -235,13 +237,13 @@ def review_basis(directory):
 
 
 def review_template(directory):
-    return {'review_version': VERSION, 'report_sha256': sha256_file(Path(directory) / 'report.md'),
+    return {'review_version': REVIEW_VERSION, 'report_sha256': sha256_file(Path(directory) / 'report.md'),
             'basis': review_basis(directory), 'reviewer': '', 'checks': {k: {'status': 'pending', 'findings': ''} for k in REVIEW_CHECKS},
             'unresolved_limits': []}
 
 
 def check_review(review, directory, required=False):
-    if not isinstance(review, dict) or review.get('review_version') != VERSION:
+    if not isinstance(review, dict) or review.get('review_version') != REVIEW_VERSION:
         raise AuditError('unsupported semantic review version')
     if review.get('report_sha256') != sha256_file(Path(directory) / 'report.md'):
         raise AuditError('semantic review belongs to different report bytes')

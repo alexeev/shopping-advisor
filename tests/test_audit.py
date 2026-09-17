@@ -4,11 +4,67 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from shopping_advisor.study import audit, bundle
 from shopping_advisor.provenance import sha256_file
 
 FIXTURE = Path(__file__).parent / 'studies' / 't3'
+
+
+class IndependentContracts(unittest.TestCase):
+    def test_gate_discovers_each_contract_independently(self):
+        from shopping_advisor.maintenance import _contract_versions, check_contracts
+        declared = _contract_versions()
+        for constant, name in (('LEDGER_VERSION', 'evidence_ledger'),
+                               ('AUDIT_VERSION', 'study_audit'),
+                               ('REVIEW_VERSION', 'semantic_review')):
+            with self.subTest(contract=name), patch.object(audit, constant, 2):
+                actual = _contract_versions()
+                self.assertEqual([k for k in actual if actual[k] != declared[k]], [name])
+                result = check_contracts({'contracts': declared})
+                self.assertEqual(len(result.findings), 1)
+                self.assertEqual(result.findings[0].code, 'contract_version')
+        for name in ('evidence_ledger', 'study_audit', 'semantic_review'):
+            missing = {k: v for k, v in declared.items() if k != name}
+            result = check_contracts({'contracts': missing})
+            self.assertEqual(result.findings[0].code, 'contract_untracked')
+
+    def test_ledger_version_moves_without_audit_or_review(self):
+        with patch.object(audit, 'LEDGER_VERSION', 2):
+            self.assertEqual(audit.empty()['ledger_version'], 2)
+            audit.check_ledger(audit.empty())
+            with self.assertRaisesRegex(audit.AuditError, 'expected 2'):
+                audit.read(FIXTURE / 'evidence.json')
+            self.assertEqual(audit.validation_result({'checks': {}})['audit_version'], 1)
+            self.assertEqual(audit.REVIEW_VERSION, 1)
+
+    def test_audit_version_moves_both_outputs_without_ledger_or_review(self):
+        from shopping_advisor.study.analysis import analyse
+        from shopping_advisor.study.brief import load
+        result, _ = analyse(load(FIXTURE / 'positive.toml'))
+        with patch.object(audit, 'AUDIT_VERSION', 2):
+            ledger = audit.read(FIXTURE / 'evidence.json')
+            self.assertEqual(audit.index(result, [], ledger)['audit_version'], 2)
+            self.assertEqual(audit.validation_result({'checks': {}})['audit_version'], 2)
+            self.assertEqual(ledger['ledger_version'], 1)
+            self.assertEqual(audit.REVIEW_VERSION, 1)
+
+    def test_review_version_moves_without_invalidating_ledger(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            for name in ('report.md', 'brief.json', 'ranking.json', 'candidates.jsonl',
+                         'cards.jsonl', 'ledger.json', 'claim-index.json'):
+                (directory / name).write_text('{}')
+            old = audit.review_template(directory)
+            with patch.object(audit, 'REVIEW_VERSION', 2):
+                audit.read(FIXTURE / 'evidence.json')
+                current = audit.review_template(directory)
+                self.assertEqual(current['review_version'], 2)
+                audit.check_review(current, directory)
+                with self.assertRaisesRegex(audit.AuditError, 'unsupported semantic'):
+                    audit.check_review(old, directory)
+                self.assertEqual(audit.validation_result(current)['audit_version'], 1)
 
 
 class EvidenceChecks(unittest.TestCase):

@@ -229,6 +229,7 @@ still covers one marketplace: feeds spanning several stop the command until
 | `python -m shopping_advisor.run reextract RUN_DIR --feed ORIGINAL_FEED -o NEW_FEED` | Offline extraction from retained pages; refuses a feed belonging to another crawl or marketplace |
 | `python -m shopping_advisor.run inspect RUN_DIR` | What a run did, which code and settings produced it, how it ended, what it retained |
 | `python -m shopping_advisor.study check BRIEF` | Whether a brief is usable, and every default it will fall back to |
+| `python -m shopping_advisor.study controls --category CATEGORY` | JSON catalogue of the live category's candidate controls, parameters and limits; no feed required |
 | `python -m shopping_advisor.study run BRIEF` | Analyses the feeds the brief names and writes a study bundle; collects nothing |
 | `python -m shopping_advisor.study validate-report BUNDLE --require-review` | Validate indexed claims, replay decisions and require a separate completed semantic review |
 | `python -m shopping_advisor.study verify BUNDLE` | Re-derives the decisions from the bundle's own inputs and reports what moved |

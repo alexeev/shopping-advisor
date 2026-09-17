@@ -628,6 +628,36 @@ to make a preferred product win.
 
 ## Current limitations
 
+### Inspect executable controls before mapping requirements
+
+```text
+uv run --offline --locked python -m shopping_advisor.study controls --category dry_pasta
+uv run --offline --locked python -m shopping_advisor.study controls --category tyre_mounting_paste
+uv run --offline --locked python -m shopping_advisor.study controls --category basmati_rice
+```
+
+This read-only JSON catalogue resolves axes, directions, defaults and claim keys
+from the live category registry. It describes all five mechanisms that move the
+candidate set: required trusted claims, the selected-axis cap, classification,
+value usability and offer grouping, including their parameters, stages and limits.
+It reads no feeds and does not establish that evidence exists or that a mechanism
+adequately represents the user's requirement.
+
+The Python interface is `shopping_advisor.study.controls.catalogue(category_key)`
+and `resolve(category_key, control, **parameters)`. For example,
+`resolve('dry_pasta', 'max_axis_value', value=100, unit='EUR/kg')` resolves a cap
+on the default price-per-kilogram axis, **not** a €100 purchase budget.
+Unknown category/control/claim/axis keys and unsupported parameters refuse;
+directionless axes cannot resolve as ranking controls. Units are exact measured
+units, checked against cards during ranking, without conversion. Classification
+and grouping are fixed mechanisms with no buyer-supplied predicate parameters.
+
+`cost_basis`, `unacceptable` and `limits` remain narrative, and external claims
+remain outside candidate eligibility. This catalogue is R13 stage 4 inspection;
+intake plans and transition/conclusion gates are not yet implemented.
+
+### Operational limits
+
 | Limitation | What to do now | Planned stage |
 |---|---|---|
 | One analysis covers one marketplace; cross-marketplace comparison is unsupported | Name the marketplace with `--marketplace` and report only that shelf | R4, on demand |

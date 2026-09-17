@@ -18,6 +18,8 @@
     "evidence_ledger": 1,
     "extraction_schema": 6,
     "run_manifest": 2,
+    "semantic_review": 1,
+    "study_audit": 1,
     "study_manifest": 2,
     "validation_contract": 2
   },
@@ -95,20 +97,21 @@
     }
   ],
   "note": "What the maintenance gate is entitled to find. Tracked on purpose: a task-local change that lowers a floor, drops a check or moves an example's decision has to say so here, in a reviewable diff. Re-record with `maintenance baseline --update` from a tree that passes.",
-  "recorded_at": "2026-09-16T21:41:49+00:00",
+  "recorded_at": "2026-09-17T07:44:26+00:00",
   "runtime": {
     "lock_sha256": "e24bc67da2dba6c49538700bc8bce61658748c715e9103603f537c15694a32cd",
     "python": "3.14",
     "scrapy": "2.19"
   },
   "tests": {
-    "minimum": 500,
+    "minimum": 515,
     "modules": [
       "test_analysis",
       "test_attributed_search",
       "test_audit",
       "test_basmati",
       "test_cli",
+      "test_controls",
       "test_corpus",
       "test_extraction",
       "test_feeds",

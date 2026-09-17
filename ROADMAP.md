@@ -1550,6 +1550,24 @@ expansion with depth using decision-relevant yield, not raw result count.
 
 **Status: NEXT. Depends on shipped T2/T3; does not wait for R11.**
 
+**2026-09-17 — INTAKE §16 stages 3–4 shipped, following stages 1–2.** The ledger,
+audit outputs and semantic review now use three independent version constants,
+all still 1, each discovered and pinned by the maintenance gate. A read-only
+controls catalogue and resolver derives category axes, directions, defaults and
+claim keys from the live registry, covering all five candidate-set mechanisms.
+`study controls --category CATEGORY` exposes it before a brief or feed exists.
+Eleven control tests exercise resolution and mechanism semantics, including
+trusted-claim presence, selected-axis caps in both ranking directions,
+classification, unusable/mixed-unit values and pack-size grouping counterexamples;
+four audit tests exercise independent version changes and gate discovery.
+
+The baseline update adds `study_audit` and `semantic_review` at 1 and records the
+new regression floor/module. No runtime lock, extraction/validation semantics,
+committed example identity, decision, report bytes or completed review changes.
+This is partial R13 delivery: intake plans, stage gates and the later migration
+remain planned. The catalogue does not prove arbitrary-language understanding
+or turn an unsupported requirement into an executable predicate.
+
 ### Scope
 
 Make the existing coding-agent conversation the tested product entry point.

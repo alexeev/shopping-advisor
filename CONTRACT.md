@@ -501,6 +501,13 @@ figure that is implausibly *low* for the product it describes.
 
 ## 8. Study audit contracts (T3)
 
+R13 stage 3 separates the three version constants in `study/audit.py`:
+`LEDGER_VERSION` governs `ledger_version`, `AUDIT_VERSION` governs
+`audit_version` in the claim index and validation result, and `REVIEW_VERSION`
+governs `review_version`. All remain **1**. The maintenance gate tracks them
+independently as `evidence_ledger`, `study_audit` and `semantic_review`.
+This separation changes no artifact bytes, study identity or review binding.
+
 Study manifests now write **v2**, adding `ledger.json`, `claim-index.json`,
 `validation.json`, and `semantic-review.json`. V1 bundles remain historical
 artifacts; this build refuses to validate them as v2. Re-run their original
