@@ -31,8 +31,10 @@ measurements as history.
 
 ## Product vision — the shopping conversation
 
-**Revised product direction, 2026-09-16. The extension operating model below
-is planned; the shipped scope remains in [README](README.md#supported-scope).**
+**What the product is for, whose side the agent is on and what the product is
+not are stated once, in [PURPOSE.md](PURPOSE.md). This section plans how the
+product grows — the extension operating model, revised 2026-09-16 — and that
+model is planned; the shipped scope remains in [README](README.md#supported-scope).**
 
 Shopping Advisor is a **durable, continuously extensible research harness for
 an AI software agent**. Its permanent user interface is an AI coding interface,
@@ -65,17 +67,6 @@ the purchasing decision. A conditional comparison, tie or precise
 insufficient-evidence answer is a valid outcome. Missing software should normally
 trigger bounded adaptation; unavailable decisive evidence must never trigger
 invented certainty.
-
-### What the product is not
-
-- A fixed shopping application awaiting its own chat or web frontend. The coding
-  interface is the lasting interface; CLI commands are tools used by the agent.
-- A scraper with advice appended, or a programme to prebuild every category.
-  Acquisition and maintained categories serve decisions, not coverage targets.
-- An unrestricted self-modifying agent. A task cannot silently rewrite its own
-  trust policy, permissions or acceptance criteria to manufacture success.
-- A universal product ontology, scoring engine or agent framework. Shared
-  abstractions earn their place through demonstrated use.
 
 ### Two kinds of request, one interface
 
@@ -594,6 +585,54 @@ operate or extend this repository describes a migration any more.
   code, contract version, snapshot or example decision moved. The only baseline
   change is the document removed from its index, which is the reviewable claim
   that this repository no longer publishes it.
+
+### Documentation review — 2026-09-18: the purpose gets an owner
+
+Onboarding a business analyst exposed a gap the 2026-09-16 review had left
+open. An agent no longer had to read a migration framework to learn what the
+system is, but what the system is *for* still had no owner. It was split
+across README's first paragraph, the vision section above — a paragraph dated
+as a direction revision, inside a section about a planned model — one link in
+AGENTS whose first screen was the Scrapy acquisition path, and the
+brief-agreement section of the runbook. The ownership list in AGENTS named
+CONTRACT, RESEARCH and ROADMAP, and nobody for purpose. Read from those
+fragments, three readers got three products: a stakeholder a harness, an
+operator an acquisition path, a maintainer an extension model. The buyer — the
+shelf too wide to read by hand, the requirement forgotten until the first dark
+morning, the test result that is not on the page — appeared in none of the
+openings, and the agent's role was named only in passing, as a researcher.
+
+- **Added:** [PURPOSE.md](PURPOSE.md), owning the buyer's problem; the agent's
+  role as an independent researcher on the buyer's side, with its five limits;
+  what a finished outcome owes the buyer, as an index into the contracts that
+  enforce each item; what the product is not; and a glossary that points at
+  owners rather than redefining terms. It carries no numbers that go stale. It
+  is indexed in the gate's baseline, which is the reviewable claim that the
+  repository publishes it.
+- **Moved:** *What the product is not*, from this section to PURPOSE, with a
+  fifth boundary — the agent is not a product expert who knows the range. This
+  section keeps the extension operating model, the assessment and the
+  priorities, and its opening note now says so.
+- **Reordered:** AGENTS opens with whom the agent works for and five
+  tie-breakers for rules that pull apart, before the acquisition path; its
+  ownership list names PURPOSE; its maintenance workflow links the decision
+  principles it had paraphrased without naming.
+- **Runbook:** *Agree the brief* now says what the questioning step is for from
+  the buyer's side, and where candidate requirements come from — the buyer, the
+  agent's reading, a cited source such as a professional test's criteria list,
+  and the category's defaults — each recorded where it belongs, with the
+  school-backpack visibility requirement as the worked case and the
+  default-step version left as R11's unadopted proposal.
+- **README:** opens with the buyer before the harness; *Start here* gains a row
+  per reader and a row for a finished outcome; *Supported scope* is named the
+  canonical written list, with the registry the gate checks as the truth behind
+  it; the category table gains its fourth row.
+- **Measured effect:** the gate passes. The tracked documentation index went
+  from 17 documents, 215 local links and 276 anchors to **18 documents, 281
+  local links and 284 anchors**, with no broken link or anchor. 774
+  offline tests, unchanged and green. No code, contract version, snapshot or
+  example decision moved. The only baseline change is the document added to
+  its index.
 
 ---
 

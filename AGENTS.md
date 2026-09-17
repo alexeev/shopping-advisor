@@ -6,6 +6,28 @@ than define separate research rules. Read this file, [README.md](README.md), and
 [RESEARCH.md](RESEARCH.md) before operating the project. Read
 [CONTRACT.md](CONTRACT.md) before changing extraction, validation, or analysis.
 
+## Whom the agent works for
+
+Shopping Advisor turns one buyer's purchasing need into a decision they can
+defend, or into a precise account of why the evidence does not support one.
+The agent is an independent researcher on the buyer's side: it takes no
+vendor's word for a fact, knows no shelf until it has looked, and says what it
+did not see. [PURPOSE.md](PURPOSE.md) owns that statement — the buyer's
+problem, the role and its limits, and what a finished outcome owes the buyer.
+Read it before the rules below, because the rules are derived from it, and
+when two of them pull in different directions these settle the matter:
+
+- The buyer's decision over the completeness of the research: stop when more
+  work cannot change what the buyer should do.
+- Honesty over a winner: a conditional answer, a tie or insufficient evidence
+  is a result, and a status never improves to obtain a ranking.
+- The fewest questions that change the answer, each with its reason and its
+  default, asked in one round.
+- Coverage stated, always: what was searched, how deep, and what was not seen.
+- A software gap and an evidence gap are different things. The first may be
+  closed by bounded, reviewed engineering; the second is never closed by
+  confidence.
+
 ## Scope and entry points
 
 - The supported research acquisition path is `amazon_product` on Amazon.de
@@ -42,10 +64,11 @@ than define separate research rules. Read this file, [README.md](README.md), and
   Do not claim portability or provider interchangeability that nothing has
   measured; the trials that would establish it are
   [R17](ROADMAP.md#r17--portability-evidence).
-- The [product vision](ROADMAP.md#product-vision--the-shopping-conversation)
-  is a permanently extensible research harness operated through a coding-agent
-  conversation. Task-driven adaptation covers categories, sources, extraction
-  and methods, not just a larger category catalogue. R13 defines intake/gap
+- [PURPOSE.md](PURPOSE.md) says what the product is for; the
+  [product vision](ROADMAP.md#product-vision--the-shopping-conversation) plans
+  how it grows: a permanently extensible research harness operated through a
+  coding-agent conversation. Task-driven adaptation covers categories, sources,
+  extraction and methods, not just a larger category catalogue. R13 defines intake/gap
   planning; R15 controls adaptation; R16 governs reuse and architectural review;
   R14 tests the complete loop. **These are planned capabilities, not runtime
   authority.** Until R11 and R15 gates ship, follow the unsupported-category
@@ -134,7 +157,8 @@ convenience, never the authority.
   [RESEARCH.md](RESEARCH.md#agree-the-brief) has the procedure and an example.
 - Say when a category is not supported instead of working around it. Only
   `dry_pasta`, `tyre_mounting_paste`, `basmati_rice` and `school_backpack`
-  ship. Explain what is
+  ship; [README's supported scope](README.md#supported-scope) is the canonical
+  written list and wins where another document disagrees. Explain what is
   missing and what it costs in time, confidence or the answer, and give the
   evidence and gap plan; do not make the user choose an implementation module.
   Answering within stated generic limits stays available, and is not a
@@ -211,7 +235,9 @@ HTML; it must not be exported or promoted. Read
 2. Record the defect and source evidence; reproduce offline where possible.
 3. Change the narrowest responsible layer. Keep category preferences downstream
    of generic extraction and validation. Generalize only when demonstrated use
-   warrants it; R10 still defers shared scoring.
+   warrants it; R10 still defers shared scoring. When a change could go either
+   way, the [decision principles](ROADMAP.md#decision-principles) are the
+   tie-breakers, and [PURPOSE.md](PURPOSE.md) is what they serve.
 4. Add regression coverage for behavioral fixes, including false-positive or
    false-negative counterexamples. For documentation-only edits, verify commands,
    links and claims rather than writing tests that restate the documentation.
@@ -242,7 +268,9 @@ questions asked of a user are revised from what actually decided past answers.
 
 ## Where durable knowledge belongs
 
-`CONTRACT.md` owns data semantics; `RESEARCH.md` owns operational procedure;
+`PURPOSE.md` owns what the product is for: the buyer's problem, the agent's
+role and its limits, and what a finished outcome owes the buyer. `CONTRACT.md`
+owns data semantics; `RESEARCH.md` owns operational procedure;
 `ROADMAP.md` owns priorities and measured decisions. `BASELINE.md`, `EXTRACTION.md`,
 and `USABILITY.md` retain dated investigations, not alternate current instructions.
 Use code/tests for verified behavior and study notes for observations awaiting

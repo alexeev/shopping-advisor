@@ -1,11 +1,18 @@
 # Shopping Advisor
 
-Shopping Advisor is a durable research harness for an AI software agent, with
-an AI coding interface as its permanent user interface. The target is to turn
-purchasing needs into evidence-backed decisions, extending the harness through
-small, tested changes when a request needs a capability that does not yet exist.
-It is permanently incomplete by design: success means accommodating unseen
-problems safely, not implementing every category in advance.
+Shopping Advisor turns a purchasing need into a decision the buyer can defend,
+or into a precise account of why the evidence does not support one. An AI
+agent does the research through a coding interface, working for the buyer: it
+gathers the shelf, checks the vendors' numbers, brings in independent tests
+where the page cannot answer, and keeps what it learned for the next question.
+[PURPOSE.md](PURPOSE.md) says what that is for, whose side the agent is on and
+where its role ends; this file says what has shipped and how to run it.
+
+Underneath, it is a durable research harness for an AI software agent, with
+an AI coding interface as its permanent user interface, extended through
+small, tested changes when a request needs a capability that does not yet
+exist. It is permanently incomplete by design: success means accommodating
+unseen problems safely, not implementing every category in advance.
 
 Today it provides briefs, retained evidence, validation, category analysis and
 replayable studies. Routine task-driven extension remains planned.
@@ -16,8 +23,13 @@ The supported scope below distinguishes shipped tools from the product vision.
 
 ## Start here
 
+A buyer or a stakeholder starts at PURPOSE; an operating agent at AGENTS; a
+maintainer at CONTRACT and the roadmap's decision principles.
+
 | Need | Read |
 |---|---|
+| Understand what the product is for, and for whom | [PURPOSE.md](PURPOSE.md) — the buyer's problem, the agent's role and its limits, what a finished outcome owes the buyer, and a glossary |
+| See what a finished outcome looks like | [tests/studies](tests/studies/README.md) — two committed studies over one feed: one reaches a recommendation, one refuses and says exactly why |
 | Operate or maintain the repository as an agent | [AGENTS.md](AGENTS.md) — canonical, provider-neutral instructions |
 | Research a product or try the offline example | [RESEARCH.md](RESEARCH.md) — current runbook and commands |
 | Understand fields and trust semantics | [CONTRACT.md](CONTRACT.md) — extraction schema **6**, validation contract **2** |
@@ -32,6 +44,11 @@ not automatically discover repository instructions, tell it to read
 credential required for crawling, analysis, or tests.
 
 ## Supported scope
+
+This section is the canonical written statement of scope. Where another
+document repeats a fact from it and the two disagree, this section wins and
+the other is corrected; the registry the gate checks is the truth behind the
+category list.
 
 - **Amazon.de** is the validated research marketplace, with an explicit German
   acquisition locale. Its baseline profile uses no proxy or browser.
@@ -56,6 +73,8 @@ The agent discovers what matters, reuses existing capabilities, detects gaps,
 adds and validates what is needed, and retains demonstrated learning. Categories,
 sources, extraction techniques and comparison methods can all evolve this way.
 Engineering is visible to the user when it affects cost, confidence or the decision.
+What all of that is for, and what the product is not, is stated once in
+[PURPOSE.md](PURPOSE.md).
 
 The [product vision and roadmap assessment](ROADMAP.md#product-vision--the-shopping-conversation)
 define the minimum operating model, architectural safeguards and delivery order.
@@ -198,6 +217,7 @@ as ranking values.
 | `dry_pasta` | Price per kilogram, lower first | Ingredients, processing claims, nutrition plausibility |
 | `tyre_mounting_paste` | Pack quantity, lower first | Drying, material compatibility, adverse lubricant claims |
 | `basmati_rice` | Price per kilogram, lower first | Cultivar, review signals, historical external findings, a seven-component score |
+| `school_backpack` | Weight of the bag, lower first | Reflective elements, manufacturer warranty, height-adjustable back, hip or chest strap; volume and stated body-height range shown, not ranked |
 
 `rank` sorts one axis. **It does not rank by basmati's composite score**, and
 no CLI produces a score-ordered shortlist. The score is a category method that
