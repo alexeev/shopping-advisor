@@ -17,6 +17,7 @@ import json
 import os
 import pathlib
 import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -891,6 +892,43 @@ class Variation(unittest.TestCase):
         self.assertEqual(record['variation'], {})
         self.assertIn('variation', record['extraction']['blocks_absent'])
         self.assertEqual(record['extraction']['errors'], [])
+
+
+class Lifecycle(unittest.TestCase):
+    """The manifest a real crawl writes, run offline.
+
+    ``python -m scrapy crawl`` with both download handlers disabled: the one
+    request fails inside the downloader before any connection is attempted,
+    and the spider still goes through Scrapy's own open/close sequence with
+    the stock extensions connected. That sequence is the point. The crawler
+    builds the spider before its extensions, so a stats snapshot taken on
+    ``spider_closed`` ran before CoreStats had written the closing stats, and
+    the 2026-09-17 manifest carried its response counts but no elapsed time.
+    """
+
+    def test_a_closed_manifest_carries_the_stats_written_on_spider_closed(self):
+        store = pathlib.Path(self.enterContext(tempfile.TemporaryDirectory()))
+        completed = subprocess.run(
+            [sys.executable, '-m', 'scrapy', 'crawl', 'amazon_product',
+             '-a', 'keyword=spaghetti', '-a', 'max_pages=1',
+             '-s', f'RUN_STORE={store}',
+             '-s', 'DOWNLOAD_HANDLERS={"http": null, "https": null}',
+             '-s', 'LOG_LEVEL=WARNING'],
+            cwd=pathlib.Path(__file__).resolve().parent.parent,
+            capture_output=True, text=True, timeout=120)
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        [run_dir] = [path for path in store.iterdir() if path.is_dir()]
+        manifest = run_module.load_manifest(run_dir)
+        self.assertEqual(run_module.run_state(manifest), 'complete')
+        self.assertEqual(manifest['finish_reason'], 'finished')
+        stats = manifest['stats']
+        self.assertEqual(
+            stats['downloader/exception_type_count/scrapy.exceptions.NotSupported'],
+            1, 'the one request failed in the downloader; nothing was fetched')
+        self.assertNotIn('downloader/response_count', stats)
+        self.assertEqual(stats['finish_reason'], 'finished')
+        self.assertIsInstance(stats['elapsed_time_seconds'], float)
+        self.assertGreater(stats['elapsed_time_seconds'], 0)
 
 
 if __name__ == '__main__':

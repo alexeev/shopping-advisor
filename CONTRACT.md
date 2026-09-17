@@ -810,7 +810,7 @@ id, revision and digest. The sanitized example is
 | Limit field | Contract |
 |---|---|
 | `kind` | `research` or `engineering`. A research allowance does not fund engineering and an engineering allowance does not fund research; an action may reference limits of its own kind only. A purchase budget is a different quantity and is not a limit |
-| `unit`, `measurement` | An **observed** unit the run manifest reports — `requests` (`downloader/request_count`), `responses` (`downloader/response_count`), `items` (`item_scraped_count`), `seconds` (`elapsed_time_seconds`), `pages_retained` (`counts.pages_saved`), `runs` (one per manifest) — or an **estimate** (`eur`, `tokens`) whose `note` says how it is estimated. Acquisition units are whole numbers |
+| `unit`, `measurement` | An **observed** unit the run manifest reports — `requests` (`downloader/request_count`), `responses` (`downloader/response_count`), `items` (`item_scraped_count`), `seconds` (`elapsed_time_seconds`, or the manifest's own `finished_at` − `started_at` when a closed manifest lacks the stat), `pages_retained` (`counts.pages_saved`), `runs` (one per manifest) — or an **estimate** (`eur`, `tokens`) whose `note` says how it is estimated. Acquisition units are whole numbers |
 | `amount`, `mode` | Finite, non-negative. `stops_new_work` refuses the next action once the remainder is short; `strict_ceiling` is permitted only for `responses`, `items` and `seconds`, which `CLOSESPIDER_PAGECOUNT`, `CLOSESPIDER_ITEMCOUNT` and `CLOSESPIDER_TIMEOUT` can close on, and its `note` must state the known overshoot. Reconciliation names the overshoot beside the limit: a page-count closure does not cancel requests in flight, an item cap is not a request cap, a timeout may leave requests in flight. No mechanism enforces a ceiling on requests, runs, retained pages or an estimate, and none is promised |
 | `scope`, `authorization`, `deadline` | What the limit covers; `source` (`user_message` with a retained message `ref`, `existing_authorization`, `operator`) and text; an optional ISO instant with offset. A deadline is wall-clock: time elapsed during an interruption counts |
 
@@ -843,7 +843,15 @@ and `checked`; it runs nothing. `session-record` writes what an action did: from
 a run directory it reads the manifest's `run_id`, timestamps, `stats` and
 `counts`, links the manifest by digest, and sets `completed` or `interrupted`
 from the manifest's own state; without a run the operator declares consumption or
-assumes the allocation. A finished action is never recorded twice.
+assumes the allocation. A finished action is never recorded twice. `seconds` is
+read from `stats.elapsed_time_seconds` and, when a closed manifest lacks it, from
+the difference of the manifest's own `finished_at` and `started_at`, with
+`consumption_source` still `run_manifest`: the run stamped both instants itself.
+The spider writes the manifest on `engine_stopped`, after CoreStats has written
+the closing stats; a manifest written before 2026-09-17 was snapshotted on
+`spider_closed` ahead of CoreStats and lacks `elapsed_time_seconds`, which is
+what the fallback reads. Neither moved a key, a unit or a status, so the ledger
+and the run manifest keep their versions; an open manifest still reads as unknown.
 
 **Resumption** (`resume BUNDLE [--session LEDGER] [--reference ISO]`,
 `resume()`) reads the bundle and the ledger — the bundle's own snapshot when no
