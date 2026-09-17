@@ -58,9 +58,9 @@ Engineering is visible to the user when it affects cost, confidence or the decis
 
 The [product vision and roadmap assessment](ROADMAP.md#product-vision--the-shopping-conversation)
 define the minimum operating model, architectural safeguards and delivery order.
-The local maintenance gate has shipped. R13 intake comes next, then R15
-controlled adaptation, R11 category synthesis, R12 coverage, R16 lifecycle and
-R14 unseen-problem trials. The supported scope above remains the operational
+The local maintenance gate and R13's intake machinery have shipped; R13's
+conversational trials come next, then R15 controlled adaptation, R11 category
+synthesis, R12 coverage, R16 lifecycle and R14 unseen-problem trials. The supported scope above remains the operational
 limit until those gates ship. Cross-platform and provider-interchangeability
 trials are [deferred to R17](ROADMAP.md#r17--portability-evidence) and block
 only the claim that either provider stack can operate this repository; the
@@ -237,7 +237,10 @@ still covers one marketplace: feeds spanning several stop the command until
 | `python -m shopping_advisor.study plan-review PLAN REVIEW.json` | Check an intake review against its plan and print what it records; exits 1 on a recorded failure |
 | `python -m shopping_advisor.study review-intake BUNDLE REVIEW.json` | Attach a separate intake review to a plan-backed bundle; a recorded failure fails `validate-report` |
 | `python -m shopping_advisor.study run BRIEF` | Analyses the feeds the brief names and writes a study bundle; collects nothing |
-| `python -m shopping_advisor.study validate-report BUNDLE --require-review` | Validate indexed claims, replay decisions and require a separate completed semantic review, plus a passing intake review on a plan-backed study |
+| `python -m shopping_advisor.study deliver BUNDLE` | Freeze the delivery instant and record whether current advice is permitted, blocked or not in scope |
+| `python -m shopping_advisor.study delivery-review-template BUNDLE -o REVIEW.json` | Write a pending delivery review bound to the latest delivery event, with its three questions and the attestation |
+| `python -m shopping_advisor.study review-delivery BUNDLE REVIEW.json` | Attach a delivery review to the event it binds; a recorded failure fails `validate-report` |
+| `python -m shopping_advisor.study validate-report BUNDLE --require-review` | Validate indexed claims, replay decisions and require a separate completed semantic review, plus a passing intake review on a plan-backed study and a passing delivery review of a permitted current-advice event |
 | `python -m shopping_advisor.study verify BUNDLE` | Re-derives the decisions from the bundle's own inputs and reports what moved |
 | `python -m shopping_advisor maintenance check` | The gate: runtime, offline suite, contract versions, categories, replayed examples and documentation links, against the tracked baseline |
 | `python -m shopping_advisor maintenance baseline --update` | Deliberately re-record the floors, from a tree that passes; refuses otherwise |
@@ -279,7 +282,11 @@ refuses a next action that does not fit, and travels inside the bundle so that
 permits without the originating conversation. A separate intake review binds
 the plan revision and the live controls: `run --intake-review` refuses a plan
 its review says misreads the request, and an audited plan-backed report needs a
-passing one. The stage 10 migration remains planned.
+passing one. The final semantic review is v2 and rests on it; the manifest is
+v3 and records how every artifact is bound; a permitted current-advice delivery
+is audited through its own delivery review with the deliverer's attestation.
+INTAKE §16's ten stages have shipped; R13's conversational trials have not been
+run.
 
 The `validated` CLI always supplies a category profile (default `dry_pasta`).
 For neutral validation, the Python API is `validate(record)` with no profile;

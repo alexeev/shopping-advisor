@@ -73,8 +73,9 @@ LIMITS = (
     'Ages are whole UTC calendar days between the observation and the '
     'reference. An observation without a parseable timestamp, or dated after '
     'the reference, is unknown, which is not the same as current.',
-    'Session consumption, interruption and attestation facts are not yet part '
-    'of this record.',
+    'Session consumption and interruption facts travel in the session snapshot '
+    'beside this record; the attestation of this event is in the delivery review '
+    'bound to it. None of them proves the clock or the declared scope true.',
 )
 
 

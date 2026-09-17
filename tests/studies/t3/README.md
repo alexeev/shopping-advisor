@@ -47,4 +47,11 @@ The JSON schema is enforced by `study/audit.py` and described in
 [CONTRACT.md](../../../CONTRACT.md#8-study-audit-contracts-t3). For a new real
 study, collect permitted excerpts with actual provenance, record scope and
 identity without guessing, and fill the generated semantic-review checklist
-in a separate pass. Never reuse these fixture approvals for another report.
+in a separate pass. Both committed reviews are **review v2** (R13 stage 10,
+[CONTRACT §14](../../../CONTRACT.md#14-manifest-v3-review-v2-and-the-delivery-review-r13-stage-10)):
+they name their phase, bind every `semantic` artifact of the inventory, record
+the intake findings they rest on — none, since neither brief has a plan — and
+carry the conclusion-presentation check. They were reissued on 2026-09-17 after
+manifest v3 moved the report bytes, with the six basis digests unchanged and the
+findings re-read rather than copied. Never reuse these fixture approvals for
+another report.

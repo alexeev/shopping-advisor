@@ -110,7 +110,7 @@ class InertWithoutAPlan(GateCase):
         self.assertNotIn('gates', ranking)
         self.assertNotIn('stop', ranking)
         self.assertNotIn('stop', manifest)
-        self.assertEqual(manifest['study_id'], 'pasta-bronze-die-46127870314d')
+        self.assertEqual(manifest['study_id'], 'pasta-bronze-die-bde2b027b117')
         self.assertEqual(bundle.verify(directory)[1], [])
 
 

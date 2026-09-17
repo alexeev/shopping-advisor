@@ -23,7 +23,7 @@ measurements as history.
 | **R10** | Scoring as a shared facility | **DEFERRED** — one consumer is not two |
 | **R11** | Category synthesis as a default step | PLANNED (first R15 application) |
 | **R12** | Discovery that states its own coverage | PLANNED |
-| **R13** | The conversation as the entry point | **NEXT** (intake, evidence and gap plan) |
+| **R13** | The conversation as the entry point | **IN PROGRESS** (INTAKE §16 machinery shipped; conversational trials pending) |
 | **R14** | A recommendation in a category nobody validated | PLANNED (R11–R13, R15, R16 gates) |
 | **R15** | Controlled task-driven capability adaptation | PLANNED (after R13; T4's local maintenance gate has shipped) |
 | **R16** | Capability lifecycle and architectural review | PLANNED (minimum lifecycle before R14) |
@@ -182,7 +182,7 @@ catalogue phase — see [decision principle 9](#decision-principles).
 
 | Order | Deliverable | Dependency and reason |
 |---|---|---|
-| 1 — next | R13 intake/evidence/gap planning | Builds on shipped T2/T3. T4's maintenance gate has shipped and now protects existing behavior; R13 establishes what to change |
+| 1 — in progress | R13 intake/evidence/gap planning | INTAKE §16's ten stages shipped on 2026-09-17 on top of T2/T3 and T4's gate; what remains is the conversational acceptance trial, which no fixture stands in for |
 | 2 | R15 bounded adaptation, with R11 as the first category case | Needs R13's recorded gap. T4's executable baseline is in place. Prove isolation, validation, traceability and rollback before making adaptation routine |
 | 3 | R12 coverage and R16 minimum lifecycle/index | Evidence planning can start with R13; integrate after R15 artifacts exist. Coverage and deliberate retention are necessary before claiming the full loop works |
 | 4 | R14 unseen-problem and reuse acceptance trials | Needs R11–R13, R15 and R16's minimum lifecycle, on top of the shipped maintenance gate. [R17](#r17--portability-evidence)'s trials — cross-platform paths, provider interchangeability and handoff — test these same artifacts afterwards, and gate only the portability claim |
@@ -533,8 +533,9 @@ alone.
   gate itself), no snapshot updates and no contract-version changes. The four
   examples reproduce their recorded identities — `pasta-bronze-die-46127870314d`,
   `pasta-low-temperature-drying-d309972b3bd0`, `basmati-audit-positive-571cca1a2d4b`
-  and `basmati-audit-insufficient-18b88dc2bd3c` — with their outcomes, offer
-  counts, exclusions and shortlists, and the two T3 examples pass
+  and `basmati-audit-insufficient-18b88dc2bd3c`, the manifest v2 ids that R13
+  stage 10 later moved once; the current ones are in the baseline — with their
+  outcomes, offer counts, exclusions and shortlists, and the two T3 examples pass
   `validate-report --require-review`. The link check resolves **128 local
   links and 247 anchors across all 16 tracked documents** and found none
   broken; the 2026-09-16 documentation review counted 91 local file and anchor
@@ -1570,162 +1571,43 @@ expansion with depth using decision-relevant yield, not raw result count.
 
 ## R13 — The conversation as the entry point
 
-**Status: NEXT. Depends on shipped T2/T3; does not wait for R11.**
+**Status: IN PROGRESS. Depends on shipped T2/T3; does not wait for R11.** The
+machinery of [INTAKE §16](INTAKE.md#16-implementation-sequence), stages 1–10,
+shipped on 2026-09-17. The conversational acceptance trial the Done-when asks
+for has not been run, and no fixture here stands in for it.
 
-**2026-09-17 — INTAKE §16 stages 3–4 shipped, following stages 1–2.** The ledger,
-audit outputs and semantic review now use three independent version constants,
-all still 1, each discovered and pinned by the maintenance gate. A read-only
-controls catalogue and resolver derives category axes, directions, defaults and
-claim keys from the live registry, covering all five candidate-set mechanisms.
-`study controls --category CATEGORY` exposes it before a brief or feed exists.
-Eleven control tests exercise resolution and mechanism semantics, including
-trusted-claim presence, selected-axis caps in both ranking directions,
-classification, unusable/mixed-unit values and pack-size grouping counterexamples;
-four audit tests exercise independent version changes and gate discovery.
+**2026-09-17 — INTAKE §16 stages 1–10 shipped.** Six dated entries recorded the
+stages as they landed; the same day they were consolidated into this one, keeping
+every measurement and dropping the "stages N–10 remain planned" scaffolding, since
+this roadmap owns decisions and measured effects and
+[CONTRACT §8–§14](CONTRACT.md#8-study-audit-contracts-t3) own the semantics.
+The commit history holds the entries as written.
 
-The baseline update adds `study_audit` and `semantic_review` at 1 and records the
-new regression floor/module. No runtime lock, extraction/validation semantics,
-committed example identity, decision, report bytes or completed review changes.
-This is partial R13 delivery: intake plans, stage gates and the later migration
-remain planned. The catalogue does not prove arbitrary-language understanding
-or turn an unsupported requirement into an executable predicate.
+| Stage | Shipped | Measured effect, and what is not established | Floor |
+|---|---|---|---|
+| 1–2 | The [case register](tests/intake/README.md) with the three inert qualifications of INTAKE §1 pinned; the §13 operating text in the runbook and AGENTS | Two briefs differing only in `cost_basis`, `unacceptable` or `limits` decide identically; a budget through `max_axis_value` caps unit price and through `unacceptable` changes nothing; the bronze-die study thirty days on has five stale ranked candidates and an unchanged shortlist. The blocking quantifier falsified by its own first example is gone | 491 → 515 |
+| 3–4 | `LEDGER_VERSION`, `AUDIT_VERSION` and `REVIEW_VERSION` split and each pinned by the gate; the controls catalogue over the live registry, `study controls --category CATEGORY` | Three independently movable contracts where there was one; a catalogue for three categories covering all five candidate-set mechanisms, with cases sensitive to each control's meaning. Not established: arbitrary-language understanding, or an unsupported requirement turned into a predicate | — |
+| 5 | Plan v1: user messages retained by provenance, requirement roles, settlements, provenance, assessment paths and stage effects, prospective questions, deterministic read-back with a separate response status; the plan-to-brief binding consumed by `check`, `analyse` and `run`; storage decided (private `data/plans/`, mandatory bundle snapshot, sanitized `tests/intake/`) | A dropped bronze-die requirement or filter, a changed role, unit, cap or axis attribution, or an unrecorded filter refuses at the boundary; replay works after the originating plan is deleted. Not established: natural-language interpretation — this is preservation machinery | 515 → 553 |
+| 6 | Stage gates at intake, comparison support and conclusion; three stop kinds kept apart from the analytical outcomes; the bounded-finding heading; requirement rows and the attribution sentence in plan-backed reports; two plan-backed examples in the gate | The delivered-cost recommendation is withheld while the item-price finding survives at identical eligibility and ordering; budget-plus-unit-price is detected without changing units and the budget on the per-kilogram cap refuses. Not established: that a plan captured every requirement, or that `enforced` means adequate | 553 → 587 |
+| 7 | Declared `freshness.scope` with silence historical; `study deliver` freezing the reference in `delivery.json`; current advice a structural condition `validate-report` enforces past any semantic review; replay never reads the clock | The case set under current-advice scope is permitted at its build date and blocked thirty days on naming all five governed observations, while the analysis against `as_of` finds nothing stale; the fixtures deliver as history at either reference; a completed review lifts no block. Not established: an honest clock or a true declaration | 587 → 613 |
+| 8 | The session ledger: limits in observed units, action records from run manifests, reconciliation that keeps unknown unknown, `session-authorise`, `session-record`, `session-check`, `run --session`, `study resume` from the bundle's own snapshot | The delivered-cost example resumes with the working ledger deleted, the interrupted collection listed as interrupted, the resumed collection prevented by name (55 of 300 responses remaining) and the engineering proposal retained unexecuted; `resumable` pinned. Not established: that a declared consumption is true, or that money or tokens can be measured here | 613 → 652 |
+| 9 | The intake review bound to the plan digest, the retained evidence, the resolved mappings, the read-back status and the live catalogue; five checks, with `limited` forced by a review-limiting redaction; `run --intake-review` refusing a failed plan; `review-intake`; `--require-review` needing a pass | Case 7's semantic limit has a record and a consequence: the budget on the cap passes the gates as `enforced` and an intake review failing `adequacy` refuses the run with the finding quoted; a review of another revision refuses as superseded; `intake_review: pass` pinned. Not established: that a reviewer's pass is right | 652 → 676 |
+| 10 | Manifest v3 with the artifact inventory; the review basis as a contract; final review v2 resting on valid intake findings, with `conclusion_presentation`; the identity decision; the delivery review with the deliverer's attestation; the dirty-tree caveat | Six ids moved once; every decision artifact is byte-identical before and after and each report differs in one line; both T3 reviews reissued under v2 with unchanged basis digests; the intake review and session ledger fixtures did not move. Not established: that an attestation is true | 676 → 712 |
 
-**2026-09-17 — INTAKE §16 stage 5 shipped.** Plan v1 retains user messages by
-provenance, requirement roles and settlements, source/agent attribution, assessment
-paths, stage effects, prospective questions, deterministic read-back and separate
-response status. Unknown categories remain valid planning records. The explicit
-plan-to-brief binding is consumed by `check`, `analyse` and `run` before analysis;
-a missing bronze-die requirement or filter now refuses at that boundary. Changed
-roles, units, caps, axis attribution and unrecorded extra filters also refuse.
+Through stages 1–9 the four pre-existing study identities, decisions, report
+bytes and both completed reviews stood unchanged, because the plan is an optional
+input and absent one every byte is identical. Stage 10 moved the ids and reissued
+the reviews deliberately — the one commit INTAKE §16 priced for exactly that —
+and no decision moved with them. No runtime lock, extraction or generic
+validation semantics changed in any stage.
 
-Storage decision: private working plans under `data/plans/` or an explicit private
-location, mandatory bundle-internal snapshots at study time, sanitized committed
-examples under `tests/intake/`, and durable private archiving even for plans that
-never become studies. Replay works after the originating plan is deleted.
-
-Measured effect: 38 new offline tests cover the contract, transition, read-back,
-CLI and snapshot replay, including the independently specified dropped-requirement
-case. The baseline adds `intake_plan: 1` and raises the test floor from 515 to 553;
-the four pinned study IDs/decisions and both completed semantic reviews remain
-unchanged. No extraction or validation behavior changed. This is preservation
-machinery, not a measured natural-language interpretation capability. Stage 6
-will add bounded execution and comparison/conclusion gates; stages 7–10 remain
-planned. A structurally valid plan is not semantic approval or engineering authority.
-
-**2026-09-17 — INTAKE §16 stage 6 shipped.** The refusal matrix of INTAKE §3 now
-runs at intake, comparison support and conclusion for plan-backed studies. A
-decisive requirement with no executable control no longer refuses at the bridge:
-it enters bounded execution, the purchasing recommendation is withheld, no
-candidate is shortlisted, and the ranking on the available axis is rendered under
-its own `Bounded finding` heading that names the narrower question — never in the
-place a recommendation occupies. Three stop kinds (`requirement_failed`,
-`requirement_unsupported`, `requirement_unassessed`) are recorded apart from the
-three analytical outcomes; an insufficient-evidence outcome under a fully enforced
-plan is diagnosed as coverage, not a capability gap. Plan-backed reports render
-each requirement's role, settlement, author and disposition, per-stage effects,
-and an attribution sentence derived from the retained response status alone.
-
-Measured effect: the delivered-cost recommendation is withheld while the bounded
-item-price finding survives with identical eligibility and ordering; the
-budget-plus-unit-price case is detected without changing its units, and routing
-the budget through the per-kilogram cap refuses. Both are committed plan-backed
-examples replayed by the maintenance gate, which gains `stage_gates: 1`. 34 new
-offline tests cover cases 6–9, 11, 14 and 19 including placement and wording,
-raising the floor from 553 to 587; the four pre-existing study ids, decisions,
-report bytes and both completed reviews are unchanged. Not established: that a
-plan captured every requirement, or that an `enforced` control answers the
-requirement it is mapped to — a budget mapped onto the per-kilogram cap passes,
-and the report says so. Stages 7–10 remain planned.
-
-**2026-09-17 — INTAKE §16 stage 7 shipped.** A brief now declares its scope,
-`historical` or `current_advice`, and silence is read as historical, so the
-committed fixtures stay historical with their bytes and ids unchanged however
-fresh their dates look. `study deliver` is the delivery event: it verifies the
-bundle, reads the execution clock in UTC — or a declared instant it records as
-declared — and freezes it in `delivery.json`, assessing the shortlisted and
-ranked observations against that reference rather than against the brief's
-`as_of`. Under current-advice scope a stale, undated or future-dated decisive
-input, a reference before `as_of`, a missing policy or a stage 6 stop blocks
-current advice; `validate-report` fails a current-advice study without a passing
-record whatever its semantic review says. Replay recomputes every event from its
-frozen reference, so the maintenance gate delivers all six examples at a fixed
-reference and cannot fail with the passage of time.
-
-Measured effect: the case set delivered at its build date under current-advice
-scope is permitted, and thirty days on is blocked naming all five governed
-observations, while the same analysis is unchanged and still finds nothing stale
-against `as_of`; the frozen fixtures deliver as history at either reference. A
-completed semantic review does not lift the block. The gate gains
-`delivery_record: 1` and `current_advice` per example; 26 new offline tests raise
-the floor from 587 to 613, and the four pre-existing study ids, decisions, report
-bytes and both completed reviews are unchanged. Not established: that the clock
-was honest, or that a declared scope is true — a brief calling fixture evidence
-current advice has lied in a way no check here detects. Stages 8–10 remain
-planned.
-
-**2026-09-17 — INTAKE §16 stage 8 shipped.** A session ledger declares aggregate
-limits — research and engineering kept apart, in the units the run manifest
-actually reports or marked as estimates that can only stop new work — and holds
-one record per inspection, probe, collection, analysis or engineering proposal
-with its allocation, state, timestamps, linked run manifest and observed
-consumption. `session-record` reads consumption from the manifest the crawl
-wrote; `session-authorise` is the check before a research action, refusing what
-does not fit the remainder, what depends on interrupted work, what is past a
-deadline, and every engineering action; `session-check` reconciles and names the
-prevented next actions. Unknown consumption stays unknown and blocks new
-acquisition until recorded or conservatively assumed; a replay is not
-acquisition; a resumed action is a new record and its predecessor is counted
-once. A completed probe records whether its evidence was promoted and whether
-seeing it changed the criteria or supplied candidates. `run --session` snapshots
-the ledger into the bundle, and `study resume` verifies artifacts, plan revision,
-resources, linked manifests and review state, rechecks delivery freshness without
-recording an event, and reports the verified state or the precise missing
-dependency — from the files, without the conversation.
-
-Measured effect: the delivered-cost example resumes from its own snapshot with
-the working ledger deleted, listing the interrupted collection as interrupted,
-preventing the resumed collection by name (100 responses asked, 55 remaining of
-300) and retaining the engineering proposal unexecuted; the gate replays it and
-records `resumable`. The gate gains `session_ledger: 1`; 39 new offline tests
-raise the floor from 613 to 652, and no study id, decision, report byte or
-completed review moves. Not established: that a declared consumption is true,
-that monetary or model usage can be measured here, or that a ceiling is stricter
-than the closure setting the crawl ran under. Stages 9 and 10 remain planned.
-
-**2026-09-17 — INTAKE §16 stage 9 shipped.** The intake review is a separate
-artifact under the study workflow, not a variant of the final semantic review:
-`intake-review.json` binds the plan's id, revision and canonical digest, the
-digests of the retained user evidence and of the requirements with their
-resolved control metadata, the read-back response status, and the digest of the
-category's live control catalogue. Its five checks are the ones INTAKE §11
-names — omissions, faithfulness, adequacy, assumptions, stage effects — each
-`pending`, `pass`, `fail` or `limited`; a completed check carries a reviewer and
-findings, and a failure names the requirements or user messages it concerns.
-Redactions the plan marked as limiting review, and missing context, are
-recomputed from the plan and forbid a `pass` on what could not be seen.
-`plan-review-template` writes the template, `plan-review` checks a review
-against its plan, `run --intake-review` snapshots it and refuses a plan whose
-review records a failure, `review-intake` attaches one to a study that has run,
-`verify` reports a snapshot bound to another revision or catalogue,
-`validate-report` fails a recorded failure and under `--require-review` requires
-a passing review on a plan-backed study, and `resume` reports its state beside
-the final review's.
-
-Measured effect: case 7's semantic limit now has a record and a consequence — a
-plan that maps the purchase budget onto the per-kilogram cap still passes the
-gates as `enforced`, and an intake review failing `adequacy` on `budget` refuses
-the run with the finding quoted and nothing written. The committed delivered-cost
-plan carries a completed fixture review the gate replays, pinning
-`intake_review: pass` beside `stop`, `current_advice` and `resumable`; a review
-of another revision, or one relabelled with a new digest without re-review,
-refuses as superseded rather than being carried forward. The gate gains
-`intake_review: 1`; 24 new offline tests raise the floor from 652 to 676. No
-study id, decision, report byte or completed review moves: a study run with and
-without its review has the same id and the same report bytes, and the final
-review's version, checks and basis are untouched. Not established: that a
-reviewer's pass is right — the checks bind and keep the review honest, they do
-not judge — or that a plan captured everything the buyer said, which no review
-of the plan alone can establish. Stage 10, the one migration, remains planned.
+**What remains for R13.** The Done-when's first bullet — a user who has read no
+documentation initiating a supported study in the conversation and receiving a
+saved, auditable outcome — and the repeated conversational trials INTAKE §12 and
+§14 call for, graded against independently stated expectations within one
+provider. A passing gate protects the tested machinery; it does not establish
+understanding of arbitrary purchase requests, and no fixture in this repository
+claims to.
 
 ### Scope
 
@@ -2140,8 +2022,10 @@ Kept for the reasoning, not as a plan.
   findings. The positive example selects B000000001, 33.3% ahead on listed
   EUR/kg; the second requires four candidates, finds three and recommends none.
   Both pass `validate-report --require-review`. Existing pasta examples retain
-  their decisions; manifest v2 gives the positive example the new ID
-  `pasta-bronze-die-46127870314d` (the T2 IDs above are historical).
+  their decisions; manifest v2 gave the positive example the ID
+  `pasta-bronze-die-46127870314d` (the T2 IDs above are historical, and so is
+  this one since R13 stage 10's manifest v3 moved every id once; the current
+  ids are in the baseline).
 - Verification: locked setup, **460 offline tests passed** (27 added for T3),
   no extraction/generic validation snapshot updates. Covered wrong reseller,
   variant, marketplace and batch; conflicts, supersession, absent/fabricated

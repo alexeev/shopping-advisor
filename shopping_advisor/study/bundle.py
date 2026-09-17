@@ -44,27 +44,20 @@ from ..provenance import (code_identity, sha256_file, sha256_text,
 from ..analysis import report as report_module
 from ..analysis.category import is_match
 from ..run import read_jsonl
-from . import writeup, audit, intake, intake_review, gates, delivery, session
+from . import (writeup, audit, intake, intake_review, gates, delivery,
+               delivery_review, session, inventory)
+from .inventory import (ARTIFACTS, BINDINGS, BRIEF, CANDIDATES, CARDS, CLAIM_INDEX,
+                        LEDGER, MANIFEST, RANKING, REPORT, REVIEW, VALIDATION)
 from .analysis import StudyError, analyse, brief_fault
 from .brief import BRIEF_VERSION, BriefError, load
 
-#: The bundle shape this build writes and reads.
-STUDY_MANIFEST_VERSION = 2
+#: The bundle shape this build writes and reads. v3 (R13 stage 10) records
+#: every artifact's binding beside its digest, from :mod:`inventory`, and is
+#: the version under which the final semantic review is v2. A v2 bundle is
+#: read by nothing here: regenerate it from its brief and pinned inputs.
+STUDY_MANIFEST_VERSION = 3
 
 DEFAULT_STUDY_ROOT = 'data/studies'
-
-MANIFEST = 'manifest.json'
-BRIEF = 'brief.json'
-CANDIDATES = 'candidates.jsonl'
-CARDS = 'cards.jsonl'
-RANKING = 'ranking.json'
-REPORT = 'report.md'
-
-LEDGER = 'ledger.json'
-CLAIM_INDEX = 'claim-index.json'
-VALIDATION = 'validation.json'
-REVIEW = 'semantic-review.json'
-ARTIFACTS = (BRIEF, CANDIDATES, CARDS, RANKING, REPORT, LEDGER, CLAIM_INDEX, VALIDATION, REVIEW)
 
 #: What two runs of the same brief over the same inputs may legitimately
 #: disagree about. Everything not on this list is a finding.
@@ -136,12 +129,37 @@ def write(brief, result, cards, directory):
     return directory
 
 
-def artifact_digests(directory):
+def undeclared_artifacts(directory):
+    """Files in the bundle directory that the inventory does not name."""
     directory = pathlib.Path(directory)
-    return {name: {'sha256': sha256_file(directory / name),
-                   'bytes': (directory / name).stat().st_size}
-            for name in (*ARTIFACTS, intake.SNAPSHOT, intake_review.SNAPSHOT,
-                         delivery.RECORD, session.SNAPSHOT)
+    return sorted(path.name for path in directory.iterdir()
+                  if path.is_file() and path.name != MANIFEST
+                  and path.name not in BINDINGS)
+
+
+def artifact_entry(directory, name):
+    """One manifest entry: digest, size, and how the workflow binds it."""
+    path = pathlib.Path(directory) / name
+    return {'sha256': sha256_file(path), 'bytes': path.stat().st_size,
+            'binding': BINDINGS[name]['binding']}
+
+
+def artifact_digests(directory):
+    """Every present artifact with its digest and binding, in inventory order.
+
+    Refuses a file the inventory does not name: an artifact enters the bundle
+    only through a row in :data:`inventory.BINDINGS`, which is the deliberate
+    binding decision INTAKE §6 asks for.
+    """
+    directory = pathlib.Path(directory)
+    stray = undeclared_artifacts(directory)
+    if stray:
+        raise BundleError(
+            f'{directory}: {", ".join(stray)} is not in the bundle inventory. An '
+            f'artifact enters a bundle through a row in study/inventory.py that '
+            f'says how the reviews bind it; nothing here digests a file whose '
+            f'binding nobody decided.')
+    return {name: artifact_entry(directory, name) for name in BINDINGS
             if (directory / name).is_file()}
 
 
@@ -374,6 +392,29 @@ def _compare(persisted, recomputed, label, findings, key=None):
                       else '')})
 
 
+def code_caveats(manifest_data):
+    """What the recorded code identity cannot establish, as sentences.
+
+    INTAKE §8: a recorded ``git_dirty`` of true makes ``git_revision``
+    non-identifying, and until stage 10 nothing said so. This is reported
+    wherever a bundle is read, and it is a caveat rather than a finding: the
+    replay still decides whether the study holds, and a gate that failed on
+    every uncommitted working tree would fail while the change it protects
+    is being made. Exact patch provenance is R15's promise, not this one.
+    """
+    code = manifest_data.get('code') or {}
+    caveats = []
+    if code.get('git_dirty') is True:
+        caveats.append(f'produced from a working tree with uncommitted changes: '
+                       f'git_revision {str(code.get("git_revision"))[:12]} does not '
+                       f'identify the code that ran, and a verify that passes says '
+                       f'the decisions re-derive, not that the patch is known.')
+    elif code.get('git_dirty') is None:
+        caveats.append('produced where git could not answer: the code identity '
+                       'records no revision, and unknown is not clean.')
+    return caveats
+
+
 def verify(directory, input_root=''):
     """Re-derive this bundle from its own inputs and report what moved.
 
@@ -396,10 +437,17 @@ def verify(directory, input_root=''):
         return data, findings
 
     unusable = set()
+    # An artifact the inventory does not name has no binding decision, so
+    # nothing can be said about it -- and it is reported, not ignored.
+    for name in undeclared_artifacts(directory):
+        findings.append({
+            'code': 'artifact_undeclared',
+            'message': f'{name} is in the bundle but not in its inventory: no '
+                       f'review binds it and no digest covers it. Remove it, or '
+                       f'add its binding to study/inventory.py deliberately.'})
     # A snapshot must agree with both the manifest and the brief binding. Its
     # presence is optional only for legacy studies, not for a bound brief.
-    optional = tuple(name for name in (intake.SNAPSHOT, intake_review.SNAPSHOT,
-                                       delivery.RECORD, session.SNAPSHOT)
+    optional = tuple(name for name in inventory.OPTIONAL
                      if name in (data.get('artifacts') or {})
                      or (directory / name).exists())
     for name in (*ARTIFACTS, *optional):
@@ -430,6 +478,15 @@ def verify(directory, input_root=''):
                            f'recorded {recorded["sha256"][:12]}, found '
                            f'{digest[:12]}. Its contents are not the study\'s '
                            f'own record any more.'})
+            continue
+        if recorded.get('binding') != BINDINGS[name]['binding']:
+            findings.append({
+                'code': 'artifact_binding_changed',
+                'message': f'{name}: the manifest records binding '
+                           f'{recorded.get("binding")!r}; this build binds it as '
+                           f'{BINDINGS[name]["binding"]!r}. What a review covers '
+                           f'is a contract, and this bundle was written under '
+                           f'another reading of it.'})
     # Everything below re-derives the study from its own brief and compares
     # it with its own ranking and candidates. If either of those is missing or
     # altered there is nothing left to compare against, and a "decision moved"
@@ -604,4 +661,13 @@ def verify(directory, input_root=''):
                     'the snapshot holds')
         except intake_review.IntakeReviewError as exc:
             findings.append({'code': 'intake_review_invalid', 'message': str(exc)})
+    if delivery_review.RECORD in optional:
+        # Binding only, per event: a review is a reviewer's record, and what
+        # is checked is that each one still binds the event, the report, the
+        # semantic review and the snapshots this bundle holds now.
+        try:
+            delivery_review.check(
+                delivery_review.read_record(directory / delivery_review.RECORD), directory)
+        except delivery_review.DeliveryReviewError as exc:
+            findings.append({'code': 'delivery_review_invalid', 'message': str(exc)})
     return data, findings

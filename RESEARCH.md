@@ -148,19 +148,23 @@ command names it rather than quietly ranking without one.
 uv run --offline --locked python -m shopping_advisor.study run tests/studies/pasta-bronze-die.toml
 ```
 
-Expect study `pasta-bronze-die-46127870314d` with outcome `recommendation`:
+Expect study `pasta-bronze-die-bde2b027b117` with outcome `recommendation`:
 22 of 25 records classified as dry pasta, 5 offers ranked, 3 excluded, 14 short
 of the required claim, 3 shortlisted. It writes
-`data/studies/pasta-bronze-die-46127870314d/` and collects nothing — every byte
+`data/studies/pasta-bronze-die-bde2b027b117/` and collects nothing — every byte
 it read was on disk before the command started.
 
 The bundle holds `manifest.json`, the validated `brief.json`, one line per
 considered record in `candidates.jsonl`, the complete evidence card of every
 classified candidate in `cards.jsonl`, the structured decisions in
 `ranking.json`, `report.md`, `ledger.json`, `claim-index.json`,
-`validation.json`, and `semantic-review.json`. The report's *What decided it* table is the
-part worth reading first: it says of every decision whether the brief stated it
-or the category supplied the default.
+`validation.json`, and `semantic-review.json`; the manifest lists each with its
+digest and how the reviews bind it, from the
+[artifact inventory](CONTRACT.md#14-manifest-v3-review-v2-and-the-delivery-review-r13-stage-10),
+and a plan-backed, delivered or session-funded study adds its snapshots and
+records beside them. The report's *What decided it* table is the part worth
+reading first: it says of every decision whether the brief stated it or the
+category supplied the default.
 
 The study id is derived from the brief, the input digests and the published
 schema/contract versions — not from the clock — so the id above is what a clean
@@ -172,7 +176,7 @@ which is what the next command is for.
 ### 3. Verify it without collecting again
 
 ```text
-uv run --offline --locked python -m shopping_advisor.study verify data/studies/pasta-bronze-die-46127870314d
+uv run --offline --locked python -m shopping_advisor.study verify data/studies/pasta-bronze-die-bde2b027b117
 ```
 
 Expect `verified`: every artefact matches its digest, and every decision and
@@ -181,10 +185,13 @@ environment picks a study up — `--input-root` says where the feeds are if the
 bundle has been moved away from them.
 
 `verify` reports, in this order and with the ones that invalidate everything
-below them first: an unsupported manifest or brief version, a missing or
-altered artefact, an input whose bytes are not the ones the study read, a code
-revision that has moved, and finally a decision or numeric claim that no longer
-reproduces. Any finding exits non-zero.
+below them first: an unsupported manifest or brief version, a file the bundle
+inventory does not name, a missing or altered artefact, an input whose bytes are
+not the ones the study read, a code revision that has moved, and finally a
+decision or numeric claim that no longer reproduces. Any finding exits non-zero.
+It also says, as a caveat and not a finding, when the bundle was produced from a
+working tree with uncommitted changes: the recorded revision then does not
+identify the code that ran.
 
 ### 4. Read the refusal
 
@@ -319,7 +326,10 @@ superseded, change the catalogue and its adequacy finding is stale, and neither
 is carried forward. `run --intake-review` refuses a plan its review says
 misreads the request; `review-intake` attaches a review to a study that has
 already run; `validate-report --require-review` needs a passing one on a
-plan-backed study. A passing review is not the buyer's confirmation — the
+plan-backed study. The final semantic review rests on it — it binds the intake
+review and records its status, and final approval needs a passing one — so the
+intake review comes first, and `review-intake` refuses to replace one under a
+completed final review. A passing review is not the buyer's confirmation — the
 read-back response status stays what it was — and it authorises no engineering.
 The committed delivered-cost review is the reference:
 
@@ -358,6 +368,23 @@ historical comparison with its reference date, or recollect. Delivering an old
 study again is a new event and a new assessment; `verify` recomputes every event
 from its frozen reference and never reads today's clock. None of this proves the
 clock honest, and none of it can tell that a declaration is false.
+
+A permitted current-advice event is delivered as audited only with its own
+[delivery review](CONTRACT.md#14-manifest-v3-review-v2-and-the-delivery-review-r13-stage-10):
+a scoped re-check of freshness, applicability and conclusion presentation at that
+event, with the deliverer's named attestation that the reference was read
+honestly and the declared scope is true. It binds the event, the report and the
+semantic review it rests on; a later delivery is a new event and needs a new one,
+and the semantic review is not rewritten for it.
+
+```text
+uv run --offline --locked python -m shopping_advisor.study delivery-review-template data/studies/<study_id> -o data/studies/<study_id>-delivery-review.json
+uv run --offline --locked python -m shopping_advisor.study review-delivery data/studies/<study_id> data/studies/<study_id>-delivery-review.json
+```
+
+A historical study is asked for none. An attestation is a statement signed by
+name, not a proof, and a recorded failure fails `validate-report` whatever the
+flags.
 
 ### Keep the session's resource ledger, and resume from the files
 

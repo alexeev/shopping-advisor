@@ -508,11 +508,12 @@ governs `review_version`. All remain **1**. The maintenance gate tracks them
 independently as `evidence_ledger`, `study_audit` and `semantic_review`.
 This separation changes no artifact bytes, study identity or review binding.
 
-Study manifests now write **v2**, adding `ledger.json`, `claim-index.json`,
-`validation.json`, and `semantic-review.json`. V1 bundles remain historical
-artifacts; this build refuses to validate them as v2. Re-run their original
-brief and pinned feeds into a new directory. Brief v1, extraction schema v6
-and generic validation contract v2 are unchanged.
+Study manifests write **v3** since R13 stage 10 (§14); v2 was T3's, adding
+`ledger.json`, `claim-index.json`, `validation.json`, and `semantic-review.json`,
+and v3 records each artifact's review binding beside its digest. V1 and v2
+bundles remain historical artifacts; this build refuses to verify them. Re-run
+their original brief and pinned feeds into a new directory. Brief v1, extraction
+schema v6 and generic validation contract v2 are unchanged.
 
 The external ledger is **v1**. Its executable schema is
 `shopping_advisor/study/audit.py:check_ledger`; a complete JSON example is
@@ -551,11 +552,13 @@ violations or unknown age explicitly label the report historical/incomplete.
 Basmati's score is published for inspection; **it does not order the shortlist**,
 and external claims do not silently change the adopted price ranking.
 
-The semantic review is **v1** and separately binds the report and evidence/decision
-artifact digests. Ledger content also participates in the study ID. It records reviewer, citation support, variant applicability,
-user priorities, coverage/limits, findings for each check and unresolved limits.
-`pending` is not approval. `validate-report --require-review` requires a complete
-passing review; plain `verify` checks replay without claiming semantic approval.
+The semantic review is **v2** since R13 stage 10 (§14) and separately binds the
+report and the evidence/decision artifact digests the inventory marks `semantic`.
+Ledger content also participates in the study ID. It records reviewer, citation
+support, variant applicability, user priorities, coverage/limits, conclusion
+presentation, findings for each check and unresolved limits. `pending` is not
+approval. `validate-report --require-review` requires a complete passing review;
+plain `verify` checks replay without claiming semantic approval.
 
 **Basmati method v2:** three former executable test constants move to
 `shopping_advisor/evidence/basmati-legacy.json` as `legacy_unverified`, with
@@ -595,8 +598,9 @@ category and readable inputs. Complete sanitized examples are
 The brief's optional **`intake` binding** contains plan version/ID/revision,
 canonical content SHA-256 and a lossless copy of the requirements. It is additive
 within brief v1 and absent from legacy serialization; older source-brief parsers
-reject the new field. Pre-stage-5 v2 bundle verifiers are not intake-aware: use
-this build's verifier for plan-backed bundles until the stage-10 manifest migration.
+reject the new field. Pre-stage-5 verifiers read manifest v2 and are not
+intake-aware; since stage 10 a bundle is v3 and such a verifier refuses it rather
+than passing a plan-backed study it cannot gate.
 At the transition, every requirement's
 meaning, role, settlement, provenance, assessment and effects must match exactly,
 including withdrawals. Scope fields must also match. The executable brief must
@@ -623,13 +627,13 @@ against `brief.intake` and consumed during replay. The original working plan is
 not needed to verify the study. Sanitized committed examples have a separate
 allowlist under `tests/intake/`.
 
-This is an optional addition to manifest v2; it does not migrate old bundles,
-change old report bytes or reissue reviews. Review v1 still checks its existing
-targets; the new brief binding indirectly pins the plan digest, but **does not
-constitute intake semantic approval**. Phase-aware review and manifest v3 remain
-stage 10. New bound briefs naturally have new source digests; the existing
-study-ID algorithm is unchanged. The operative identity projection is deferred
-to that migration.
+The snapshot entered as an optional addition to manifest v2 and is a
+`semantic`-bound artifact under v3 (§14). The brief binding pins the plan's
+canonical digest into the study id, and that binding is the identity projection
+INTAKE §8 asked for — decided in stage 10, with the reason in §14 — but it **does
+not constitute intake semantic approval**; that is §13's artifact. New bound
+briefs naturally have new source digests; the study-ID algorithm is unchanged in
+shape.
 
 Structural preservation is not faithful language interpretation or semantic
 adequacy. Completeness of capture, whether wording authorizes a change, the truth
@@ -718,7 +722,7 @@ a purchase budget mapped onto the per-kilogram cap passes as `enforced`, and the
 report says beside the table that enforced does not mean adequate. Those are
 the intake review (§13) and the semantic-execution question of INTAKE
 §12. The gates do not apply discovery or acquisition effects, account for
-session resources (stage 8) or invalidate reviews (stage 10). Delivery
+session resources (§12) or invalidate reviews (§14 binds those). Delivery
 freshness is §11.
 
 ## 11. Declared scope and the delivery record (R13 stage 7)
@@ -784,10 +788,10 @@ change, not with the passage of time.
 prevents silent backdating inside the declared workflow and does not prove a
 supplied reference true; every event says where its reference came from. Session
 consumption and interruption facts travel beside it in the bundle's session
-snapshot (§12) rather than inside the event; neither is yet bound into a delivery
-review (stage 10), and the declared scope is a declaration — a brief that calls
-frozen fixture evidence current advice has made a false declaration the software
-cannot detect.
+snapshot (§12) rather than inside the event; both are bound, per event, into the
+delivery review of §14, and the declared scope is a declaration — a brief that
+calls frozen fixture evidence current advice has made a false declaration the
+software cannot detect, and the delivery review can only record who vouched for it.
 
 ## 12. Session resource ledger and resumption (R13 stage 8)
 
@@ -873,8 +877,8 @@ estimates that stop new work and enforce no ceiling — and does not prove that 
 declared consumption is true. A strict ceiling is only as strict as the closure
 setting the crawl actually ran under, which `enforced_caps()` reads from the
 manifest and the record names. Resumption does not reconstruct the conversation;
-what it verifies is what the files hold. Attestation, and binding session facts
-into a delivery review, are stage 10.
+what it verifies is what the files hold. The attestation, and the binding of
+session facts per delivery event, are the delivery review of §14.
 
 ## 13. Intake review (R13 stage 9)
 
@@ -885,9 +889,8 @@ faithfully and completely, whether each resolved control answers the requirement
 it is mapped to, whether each assumed default was defensible, and whether the
 recorded stage effects are the ones a requirement's meaning implies. It is a
 separate artifact under the same workflow and deliberately not the final
-semantic review of §8: that review's version, check tuple and basis are
-unchanged, and no committed review is invalidated. The sanitized completed
-example is
+semantic review of §8, which stage 10 then moved to v2 (§14) so that it rests on
+this one. The sanitized completed example is
 [delivered-cost-intake-review.json](tests/intake/delivered-cost-intake-review.json).
 
 | Part | Contract |
@@ -932,6 +935,126 @@ honest, and nothing here judges. It cannot detect an instruction absent from bot
 the plan and the retained evidence, and a reviewer can pass an inadequate mapping.
 A passing review says the plan reads the retained request faithfully and its
 controls answer it, not that the buyer confirmed it: the read-back response
-status is bound, not waived, and the review authorises no engineering. Reuse of
-unchanged findings across plan revisions, the phase-aware final review that
-requires valid intake findings, and invalidation across revisions are stage 10.
+status is bound, not waived, and the review authorises no engineering. Findings
+are not reused across plan revisions: the plan digest refuses a review of another
+revision, and a revision is re-reviewed. The final review that requires these
+findings, and what a changed intake review does to it, are §14.
+
+## 14. Manifest v3, review v2 and the delivery review (R13 stage 10)
+
+Stage 10 is the one migration INTAKE §16 priced: the change that moves every
+committed study id and both committed final reviews at once, so everything that
+could be inert landed first and this landed last. It changes no eligibility,
+ordering or outcome — the measurement below is that it did not — and it closes
+the gap INTAKE §6 measured: artifacts the manifest digested and no review bound.
+
+### The artifact inventory
+
+`study/inventory.py` names every file a bundle may hold and how the workflow
+binds it. A file without a row is refused by `artifact_digests` and reported by
+`verify` as `artifact_undeclared`; the manifest records each present artifact's
+`binding` beside its digest, and a manifest recording another binding than this
+build's is `artifact_binding_changed`. A new artifact enters the bundle only
+through a row here, which is a contract change reviewed like any other.
+
+| Artifact | Present | Binding | Meaning |
+|---|---|---|---|
+| `brief.json`, `candidates.jsonl`, `cards.jsonl`, `ranking.json`, `ledger.json`, `claim-index.json` | always | `semantic` | in the final review's `basis` |
+| `intake-plan.json`, `intake-review.json` | with a plan | `semantic` | in the final review's `basis`: approval rests on the intake findings it was given |
+| `report.md` | always | `report` | the final review's `report_sha256` target |
+| `delivery.json`, `session.json` | when delivered; with a session | `delivery` | bound per event into the delivery review, never into the semantic basis |
+| `semantic-review.json`, `validation.json`, `delivery-review.json` | always; always; when reviewed | `review` | a review record or its derivative: binds others, never itself |
+
+**Manifest v3** writes this. A v2 bundle is refused with
+`unsupported_manifest_version`; regenerate it from its brief and pinned inputs.
+The `study_id` material is unchanged in shape and includes the manifest version,
+so the bump alone moved every id once.
+
+### Final review v2
+
+| Field | Contract |
+|---|---|
+| `review_version`, `phase` | `2` and `final`. A v1 review is refused outright: a review of other report bytes is reissued with reconsideration, never carried forward |
+| `report_sha256` | the report |
+| `basis` | digests of every present `semantic` artifact, from the inventory: six for a legacy study, plus the plan snapshot and the intake review for a plan-backed one |
+| `intake_review` | `null` for a study without a plan; otherwise the intake review's `status` and canonical digest, or `absent` |
+| `checks` | exactly `citation_support`, `variant_applicability`, `user_priorities`, `coverage_and_limits` and **`conclusion_presentation`**: do the headline, the result slot and any bounded finding claim no more than the outcome, the stop and the declared scope permit, with nothing beneath a refusal that reads as a recommendation. A completed check names a reviewer and findings |
+| `reviewer`, `unresolved_limits` | text, and a list of text |
+
+A completed review must match the live basis and the live intake findings.
+**Final approval requires valid intake findings:** a review whose every check
+passes is refused on a plan-backed bundle whose intake review is absent, pending,
+limited or failed; a review recording a failure may be attached regardless, since
+it is not approval. The order is therefore intake review, then final review.
+`study review-intake` refreshes the pending final-review template to name the
+intake review it attached, and **refuses** when the final review is already
+completed, because attaching another intake review would supersede it — re-run
+the study with `--intake-review` instead. A changed intake review behind the
+CLI's back leaves a completed final review that no longer binds, which `verify`
+reports as `report_invalid`.
+
+### The identity decision
+
+No operative-requirement projection enters `study_id` as separate material.
+Since stage 5 the brief's `intake` binding carries the plan's canonical digest
+and a lossless copy of its requirements, and the brief digest is in the id, so
+every fact INTAKE §8 lists — the operative requirements and assumptions, the
+conclusion scope, the response status the attribution renders from — is in the
+id already, and the assessment results and stop are deterministic functions of
+it that `verify` replays, as every other decision is. Hashing computed gate
+results into the id would move it with the gate code, which INTAKE §8 itself
+forbids. The transitive binding is broader than the projection would have been:
+retained wording, redactions and the read-back response status move the id too.
+The intake review, the session snapshot and a delivery move nothing.
+
+### The delivery review
+
+**Delivery review v1** is `study/delivery_review.py`, tracked as
+`delivery_review`; the bundle holds `delivery-review.json` with one review per
+reviewed event. It is the scoped re-check INTAKE §8 describes: at a later
+delivery event the semantic findings are not rewritten, the new event is.
+
+| Part | Contract |
+|---|---|
+| `event`, `reference`, `current_advice`, `event_sha256` | the event's position in `delivery.json`, its reference and status for legibility, and its canonical digest. A review of another event's bytes is superseded and names every field that moved |
+| `report_sha256`, `semantic_review` | the report, and the semantic review's `status` and file digest at review time |
+| `session_sha256`, `intake_review_sha256` | the snapshots' digests, or empty when the bundle holds none |
+| `checks` | exactly `freshness` (is the declared age bound adequate for advice issued at this reference, and are the right observations governed), `applicability` (do the governed observations and scope still fit this buyer's marketplace, region and variant) and `conclusion_presentation` (does the delivered statement claim no more than the event permits). A completed check names a reviewer and findings |
+| `attestation` | `by`, `reference_read_honestly`, `declaration_true`, `statement`. A completed review answers both questions; **a passing review needs both true** — a delivery nobody will vouch for is not approved. A statement signed by name, not a proof |
+| `unresolved_limits`, `limits` | the reviewer's open limits, and this contract's |
+
+**Consumers.** `study delivery-review-template BUNDLE -o OUT [--event N]` writes a
+pending review bound to one event, the latest by default; `study review-delivery
+BUNDLE REVIEW` checks its bindings and attaches it, replacing an earlier review of
+the same event. `verify` reports `delivery_review_invalid` when any review no
+longer binds its event or when one event has two. `validate-report` reports the
+latest event's review as `delivery.review`, fails a recorded failure whatever the
+flags (`delivery_review_failed`), and under `--require-review` requires a passing
+review of a **permitted current-advice** event (`delivery_review_missing`,
+`delivery_review_incomplete`); a historical study is asked for nothing. `resume`
+reports the state. A later event is a new event: the earlier review stays bound
+to its own event, the semantic review is untouched, and the new event owes its
+own review.
+
+### The dirty-tree caveat
+
+`code_identity()` records `git_dirty`; until now nothing read it. `verify` and
+`validate-report` say, as a caveat and not a finding, that a bundle produced from
+a working tree with uncommitted changes carries a non-identifying revision, and
+that an unknown answer from git is not a clean one. The replay still decides
+whether the study holds; exact patch provenance stays R15's.
+
+### The migration, measured
+
+Six study ids moved once, by the manifest version alone; every decision artifact
+of every example is byte-identical before and after, and each report differs in
+one line, its id. Both T3 final reviews were reissued under v2 against the new
+bytes with the same six basis digests and re-read findings. The intake review
+fixture and the session ledger bind the plan digest and did not move. The
+baseline records `study_manifest` 3, `semantic_review` 2 and `delivery_review`
+1; the test floor rose from 676 to 712.
+
+**Limits.** An attestation is a statement; a reviewer's pass is a judgement; the
+inventory decides what a review covers, not whether the reviewer looked. Nothing
+here detects a requirement the plan never captured or a declaration that is
+false.

@@ -25,10 +25,10 @@ Exit status is 0 when there is nothing to report, 1 when a check failed, and
 import argparse
 import json
 from pathlib import Path
-from . import audit, delivery, gates, intake, intake_review, session
+from . import audit, delivery, delivery_review, gates, intake, intake_review, session
 from .controls import catalogue
 from ..provenance import write_json_atomically
-from .bundle import artifact_digests
+from .bundle import artifact_digests, code_caveats
 import datetime as _dt
 import sys
 import os
@@ -136,6 +136,9 @@ def deliver_command(args):
         print(f'  blocked       {blocker}')
     print(f'  statement     {event["statement"]}')
     print(f'  events        {len(record["events"])} in {path}')
+    if event['current_advice'] == delivery.PERMITTED:
+        print('  next          a permitted event is delivered as audited only with its own '
+              'delivery review: `study delivery-review-template`, then `study review-delivery`')
     return 0
 
 
@@ -146,6 +149,8 @@ def verify_command(args):
     if manifest.get('stop'):
         label = f'{label} on the available axis; recommendation withheld: {manifest["stop"]}'
     print(f'{manifest.get("study_id") or args.bundle}  [{label}]')
+    for caveat in code_caveats(manifest):
+        print(f'  {"code":<28} {caveat}')
     if not findings:
         print('  verified      every artefact matches its digest, and every '
               'decision and numeric claim re-derives from the declared inputs')
@@ -163,7 +168,8 @@ def validate_command(args):
     except (ValueError, OSError, KeyError, TypeError) as exc:
         print(json.dumps({'valid': False, 'findings': [{'code': 'unreadable_bundle', 'message': str(exc)}]}))
         return 2
-    status = {'scope': manifest.get('scope'), 'current_advice': 'no_record', 'reference': ''}
+    status = {'scope': manifest.get('scope'), 'current_advice': 'no_record', 'reference': '',
+              'review': 'absent'}
     # A bundle that does not verify is not read for its review either way.
     intake_state = 'not_checked' if findings else 'absent'
     if not findings:
@@ -202,9 +208,36 @@ def validate_command(args):
         # Structural, and outside the review: a completed semantic review does
         # not waive a freshness block, and cannot be edited to.
         path = Path(args.bundle) / delivery.RECORD
-        event = delivery.latest(delivery.read(path)) if path.is_file() else None
+        record = delivery.read(path) if path.is_file() else None
+        event = delivery.latest(record) if record else None
         if event:
             status.update(current_advice=event['current_advice'], reference=event['reference'])
+            # The delivery review of the latest event. verify() has checked that
+            # every review binds its event; what matters here is what the one
+            # for this event recorded, and whether a permitted current-advice
+            # event has one at all when the report is delivered as audited.
+            reviews_path = Path(args.bundle) / delivery_review.RECORD
+            reviewed = (delivery_review.for_event(delivery_review.read_record(reviews_path),
+                                                  len(record['events']) - 1)
+                        if reviews_path.is_file() else None)
+            status['review'] = delivery_review.status(reviewed) if reviewed else 'absent'
+            if reviewed and status['review'] == delivery_review.FAIL:
+                findings.append({'code': 'delivery_review_failed',
+                                 'message': 'the delivery review of the latest event records a '
+                                            'failure: ' + '; '.join(
+                                                f'{n}: {i["findings"]}'
+                                                for n, i in reviewed['checks'].items()
+                                                if i['status'] == delivery_review.FAIL)})
+            elif (args.require_review and manifest.get('scope') == delivery.CURRENT_ADVICE
+                  and event['current_advice'] == delivery.PERMITTED
+                  and status['review'] != delivery_review.PASS):
+                findings.append({'code': ('delivery_review_incomplete' if reviewed
+                                          else 'delivery_review_missing'),
+                                 'message': f'a permitted current-advice event is delivered as '
+                                            f'audited only with a passing delivery review of that '
+                                            f'event (found: {status["review"]}); write one with '
+                                            f'`study delivery-review-template` and attach it with '
+                                            f'`study review-delivery`'})
         if manifest.get('scope') == delivery.CURRENT_ADVICE:
             if event is None:
                 findings.append({'code': 'delivery_missing',
@@ -214,11 +247,13 @@ def validate_command(args):
                 findings.append({'code': 'current_advice_blocked',
                                  'message': event['statement']})
     structural = ('delivery_missing', 'current_advice_blocked', 'intake_review_failed',
-                  'intake_review_incomplete', 'intake_review_missing')
+                  'intake_review_incomplete', 'intake_review_missing', 'delivery_review_failed',
+                  'delivery_review_missing', 'delivery_review_incomplete')
     semantic = audit.review_status(review) if not findings or all(
         f['code'] in structural for f in findings) else 'not_approved'
     print(json.dumps({'valid': not findings, 'semantic': semantic, 'intake_review': intake_state,
-                      'delivery': status, 'findings': findings}, indent=2))
+                      'delivery': status, 'code': code_caveats(manifest),
+                      'findings': findings}, indent=2))
     return 1 if findings else 0
 
 
@@ -341,6 +376,8 @@ def resume_command(args):
         print(f'  interrupted   {name}: never assumed complete')
     print(f'  review        {report["review"] or "none"}')
     print(f'  intake review {report["intake_review"] or "none"}')
+    if report['delivery_review'] is not None:
+        print(f'  delivery rev. {report["delivery_review"]} (latest event)')
     latest, recheck = report['delivery']['latest'], report['delivery']['recheck']
     if latest:
         print(f'  delivered     {latest["current_advice"]} at {latest["reference"]}')
@@ -451,8 +488,20 @@ def review_intake_command(args):
                                              f'no plan revision for an intake review to bind')
     review = intake_review.load(args.review, intake.load(directory / intake.SNAPSHOT))
     word = intake_review.status(review)
+    final = json.loads((directory / 'semantic-review.json').read_text(encoding='utf-8'))
+    if audit.review_status(final) != 'pending':
+        raise intake_review.IntakeReviewError(
+            f'{directory}: the final semantic review is completed and rests on the intake '
+            f'review this bundle holds; attaching another would supersede it. Final approval '
+            f'requires valid intake findings (INTAKE §11), so the intake review comes first: '
+            f're-run the study with --intake-review and review the new bundle.')
     write_json_atomically(directory / intake_review.SNAPSHOT, review)
     manifest['intake_review'] = {'status': word, 'sha256': intake_review.digest(review)}
+    # The pending final-review template names the intake findings it will
+    # rest on, so it is refreshed to name the ones now in the bundle.
+    template = audit.review_template(directory)
+    write_json_atomically(directory / 'semantic-review.json', template)
+    write_json_atomically(directory / 'validation.json', audit.validation_result(template))
     manifest['artifacts'] = artifact_digests(directory)
     write_json_atomically(directory / 'manifest.json', manifest)
     print(f'{manifest["study_id"]}  [intake review {word}]')
@@ -463,6 +512,60 @@ def review_intake_command(args):
               'validate-report fails until the plan is revised and the study re-run.')
     elif word != intake_review.PASS:
         print('  Pending or limited is not approval; --require-review will not accept it.')
+    return 0
+
+
+def delivery_review_template_command(args):
+    """``delivery-review-template BUNDLE -o OUT`` -- a pending review bound to one event."""
+    directory = Path(args.bundle)
+    manifest, findings = verify_bundle(directory, args.input_root)
+    if findings:
+        raise delivery_review.DeliveryReviewError(
+            'Repair the bundle before reviewing a delivery: ' + '; '.join(f['code'] for f in findings))
+    review = delivery_review.template(directory, args.event)
+    output = Path(args.output)
+    if output.suffix != '.json' or output.exists():
+        raise delivery_review.DeliveryReviewError('choose a new .json output for the review template')
+    write_json_atomically(output, review)
+    print(f'{output}: pending delivery review of event {review["event"]} '
+          f'({review["current_advice"]} at {review["reference"]}) of {manifest["study_id"]}; '
+          f'semantic review {review["semantic_review"]["status"]}.')
+    for name in delivery_review.CHECKS:
+        print(f'  {name:<24}{delivery_review.QUESTIONS[name]}')
+    print('  attestation             who delivered it, whether the reference was read honestly '
+          'and whether the declared scope is true -- a statement signed by name, not a proof')
+    print('Pending is not approval. A later delivery is a new event and needs its own review.')
+    return 0
+
+
+def review_delivery_command(args):
+    """``review-delivery BUNDLE REVIEW`` -- attach a delivery review to the event it binds."""
+    directory = Path(args.bundle)
+    manifest, findings = verify_bundle(directory, args.input_root)
+    if findings:
+        raise delivery_review.DeliveryReviewError(
+            'Repair the bundle before attaching a delivery review: '
+            + '; '.join(f['code'] for f in findings))
+    review = delivery_review.load(args.review, directory)
+    word = delivery_review.status(review)
+    path = directory / delivery_review.RECORD
+    record = delivery_review.read_record(path) if path.is_file() else delivery_review.empty()
+    write_json_atomically(path, delivery_review.attach(record, review))
+    manifest['artifacts'] = artifact_digests(directory)
+    write_json_atomically(directory / 'manifest.json', manifest)
+    print(f'{manifest["study_id"]}  [delivery review {word}: event {review["event"]}, '
+          f'{review["current_advice"]} at {review["reference"]}]')
+    for name in delivery_review.CHECKS:
+        print(f'  {name:<24}{review["checks"][name]["status"]}')
+    attested = review['attestation']
+    print(f'  attestation             by {attested["by"] or "(nobody yet)"}; reference read '
+          f'honestly: {attested["reference_read_honestly"]}; declaration true: '
+          f'{attested["declaration_true"]}')
+    if word == delivery_review.FAIL:
+        print('  The review records that this delivery does not hold. validate-report fails '
+              'until a later event is delivered and reviewed.')
+    elif word != delivery_review.PASS:
+        print('  Pending is not approval; --require-review will not accept it for current advice.')
     return 0
 
 
@@ -614,6 +717,21 @@ def main(argv=None):
     reviewing_intake.add_argument('review', help='intake review JSON bound to the bundle\'s plan revision')
     reviewing_intake.add_argument('--input-root', default='')
     reviewing_intake.set_defaults(handler=review_intake_command)
+    delivery_template = commands.add_parser(
+        'delivery-review-template',
+        help='write a pending delivery review bound to one delivery event of a bundle')
+    delivery_template.add_argument('bundle')
+    delivery_template.add_argument('-o', '--output', required=True, help='new JSON review path')
+    delivery_template.add_argument('--event', type=int, default=None,
+                                   help='event position in delivery.json; default the latest')
+    delivery_template.add_argument('--input-root', default='')
+    delivery_template.set_defaults(handler=delivery_review_template_command)
+    reviewing_delivery = commands.add_parser(
+        'review-delivery', help='attach a delivery review to the event it binds')
+    reviewing_delivery.add_argument('bundle')
+    reviewing_delivery.add_argument('review', help='delivery review JSON bound to one event of this bundle')
+    reviewing_delivery.add_argument('--input-root', default='')
+    reviewing_delivery.set_defaults(handler=review_delivery_command)
     args = parser.parse_args(argv)
     try:
         return args.handler(args)

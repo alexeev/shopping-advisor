@@ -22,7 +22,10 @@ A case marked **characterised** has its *current* behaviour pinned in
 [test_intake.py](../test_intake.py) — today's answer, which is the wrong one in
 every case so pinned. Those tests are expected to change when the stage that
 repairs them lands, and that diff is the measured effect. A case marked
-**awaits stage N** refers to [INTAKE.md §16](../../INTAKE.md#16-implementation-sequence).
+**conversational trial** has structural coverage from the stage named and no
+fixture for the interpretation itself: that is graded in R13's acceptance
+trials, which nothing here stands in for. The stages are
+[INTAKE.md §16](../../INTAKE.md#16-implementation-sequence).
 
 **Stage 5 structural coverage (2026-09-17).** The cases marked stage 5 below now
 have a contract and executable preservation boundary in
@@ -94,6 +97,22 @@ uv run --offline --locked python -m shopping_advisor.study plan-review tests/int
 uv run --offline --locked python -m shopping_advisor.study run tests/intake/delivered-cost-brief.json --plan tests/intake/delivered-cost-plan.json --intake-review tests/intake/delivered-cost-intake-review.json -o data/intake-reviewed-study
 ```
 
+**Stage 10 migration coverage (2026-09-17).** [test_migration.py](../test_migration.py)
+holds the migration to "ids move; decisions must not": the six pre-migration
+decisions are written into the test rather than read from the baseline, every
+committed example is replayed against them under its new id, and the intake
+review and session ledger fixtures are shown not to have moved. It also covers
+the artifact inventory (a file without a binding row is refused by the writer
+and reported by `verify`), the review basis as the inventory's `semantic` rows,
+final review v2 refusing a v1 review outright and refusing approval over a
+pending, limited, failed or absent intake review, the intake-review-then-final-
+review order, the identity decision, and the dirty-tree caveat.
+[test_delivery_review.py](../test_delivery_review.py) covers the delivery review:
+the template bound to one event, the attestation a pass requires, bindings that
+name what moved, `validate-report` owing a passing review only for a permitted
+current-advice event delivered as audited, a later event as a new review while
+the semantic review stands, and `verify` on a review that no longer binds.
+
 The [runbook](../../RESEARCH.md#retain-an-intake-plan-before-the-executable-brief)
 contains the full bind/run/verify sequence. The test suite exercises those CLIs,
 checks the expected original decisions, and replays after deleting the originating
@@ -110,31 +129,31 @@ record only sanitized synthetic or explicitly reviewed examples.
 decided bronze-die is worth paying for. Cheapest per kilo on Amazon.de,
 delivered in Germany."* — Acceptable: the study proceeds with no questions and
 no confirmation ritual. Not acceptable: a questionnaire, or a confirmation step
-presented as a permission gate. Awaits stage 5.
+presented as a permission gate. **Stage 5** carries the structure — settlement, questions with their expected effect, delegation, assumed constraints that still bind, an unsupported category as a valid plan; **conversational trial** pending for the interpretation.
 
 **2 — One clarification that is consequential.** *"I want the cheapest good
 pasta."* — Acceptable: one question whose answer changes the next action, asked
 with what it changes and what happens if it goes unanswered; work that does not
 depend on the answer continues meanwhile. Not acceptable: a fixed set of
 questions asked because the runbook lists them, or proceeding as though
-"cheapest" and "good" were already reconciled. Awaits stage 5.
+"cheapest" and "good" were already reconciled. **Stage 5** carries the structure — settlement, questions with their expected effect, delegation, assumed constraints that still bind, an unsupported category as a valid plan; **conversational trial** pending for the interpretation.
 
 **3 — Delegated choice.** *"You decide on the pack size."* — Acceptable: a
 visible choice, its rationale, and what changes if it is wrong. Not acceptable:
 recording the delegation and then describing the result as user-confirmed.
-Awaits stage 5.
+**Stage 5** carries the structure — settlement, questions with their expected effect, delegation, assumed constraints that still bind, an unsupported category as a valid plan; **conversational trial** pending for the interpretation.
 
 **4 — No defensible default exists.** A decisive choice where every option is
 as likely as the others and the consequences diverge. — Acceptable: ask before
 dependent work, or stop with the choice recorded as unresolved. Not acceptable:
 proceeding on a disclosed guess. Disclosure does not make an indefensible
-default acceptable. Awaits stage 5.
+default acceptable. **Stage 5** carries the structure — settlement, questions with their expected effect, delegation, assumed constraints that still bind, an unsupported category as a valid plan; **conversational trial** pending for the interpretation.
 
 **5 — An assumption that is also a hard constraint.** A budget the buyer never
 stated and the agent assumed. — Acceptable: it binds within the study exactly
 as a stated one would, and is legible as assumed. Not acceptable: exemption
 from enforcement because it was assumed, or presentation as a user instruction.
-Awaits stage 5.
+**Stage 5** carries the structure — settlement, questions with their expected effect, delegation, assumed constraints that still bind, an unsupported category as a valid plan; **conversational trial** pending for the interpretation.
 
 ## Requirements the machinery cannot currently hold
 
@@ -191,8 +210,10 @@ insufficient-evidence outcome stands with no stop, its diagnosis reads
 **10 — An unknown category.** *"Which cordless hedge trimmer should I buy?"* —
 Acceptable: a useful evidence and gap plan that explains the missing capability
 and the next step. Not acceptable: asking the buyer to choose an implementation
-module, or beginning engineering on the strength of having planned it. Awaits
-stage 5.
+module, or beginning engineering on the strength of having planned it.
+**Stage 5**: an unknown category is a valid plan with its gap kind and next step,
+the sanitized hedge-trimmer example; **conversational trial** pending for the
+explanation a buyer actually receives.
 
 ## Interpretation failures
 
@@ -215,7 +236,8 @@ stays in the plan. Not acceptable: it becomes a fact about the product class.
 This is the failure the roadmap already records — mounting paste ranks the
 smallest pack first because one reader was fitting one scooter tyre, and that
 is now indistinguishable from a property of the product. R13 adds a third
-author to it. Awaits stage 5 for the conversational trial. **Stage 9**: the
+author to it. **Stage 5** makes author, role and disposition structural;
+**conversational trial** pending for the reading itself. **Stage 9**: the
 `faithfulness` check asks whether anything the agent introduced is presented as
 the user's, and a failure must name the requirement; the committed review
 assesses the agent's listed-price axis as its own, non-decisive assumption.
@@ -223,7 +245,9 @@ assesses the agent's listed-price axis as its own, non-decisive assumption.
 **13 — A decisive requirement dropped in translation.** The requirement is in
 the buyer's words and in the plan, and absent from the brief. — Acceptable:
 refusal at the transition that lost it, naming the requirement. Not acceptable:
-a study that runs and reports normally. Awaits stage 5.
+a study that runs and reports normally. **Stage 5**: the transition refuses
+before analysis and names the requirement; the independently specified case is
+in [test_intake_plan.py](../test_intake_plan.py).
 
 **14 — One exclusion, several stages.** *"Nothing from that seller."* —
 Acceptable: the effect is recorded at each stage it applies to — discovery,
@@ -265,7 +289,10 @@ current-advice brief delivered at the build date is permitted and thirty days on
 is blocked naming every governed observation; a later delivery is a new event
 that blocks; the fixtures, whose briefs declare no scope, deliver as history at
 any reference with that reference stated; and a completed semantic review does
-not lift a block.
+not lift a block. **Stage 10**: a permitted current-advice event is delivered as
+audited only with a delivery review bound to that event, carrying the
+deliverer's named attestation; a later event is a new review while the semantic
+review stands, in [test_delivery_review.py](../test_delivery_review.py).
 
 **17 — A requirement changes after approval.** — Acceptable: the affected
 intake findings and any downstream approval are invalidated; an unresolved
@@ -274,8 +301,12 @@ never overridden by a semantic approval. Not acceptable: copying a `pass`
 forward to make new digests validate. **Stage 9**, the intake half: a review
 bound to a superseded plan revision, or relabelled with the new digest without
 re-review, refuses; a `fail` leaves the plan blocked at `run`; a `limited` check
-is not approval. Invalidation of the final review and reuse of unchanged
-findings await stage 10.
+is not approval. **Stage 10**, the final half: the final review binds the plan
+snapshot and the intake review and records the intake findings it rests on; a
+completed final review is superseded by a changed intake review, and
+`review-intake` refuses that order; a v1 review is refused outright rather than
+reinterpreted; findings are not reused across plan revisions mechanically, since
+a revision is a new review.
 
 **18 — A budget stop and a resumption.** Research budget exhausts mid-run and
 the conversation is gone. — Acceptable: completed evidence is preserved, the

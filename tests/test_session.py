@@ -389,7 +389,7 @@ class Resumption(SessionCase):
 
     def test_the_fixture_study_resumes_from_its_own_snapshot(self):
         directory, manifest = self.study()
-        self.assertEqual(manifest['study_id'], 'pasta-delivered-cost-608160f72d15',
+        self.assertEqual(manifest['study_id'], 'pasta-delivered-cost-43425b41286a',
                          'a session snapshot moves no identity')
         self.assertEqual(manifest['session']['id'], 'pasta-delivered-session')
         self.assertIn(session.SNAPSHOT, manifest['artifacts'])

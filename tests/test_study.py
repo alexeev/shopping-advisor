@@ -419,9 +419,8 @@ class Verification(Temporary):
         path.write_text(text + '\n', encoding='utf-8')
         manifest_path = self.directory / bundle.MANIFEST
         manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
-        manifest['artifacts'][bundle.RANKING] = {
-            'sha256': bundle.sha256_file(path),
-            'bytes': path.stat().st_size}
+        manifest['artifacts'][bundle.RANKING] = bundle.artifact_entry(
+            self.directory, bundle.RANKING)
         manifest_path.write_text(json.dumps(manifest), encoding='utf-8')
         codes, findings = self.codes()
         self.assertEqual(codes, ['decision_moved'])

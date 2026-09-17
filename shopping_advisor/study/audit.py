@@ -11,9 +11,31 @@ from ..provenance import sha256_text, sha256_file
 
 LEDGER_VERSION = 1
 AUDIT_VERSION = 1
-REVIEW_VERSION = 1
+#: Review v2 (R13 stage 10) is phase-aware: it names its phase, binds every
+#: artifact the inventory marks ``semantic`` -- the intake plan and the intake
+#: review included -- records the intake findings it rests on, and adds the
+#: conclusion-presentation check INTAKE §6 asks a reviewer for. A v1 review is
+#: refused outright: the migration that moved the report bytes requires
+#: substantive reconsideration, never a copied pass.
+REVIEW_VERSION = 2
+REVIEW_PHASE = 'final'
 REVIEW_CHECKS = ('citation_support', 'variant_applicability', 'user_priorities',
-                 'coverage_and_limits')
+                 'coverage_and_limits', 'conclusion_presentation')
+REVIEW_QUESTIONS = {
+    'citation_support': 'Does each indexed external statement mean what the report uses '
+                        'it for, within its recorded scope?',
+    'variant_applicability': 'Does each finding apply to the listing, variant and batch it '
+                             'is attached to?',
+    'user_priorities': 'Do the ranking axis, filters and stopping criteria answer the '
+                       'question the brief -- and the plan, where there is one -- asked?',
+    'coverage_and_limits': 'Does the report say what was inspected, what was not, and what '
+                           'that leaves unknown, without describing the inspected sources '
+                           'as the market?',
+    'conclusion_presentation': 'Do the headline, the result slot and any bounded finding '
+                               'claim no more than the outcome, the stop and the declared '
+                               'scope permit, with nothing beneath a refusal that reads as '
+                               'a recommendation?',
+}
 SCOPES = ('historical', 'current_batch', 'vendor_declaration', 'review_sample',
           'access_limit')
 
@@ -231,26 +253,67 @@ def review_status(review):
 
 
 def review_basis(directory):
-    names = ('brief.json', 'ranking.json', 'candidates.jsonl', 'cards.jsonl',
-             'ledger.json', 'claim-index.json')
-    return {name: sha256_file(Path(directory) / name) for name in names}
+    """Digests of every present artifact the inventory binds into this review.
+
+    A contract, not a list kept beside the code: the names come from
+    :data:`inventory.BINDINGS`, so an artifact added to the bundle is either
+    bound here or deliberately not, and a test holds the table to that.
+    """
+    from .inventory import SEMANTIC, present
+    return {name: sha256_file(Path(directory) / name) for name in present(directory, SEMANTIC)}
+
+
+def intake_findings(directory):
+    """The intake findings a final review of this bundle rests on.
+
+    ``None`` for a study without a plan. For a plan-backed study, the intake
+    review's status and digest, or ``absent`` when none is attached: final
+    approval requires valid intake findings (INTAKE §11), and a review that
+    recorded which ones it had can be held to them later.
+    """
+    from . import intake, intake_review
+    directory = Path(directory)
+    if not (directory / intake.SNAPSHOT).is_file():
+        return None
+    path = directory / intake_review.SNAPSHOT
+    if not path.is_file():
+        return {'status': 'absent', 'sha256': ''}
+    review = intake_review.read(path)
+    return {'status': intake_review.status(review), 'sha256': intake_review.digest(review)}
 
 
 def review_template(directory):
-    return {'review_version': REVIEW_VERSION, 'report_sha256': sha256_file(Path(directory) / 'report.md'),
-            'basis': review_basis(directory), 'reviewer': '', 'checks': {k: {'status': 'pending', 'findings': ''} for k in REVIEW_CHECKS},
+    return {'review_version': REVIEW_VERSION, 'phase': REVIEW_PHASE,
+            'report_sha256': sha256_file(Path(directory) / 'report.md'),
+            'basis': review_basis(directory), 'intake_review': intake_findings(directory),
+            'reviewer': '', 'checks': {k: {'status': 'pending', 'findings': ''} for k in REVIEW_CHECKS},
             'unresolved_limits': []}
 
 
 def check_review(review, directory, required=False):
     if not isinstance(review, dict) or review.get('review_version') != REVIEW_VERSION:
-        raise AuditError('unsupported semantic review version')
+        raise AuditError(f'unsupported semantic review version: this build reads v{REVIEW_VERSION}, '
+                         f'and a review of other report bytes is reissued, never carried forward')
+    if review.get('phase') != REVIEW_PHASE:
+        raise AuditError(f'semantic review phase must be {REVIEW_PHASE!r}; the intake phase has '
+                         f'its own artifact')
     if review.get('report_sha256') != sha256_file(Path(directory) / 'report.md'):
         raise AuditError('semantic review belongs to different report bytes')
     if not isinstance(review.get('checks'), dict) or set(review['checks']) != set(REVIEW_CHECKS) or not isinstance(review.get('unresolved_limits'), list):
         raise AuditError('semantic review needs checklist and unresolved limits')
-    if any(item.get('status') != 'pending' for item in review['checks'].values() if isinstance(item, dict)) and review.get('basis') != review_basis(directory):
+    if 'intake_review' not in review:
+        raise AuditError('semantic review records the intake findings it rests on, or null')
+    completed = any(item.get('status') != 'pending' for item in review['checks'].values() if isinstance(item, dict))
+    if completed and review.get('basis') != review_basis(directory):
         raise AuditError('semantic review belongs to different evidence/decision bytes')
+    intake_state = intake_findings(directory)
+    if completed and review['intake_review'] != intake_state:
+        raise AuditError('semantic review rests on other intake findings than this bundle holds: '
+                         'the intake review changed after the final review, which supersedes it')
+    approved = all(isinstance(item, dict) and item.get('status') == 'pass' for item in review['checks'].values())
+    if approved and intake_state is not None and intake_state['status'] != 'pass':
+        raise AuditError(f'final approval requires valid intake findings: the intake review is '
+                         f'{intake_state["status"]}, and a final review cannot pass over it')
     if not isinstance(review.get('reviewer'), str) or any(not isinstance(v, str) for v in review['unresolved_limits']):
         raise AuditError('reviewer and unresolved limits must be text')
     for item in review['checks'].values():

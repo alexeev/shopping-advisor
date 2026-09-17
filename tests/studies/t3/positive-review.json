@@ -1,36 +1,43 @@
 {
-  "review_version": 1,
-  "report_sha256": "0acb3a9ee1e3a3c2dea055efcfbf41c893900720df84855b51c551e6f617aa6f",
+  "review_version": 2,
+  "phase": "final",
+  "report_sha256": "783cc09856339917254a8dbf6b7fef05bb53b53b82912e63a41cc954cdcfc2ef",
   "basis": {
     "brief.json": "8288b993128227e692fe96bce8045061b54325b69ab84e5a3f7cb576c9aac215",
-    "ranking.json": "b019d4aa0de8a5202aec23ccd338f94218444c9a88cc9c36bf4a2ba7510dedaf",
     "candidates.jsonl": "fb34a4c8d013a583e2187a52c568f3ccbe3e87d06712686c5ed8fa68d427c1c0",
     "cards.jsonl": "3c479217b4313b75e120c775bf2f6ae0d324d077ec3f92b8e33ffb65fea21b8d",
+    "ranking.json": "b019d4aa0de8a5202aec23ccd338f94218444c9a88cc9c36bf4a2ba7510dedaf",
     "ledger.json": "2e9f49e8f3a0d1b34e8a310a1d6a970f8e18fc407152a679bea83d6a328b8d5b",
     "claim-index.json": "c75cb8a0e1c207d6097cd1af1da388ba4bb049a1fe413bfb2f898a35464a81ce"
   },
-  "reviewer": "Codex, separate T3 fixture semantic review, 2026-09-16",
+  "intake_review": null,
+  "reviewer": "Claude Fable 5.1, T3 fixture semantic review reissued under review v2, 2026-09-17",
   "checks": {
     "citation_support": {
       "status": "pass",
-      "findings": "The only indexed external statement equals the retained synthetic paragraph, which says only that fixture-batch was tested. It makes no safety claim. The three legacy observations explicitly lack source access and receive no verified conclusions."
+      "findings": "The claim index carries one external claim, fixture-claim, scope current_batch, from the retained synthetic paragraph dated 2026-09-14. Its statement equals the observation's claim word for word and says only that fixture-batch was tested and that this is test data; the report draws no safety, quality or suitability conclusion from it anywhere. The three legacy observations are legacy_unverified with unavailable snapshots and unresolved matches; the audit section says so of each, and none earns a verified conclusion or a score credit."
     },
     "variant_applicability": {
       "status": "pass",
-      "findings": "The fixture source and B000000001 agree on Tilda, Pure Original, 5 kg, DE and fixture-batch. These are synthetic identity fields, not evidence about a real listing. No legacy finding is applied to a current batch."
+      "findings": "fixture-claim is matched to www.amazon.de:B000000001 on brand Tilda, model Pure Original, variant 5 kg, geography DE and batch fixture-batch, and the record carries those values. They are synthetic identity fields, not evidence about a real listing. No legacy observation is attached to any listing or current batch; each says a historical finding cannot establish current batch safety."
     },
     "user_priorities": {
       "status": "pass",
-      "findings": "The brief asks for listed EUR/kg, with delivery unknown. Prices are 3, 4 and 5 EUR/kg. The positive brief requires two candidates and selects the first; the insufficient brief requires four and selects none. Scores do not determine selection."
+      "findings": "The brief asks for listed price per kilogram in EUR/kg with the cost basis stated as listed price, delivery unknown, and the report's decision table attributes axis and unit to the brief. Prices are 3, 4 and 5 EUR/kg; the brief requires at least two candidates and no margin, so B000000001 leads by 33.3% and is selected on price alone. The basmati score is serialized in the cards and replayed, and the claim index records score_shortlist false: it orders nothing. There is no plan, so no intake findings are rested on and none are claimed."
     },
     "coverage_and_limits": {
       "status": "pass",
-      "findings": "The report limits itself to three synthetic named records, no queries or live collection. The retained source explicitly says synthetic; legacy source access and batch limits remain visible. Observations are two days old relative to the fixed fixture reference date."
+      "findings": "The report limits itself to the three named synthetic records in the declared input and says so twice: no queries, no live collection, classifier decisions whose accuracy is not measured. Freshness is measured against the brief's as_of of 2026-09-16, the oldest ranked observation is two days old, and the coverage section says these are synthetic regression records with no current purchase advice. The brief declares no scope, so every delivery event is not_in_scope; the report does not describe the three records as the market."
+    },
+    "conclusion_presentation": {
+      "status": "pass",
+      "findings": "The headline is Recommendation with the leader and its 33.3% margin, and the result slot holds the three-row shortlist; for a supported recommendation that is the permitted placement, and the scope and evidence stand beside it in the header, freshness and coverage sections. There is no stop and no bounded finding, so nothing is placed beneath a refusal. The study is historical by an undeclared scope, and the report claims no current buying advice. The header's study id is the manifest v3 identity the gate replays."
     }
   },
   "unresolved_limits": [
     "No real external laboratory document was acquired or verified.",
     "No finding here establishes safety or suitability of a real current product batch.",
-    "Delivered costs, marketplace coverage and live freshness are unmeasured."
+    "Delivered costs, marketplace coverage and live freshness are unmeasured.",
+    "Reissued under review v2 on 2026-09-17 after the manifest v3 migration moved the study id and so the report bytes. The six basis digests are unchanged from the v1 review of 2026-09-16; the findings were re-read against the new report and index, not copied. The reviewer is an agent, and this is a fixture approval that must not be reused for another report."
   ]
 }

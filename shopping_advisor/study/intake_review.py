@@ -49,10 +49,12 @@ state beside the final review's. It enters neither ``study_id`` nor the report
 bytes: approval travels in review artifacts and is checked before delivery,
 never rendered into the report it approves (INTAKE §11).
 
-**What it does not touch.** The final semantic review, its version, its check
-tuple and its basis are unchanged, so no committed review is invalidated. The
-phase-aware final review that requires valid intake findings, and invalidation
-across plan revisions, are stage 10.
+**What rests on it.** Stage 10 moved the final semantic review to v2 so that
+it binds this artifact and records the intake findings it rests on: final
+approval requires a passing intake review, and a changed intake review
+supersedes a completed final one (CONTRACT §14). Findings are not reused
+across plan revisions -- the plan digest refuses a review of another revision,
+and a revision is re-reviewed.
 """
 
 import json

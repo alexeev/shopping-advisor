@@ -19,7 +19,7 @@ class IndependentContracts(unittest.TestCase):
         for constant, name in (('LEDGER_VERSION', 'evidence_ledger'),
                                ('AUDIT_VERSION', 'study_audit'),
                                ('REVIEW_VERSION', 'semantic_review')):
-            with self.subTest(contract=name), patch.object(audit, constant, 2):
+            with self.subTest(contract=name), patch.object(audit, constant, 99):
                 actual = _contract_versions()
                 self.assertEqual([k for k in actual if actual[k] != declared[k]], [name])
                 result = check_contracts({'contracts': declared})
@@ -37,7 +37,7 @@ class IndependentContracts(unittest.TestCase):
             with self.assertRaisesRegex(audit.AuditError, 'expected 2'):
                 audit.read(FIXTURE / 'evidence.json')
             self.assertEqual(audit.validation_result({'checks': {}})['audit_version'], 1)
-            self.assertEqual(audit.REVIEW_VERSION, 1)
+            self.assertEqual(audit.REVIEW_VERSION, 2)
 
     def test_audit_version_moves_both_outputs_without_ledger_or_review(self):
         from shopping_advisor.study.analysis import analyse
@@ -48,7 +48,7 @@ class IndependentContracts(unittest.TestCase):
             self.assertEqual(audit.index(result, [], ledger)['audit_version'], 2)
             self.assertEqual(audit.validation_result({'checks': {}})['audit_version'], 2)
             self.assertEqual(ledger['ledger_version'], 1)
-            self.assertEqual(audit.REVIEW_VERSION, 1)
+            self.assertEqual(audit.REVIEW_VERSION, 2)
 
     def test_review_version_moves_without_invalidating_ledger(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -57,10 +57,10 @@ class IndependentContracts(unittest.TestCase):
                          'cards.jsonl', 'ledger.json', 'claim-index.json'):
                 (directory / name).write_text('{}')
             old = audit.review_template(directory)
-            with patch.object(audit, 'REVIEW_VERSION', 2):
+            with patch.object(audit, 'REVIEW_VERSION', 3):
                 audit.read(FIXTURE / 'evidence.json')
                 current = audit.review_template(directory)
-                self.assertEqual(current['review_version'], 2)
+                self.assertEqual(current['review_version'], 3)
                 audit.check_review(current, directory)
                 with self.assertRaisesRegex(audit.AuditError, 'unsupported semantic'):
                     audit.check_review(old, directory)
@@ -221,7 +221,7 @@ class BundleAudit(unittest.TestCase):
         change(value)
         path.write_text(json.dumps(value))
         manifest = json.loads((directory / bundle.MANIFEST).read_text())
-        manifest['artifacts'][name] = {'sha256': sha256_file(path), 'bytes': path.stat().st_size}
+        manifest['artifacts'][name] = bundle.artifact_entry(directory, name)
         (directory / bundle.MANIFEST).write_text(json.dumps(manifest))
 
     def test_positive_and_insufficient_examples_replay(self):

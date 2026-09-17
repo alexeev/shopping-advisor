@@ -424,6 +424,10 @@ must move the id. Use canonical serialisation with its own version, check the
 projection for omissions, and avoid digest cycles — neither the projection nor a
 review basis includes the enclosing manifest or its own approval bytes.
 
+*Resolved in stage 10 (§16): the projection is the plan binding stage 5 put in
+the brief bytes, which are in the id. No computed assessment enters the
+identity; the reason is recorded under "Decided" below.*
+
 ### The delivery record is integrity-bound, not identity-bearing
 
 The delivery reference, session consumption, interruption and resumption facts, and
@@ -892,25 +896,27 @@ compares `report_sha256`, and a completed review needs a reviewer and non-empty
 findings rather than a bare approval, so each break costs two *human* review acts
 and cannot be regenerated.
 
-**`study_id` moves** and all four baseline examples' pinned ids change across six
-files. Because the report renders `study_id` into its own header, this cost always
-triggers the first one.
+**`study_id` moves** and every baseline example's pinned id changes — four when
+this was written, six by the time the migration ran, because stage 6 added two
+plan-backed examples. Because the report renders `study_id` into its own header,
+this cost always triggers the first one.
 
-The surface is exact:
+The surface, as it turned out to be on 2026-09-17:
 
-| File | What moves |
+| File | What moved |
 |---|---|
-| `shopping_advisor/maintenance/baseline.json` | four pinned `study_id` values, `contracts`, `tests` |
+| `shopping_advisor/maintenance/baseline.json` | six pinned `study_id` values; `study_manifest` 2→3, `semantic_review` 1→2, `delivery_review` added at 1; the test floor and module inventory |
 | [RESEARCH.md](RESEARCH.md#offline-walkthrough) | three occurrences in the offline walkthrough |
-| [tests/studies/README.md](tests/studies/README.md) | one occurrence |
-| [ROADMAP.md](ROADMAP.md) | the current-identity list and the T3 correction; earlier ids are already marked historical and stay as written |
-| `tests/studies/t3/positive-review.json`, `tests/studies/t3/insufficient-review.json` | `report_sha256`, `basis`, `review_version` — reissued by a reviewer |
+| [tests/studies/README.md](tests/studies/README.md) | two occurrences, the `verify` and `deliver` lines |
+| [ROADMAP.md](ROADMAP.md) | the current-identity list and the T3 correction, now marked as pre-migration ids; the R13 entry |
+| `tests/studies/t3/positive-review.json`, `tests/studies/t3/insufficient-review.json` | reissued under review v2: `report_sha256`, `phase`, `intake_review`, the fifth check, findings re-read against the new bytes; the six basis digests unchanged |
+| `tests/test_delivery.py`, `tests/test_intake_plan.py`, `tests/test_gates.py`, `tests/test_session.py`, `tests/test_intake_review.py` | one literal id each, pinned by stages 5–9 after the original table was written |
 
-Therefore everything that can be inert on the existing four examples lands first,
-and **one** explicitly named migration commit pays both costs once. What makes that
+Therefore everything that can be inert on the existing examples lands first, and
+**one** explicitly named migration commit pays both costs once. What makes that
 possible is a single decision: **the plan is an optional input to `run()` and
 `analyse()`, exactly as the evidence ledger is today.** Absent a plan, behaviour is
-byte-identical, so stages 1–9 cannot move a committed example.
+byte-identical, so stages 1–9 cannot move a committed example — and they did not.
 
 ### The stages
 
@@ -925,44 +931,36 @@ byte-identical, so stages 1–9 cannot move a committed example.
 | 7 | Declared study scope, delivery record, freshness block | no | new fixtures only | M |
 | 8 | Session resource ledger and resumption | no | no | M |
 | 9 | Intake review artifact | no | no | M |
-| 10 | **Migration**: manifest v3, identity projection, review v2 | **once** | **once** | L |
+| 10 | **Migration**: manifest v3 with the artifact inventory, review v2, the delivery review, the identity decision | **once** | **once** | L |
 
-**Implementation status (2026-09-17): stages 1–9 shipped.** Stage 3 uses
-`LEDGER_VERSION`, `AUDIT_VERSION` and `REVIEW_VERSION`, each still 1 and tracked
-independently by the gate. Stage 4 is
-[study/controls.py](shopping_advisor/study/controls.py), exposed by
-`study controls --category CATEGORY`; its resolver reads the live registry and
-covers the five mechanisms in §4. The catalogue is inspection, not an intake
-plan, execution authorisation or a semantic adequacy check. Stage 5 adds
-[plan v1 and the preservation boundary](CONTRACT.md#9-intake-plan-and-brief-preservation-r13-stage-5),
-retained user evidence, deterministic read-back and response status, explicit brief
-bindings, and bundle-internal snapshots used in replay. Stage 6 is
-[study/gates.py](shopping_advisor/study/gates.py) and
-[CONTRACT §10](CONTRACT.md#10-stage-gates-r13-stage-6): the intake, comparison-
-support and conclusion gates, three stop kinds kept apart from the analytical
-outcomes, the bounded-finding rendering, the attribution sentence from the
-response status, and two plan-backed examples replayed by the maintenance gate.
-Stage 7 is [study/delivery.py](shopping_advisor/study/delivery.py) and
-[CONTRACT §11](CONTRACT.md#11-declared-scope-and-the-delivery-record-r13-stage-7):
-the declared scope with silence read as historical, `study deliver` freezing the
-execution-clock reference in a bundle-internal record, current advice as a
-structural condition `validate-report` enforces past any semantic review, and
-replay that never reads the clock. Stage 8 is
-[study/session.py](shopping_advisor/study/session.py) and
-[CONTRACT §12](CONTRACT.md#12-session-resource-ledger-and-resumption-r13-stage-8):
-declared research and engineering limits in observed units, action records read
-from run manifests, reconciliation that keeps unknown unknown and counts a
-resumed action once, the next-action check, and `study resume` from the bundle's
-own snapshot. Stage 9 is
-[study/intake_review.py](shopping_advisor/study/intake_review.py) and
-[CONTRACT §13](CONTRACT.md#13-intake-review-r13-stage-9): a separate intake
-review artifact bound to the plan revision, the retained user evidence, the
-resolved mappings and the live control catalogue, with the five checks of §11,
-a `limited` status that a review-limiting redaction forces, refusal of a run on
-a plan its review fails, and `validate-report --require-review` needing a
-passing one on a plan-backed study — without touching the final review or its
-version. Stage 10 remains planned; the four pre-existing study identities,
-decisions and report bytes stay unchanged, and both committed reviews stand.
+**Implementation status (2026-09-17): stages 1–10 shipped.** Each stage's
+adopted semantics are in CONTRACT.md; this table is the map, not the record.
+
+| Stage | Where it lives |
+|---|---|
+| 1 | [tests/intake/README.md](tests/intake/README.md) and `tests/test_intake.py`: the case register, and the three inert qualifications of §1 pinned as regressions |
+| 2 | §13 here; the runbook and AGENTS carry the operating text |
+| 3 | `LEDGER_VERSION`, `AUDIT_VERSION`, `REVIEW_VERSION` in `study/audit.py`, each tracked by the gate ([CONTRACT §8](CONTRACT.md#8-study-audit-contracts-t3)) |
+| 4 | [study/controls.py](shopping_advisor/study/controls.py) and `study controls --category CATEGORY`: a resolver over the live registry covering the five mechanisms of §4. Inspection, not an intake plan, execution authorisation or a semantic adequacy check |
+| 5 | [study/intake.py](shopping_advisor/study/intake.py), [CONTRACT §9](CONTRACT.md#9-intake-plan-and-brief-preservation-r13-stage-5): plan v1, user evidence retained by provenance, deterministic read-back and response status, explicit brief bindings, the plan-to-brief refusal, bundle-internal snapshots used in replay |
+| 6 | [study/gates.py](shopping_advisor/study/gates.py), [CONTRACT §10](CONTRACT.md#10-stage-gates-r13-stage-6): the intake, comparison-support and conclusion gates, three stop kinds kept apart from the analytical outcomes, the bounded-finding rendering, the attribution sentence from the response status |
+| 7 | [study/delivery.py](shopping_advisor/study/delivery.py), [CONTRACT §11](CONTRACT.md#11-declared-scope-and-the-delivery-record-r13-stage-7): declared scope with silence read as historical, `study deliver` freezing the execution-clock reference, current advice as a structural condition, replay that never reads the clock |
+| 8 | [study/session.py](shopping_advisor/study/session.py), [CONTRACT §12](CONTRACT.md#12-session-resource-ledger-and-resumption-r13-stage-8): declared limits in observed units, action records from run manifests, reconciliation that keeps unknown unknown, the next-action check, `study resume` |
+| 9 | [study/intake_review.py](shopping_advisor/study/intake_review.py), [CONTRACT §13](CONTRACT.md#13-intake-review-r13-stage-9): the intake review bound to the plan revision, the retained evidence, the resolved mappings and the live catalogue, with a `limited` status a review-limiting redaction forces |
+| 10 | [study/inventory.py](shopping_advisor/study/inventory.py), [study/delivery_review.py](shopping_advisor/study/delivery_review.py), [CONTRACT §14](CONTRACT.md#14-manifest-v3-review-v2-and-the-delivery-review-r13-stage-10): manifest v3 with the artifact inventory, the review basis as a contract, final review v2, the delivery review, the identity decision, the dirty-tree caveat |
+
+**Measured effect of stage 10.** All six example ids moved once, by the
+manifest version alone, and every decision artifact — `brief.json`,
+`candidates.jsonl`, `cards.jsonl`, `ranking.json`, `ledger.json`,
+`claim-index.json`, and the plan, intake-review and session snapshots where
+present — is byte-identical before and after; each report differs in exactly
+one line, its study id. Both T3 final reviews were reissued under v2 against
+the new bytes with the same six basis digests and findings re-read rather than
+copied. The intake review fixture and the session ledger bind the plan digest
+and did not move. 36 new offline tests raise the floor from 676 to 712, in two
+new modules. Not established, as at stage 9: that a reviewer's pass is right,
+that a plan captured everything the buyer said, or that a deliverer's
+attestation is true.
 
 **1 — Worked cases and characterisation tests.** The referent, written before any
 field name. The cases in §14 become committed fixtures with their intent and
@@ -1029,15 +1027,59 @@ conversation.
 plan snapshot, mappings and control metadata, deliberately not touching the final
 review or its version so that no committed review is invalidated yet.
 
-**10 — Migration.** One commit, argued as one claim: manifest v3 for the artifacts
-the bundle gains, `review_basis` as a contract with a test that a new artifact
-cannot enter the bundle without a deliberate binding decision, the phase-aware
-final review at v2 requiring valid intake findings, and the frozen
-operative-requirement projection entering `study_id`. Then four ids re-recorded,
-two reviews reissued, ids updated in the files listed above, and the baseline
-re-recorded as a separately explained part of the same change. **Ids move;
-decisions must not** — eligibility, ordering and outcome on all four examples are
-shown unchanged in the diff.
+**10 — Migration.** One commit, argued as one claim, and rescoped on
+2026-09-17 against the tree stages 5–9 had left rather than the one this
+section was written against. What it lands:
+
+- **Manifest v3 with a declared artifact inventory.** The bundle had already
+  gained its four optional artifacts as v2 additions, so the bump is not "for
+  the artifacts the bundle gains". It is for what the version pins: the id
+  material, so every committed id moves exactly once; the per-artifact
+  `binding` the manifest now records beside each digest; and the refusal of a
+  v3 bundle by a pre-stage-5 verifier that would otherwise pass a plan-backed
+  study it cannot gate.
+- **The review basis as a contract.** `review_basis` is derived from the
+  inventory, which names every artifact a bundle may hold and how the workflow
+  binds it — into the final review, as its report target, per event into the
+  delivery review, or as a review record that binds others and never itself.
+  A file without a row is refused by the writer and reported by `verify`. That
+  is the test §6 asked for; the four artifacts stages 5–9 added had their
+  binding decided in CONTRACT prose and nowhere a test could see it.
+- **Final review v2, phase-aware.** It names its phase, binds the intake plan
+  and the intake review beside the six original artifacts, records the intake
+  findings it rests on, and adds the conclusion-presentation check of §6.
+  Final approval requires a passing intake review; replacing the intake review
+  after a completed final review supersedes it, and the CLI refuses the wrong
+  order rather than letting an approval stand over findings it never saw.
+- **The identity decision.** No separate projection enters `study_id`. Since
+  stage 5 the brief's `intake` binding carries the plan's canonical digest and
+  a lossless copy of its requirements, and the brief digest is in the id, so
+  every operative fact §8 lists is either in the id already or a deterministic
+  function of it that `verify` replays — as every other decision is. Hashing
+  computed assessment results into the id would move it with the gate code,
+  the inversion §8 itself forbids. The transitive binding is broader than the
+  projection would have been: retained wording, redactions and the response
+  status move the id too, and a test pins that alongside what moves nothing.
+- **The delivery review.** CONTRACT §11 and §12 had deferred here the binding
+  of delivery events and session facts, and §8 the attestation. One review per
+  event binds the event's canonical digest, the report, the semantic review it
+  rests on, and the session and intake-review snapshots; it checks freshness,
+  applicability and conclusion presentation, and carries the deliverer's named
+  attestation that the reference was read honestly and the declared scope is
+  true. A permitted current-advice event is delivered as audited only with a
+  passing one; a later event is a new review while the semantic review stands,
+  which is the affordability §8 requires.
+- **The dirty-tree caveat.** `verify` and `validate-report` say when a bundle
+  was produced from a working tree with uncommitted changes and that its
+  revision is therefore non-identifying. A caveat, not a finding: a gate that
+  failed on every uncommitted tree would fail while the change it protects is
+  being made.
+
+Then six ids re-recorded, two final reviews reissued under v2 with their
+findings re-read against the new bytes, the ids updated where the surface table
+says, and the baseline re-recorded as a separately explained part of the same
+change. **Ids move; decisions must not** — the measurement is in the status
+paragraph above.
 
 ### Decided, and one that is not
 
@@ -1054,14 +1096,25 @@ storage is not a backup, and the CLI does not claim that it has archived anythin
 This keeps private conversations out of the repository by default while retaining
 the executable study's intent without an external-file dependency.
 
+**Decided in stage 10 (2026-09-17).** The identity projection is the plan
+binding already in the brief bytes; no computed assessment enters `study_id`.
+The review basis is derived from the artifact inventory, never listed beside
+it. The intake review precedes the final review, and a changed intake review
+supersedes a completed final one. Findings are not reused across plan revisions
+mechanically: a revision is re-reviewed, and copying findings forward is a
+reviewer's act that needs the reconsideration §11 asks for. Delivery events and
+session facts bind into a per-event delivery review, never into the semantic
+basis. A dirty production tree is a caveat every reader of the bundle sees,
+not a failure.
+
 ### On estimating this
 
 No effort figure is offered, for the reason given in §8's closing: the components
 have to be scoped against the cases first. Relative weight is stated per stage, and
-the two carrying the most unknown are stage 5, where the requirement dimensions
-meet real language, and stage 10, where three version bumps and a reissued review
-land together. Stages 1 to 4 are the ones that no later design choice can
-invalidate.
+the two carrying the most unknown were stage 5, where the requirement dimensions
+meet real language, and stage 10, where two version bumps, one new contract and
+two reissued reviews landed together. Stages 1 to 4 are the ones that no later
+design choice could invalidate, and none did.
 
 ---
 
@@ -1083,5 +1136,6 @@ banner placed above the headline. These observations establish current behaviour
 not completed work.
 
 The original assessment changed no runtime implementation, canonical operating
-instruction, contract or baseline. Subsequent implementation status and storage
-decisions are recorded in §16, with adopted semantics in CONTRACT.md.
+instruction, contract or baseline. Subsequent implementation status, the stage 10
+rescoping and the decisions it forced are recorded in §16, with adopted semantics
+in CONTRACT.md.

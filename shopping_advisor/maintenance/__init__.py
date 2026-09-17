@@ -200,6 +200,7 @@ def _contract_versions():
     from ..study.intake_review import INTAKE_REVIEW_VERSION
     from ..study.gates import STAGE_GATES_VERSION
     from ..study.delivery import DELIVERY_VERSION
+    from ..study.delivery_review import DELIVERY_REVIEW_VERSION
     from ..study.session import SESSION_VERSION
     from ..validation.contract import CONTRACT_VERSION
 
@@ -211,6 +212,7 @@ def _contract_versions():
             'intake_review': INTAKE_REVIEW_VERSION,
             'stage_gates': STAGE_GATES_VERSION,
             'delivery_record': DELIVERY_VERSION,
+            'delivery_review': DELIVERY_REVIEW_VERSION,
             'session_ledger': SESSION_VERSION,
             'study_manifest': STUDY_MANIFEST_VERSION,
             'evidence_ledger': audit.LEDGER_VERSION,

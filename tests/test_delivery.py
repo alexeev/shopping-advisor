@@ -93,7 +93,7 @@ class ScopeIsDeclaredNotInferred(DeliveryCase):
         self.assertNotIn('scope', brief.as_dict()['freshness'])
         directory, manifest = self.run_study()
         self.assertEqual((manifest['scope'], manifest['scope_source']), ('historical', 'undeclared'))
-        self.assertEqual(manifest['study_id'], 'pasta-bronze-die-46127870314d')
+        self.assertEqual(manifest['study_id'], 'pasta-bronze-die-bde2b027b117')
         self.assertEqual(delivery.scope_of(json.loads((directory / bundle.BRIEF).read_text())),
                          ('historical', 'undeclared'))
         self.assertNotIn('| Scope |', (directory / bundle.REPORT).read_text())
@@ -222,10 +222,15 @@ class CurrentAdviceIsAStructuralCondition(DeliveryCase):
         self.assertEqual(status, 1)
         self.assertEqual(payload['semantic'], 'pass')
         self.assertEqual([f['code'] for f in payload['findings']], ['current_advice_blocked'])
-        # A delivery that passes lifts it without touching the review.
+        # A delivery that passes lifts it without touching the review. What it
+        # owes instead, when delivered as audited, is a delivery review of that
+        # event (stage 10): the semantic review is not rewritten for it.
         self.deliver(directory, BUILT)
-        status, payload = self.validate(directory, '--require-review')
+        status, payload = self.validate(directory)
         self.assertEqual((status, payload['valid'], payload['semantic']), (0, True, 'pass'))
+        status, payload = self.validate(directory, '--require-review')
+        self.assertEqual((status, payload['semantic']), (1, 'pass'))
+        self.assertEqual([f['code'] for f in payload['findings']], ['delivery_review_missing'])
 
     def test_the_default_reference_is_the_execution_clock_and_says_so(self):
         directory, _ = self.run_study(self.current(), name='current')

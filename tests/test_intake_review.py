@@ -257,7 +257,7 @@ class BundleIntegration(ReviewCase):
         without, _ = self.study('plain')
         pending = self.write('pending.json', self.template)
         directory, manifest = self.study('reviewed', plan_review=pending)
-        self.assertEqual(manifest['study_id'], 'pasta-delivered-cost-608160f72d15')
+        self.assertEqual(manifest['study_id'], 'pasta-delivered-cost-43425b41286a')
         self.assertEqual(manifest['intake_review'],
                          {'status': 'pending', 'sha256': intake_review.digest(self.template)})
         self.assertIn(intake_review.SNAPSHOT, manifest['artifacts'])
@@ -514,9 +514,10 @@ class Fixture(ReviewCase):
                                 for f in findings))
         from shopping_advisor.study import audit
         self.assertEqual((audit.REVIEW_VERSION, audit.REVIEW_CHECKS),
-                         (1, ('citation_support', 'variant_applicability', 'user_priorities',
-                              'coverage_and_limits')),
-                         'the final review is untouched: no committed review is invalidated')
+                         (2, ('citation_support', 'variant_applicability', 'user_priorities',
+                              'coverage_and_limits', 'conclusion_presentation')),
+                         'stage 10 moved the final review once, and the two committed '
+                         'reviews were reissued with it; the intake review did not move')
 
 
 if __name__ == '__main__':

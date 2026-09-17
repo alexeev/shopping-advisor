@@ -416,7 +416,7 @@ class BundleAndCLI(PlanCase):
     def test_absent_plan_is_inert_on_all_existing_artifacts(self):
         first, a = bundle.run(BRIEF, directory=self.directory / 'legacy')
         second, b = bundle.run(BRIEF, directory=self.directory / 'explicit-none', plan=None)
-        self.assertEqual(a['study_id'], 'pasta-bronze-die-46127870314d')
+        self.assertEqual(a['study_id'], 'pasta-bronze-die-bde2b027b117')
         self.assertEqual(a['study_id'], b['study_id'])
         self.assertNotIn('intake', json.loads((first / 'brief.json').read_text()))
         self.assertFalse((first / intake.SNAPSHOT).exists())

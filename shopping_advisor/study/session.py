@@ -654,12 +654,25 @@ def resume(directory, ledger=None, reference=None, source=delivery.DECLARED,
             plan_review = 'unreadable'
 
     delivery_state = {'latest': None, 'recheck': None}
+    # The delivery review of the latest event, beside the other two reviews.
+    delivery_review_state = None
     if not verification:
         record_path = directory / delivery.RECORD
         if record_path.is_file():
-            latest = delivery.latest(delivery.read(record_path))
+            from . import delivery_review
+            events = delivery.read(record_path)['events']
+            latest = events[-1]
             delivery_state['latest'] = {'reference': latest['reference'],
                                         'current_advice': latest['current_advice']}
+            delivery_review_state = 'absent'
+            reviews_path = directory / delivery_review.RECORD
+            if reviews_path.is_file():
+                try:
+                    found = delivery_review.for_event(
+                        delivery_review.read_record(reviews_path), len(events) - 1)
+                    delivery_review_state = delivery_review.status(found) if found else 'absent'
+                except delivery_review.DeliveryReviewError:
+                    delivery_review_state = 'unreadable'
         if reference:
             event = delivery.assess_bundle(directory, reference, source)
             delivery_state['recheck'] = {
@@ -678,6 +691,7 @@ def resume(directory, ledger=None, reference=None, source=delivery.DECLARED,
         'interrupted': resources['interrupted'] if resources else [],
         'review': review,
         'intake_review': plan_review,
+        'delivery_review': delivery_review_state,
         'delivery': delivery_state,
         'next_actions': next_actions,
         'limits': ['Resumption verifies what is on disk. It cannot recover an action that '

@@ -115,7 +115,8 @@ convenience, never the authority.
   `plan-review-template` and `plan-review` bind an intake review to the plan
   revision and the live controls, `run --intake-review` refuses a plan its
   review says misreads the request, and `validate-report --require-review`
-  needs a passing one on a plan-backed study. A structurally valid plan is
+  needs a passing one on a plan-backed study. The final semantic review rests
+  on it, so the intake review comes first. A structurally valid plan is
   not a faithful one, and a passing review is not the buyer's confirmation. See
   [the intake workflow](RESEARCH.md#retain-an-intake-plan-before-the-executable-brief)
   and [the review pass](RESEARCH.md#review-the-plan-in-a-separate-pass).
@@ -149,7 +150,10 @@ convenience, never the authority.
   declares `freshness.scope`; silence is historical. Current advice is a
   structural condition checked by `study deliver` at each delivery event against
   the execution clock, and a blocked or missing delivery record fails
-  `validate-report` whatever the semantic review says. See
+  `validate-report` whatever the semantic review says. A permitted
+  current-advice event is delivered as audited only with its own delivery
+  review and the deliverer's named attestation; a later delivery is a new event
+  and a new review, never a rewritten semantic one. See
   [delivering the study](RESEARCH.md#deliver-the-study-and-say-what-it-is).
 - Keep runs sequential for now, with unique feed output paths, explicit locale,
   baseline pacing and finite query/product/time limits. Do not silently increase

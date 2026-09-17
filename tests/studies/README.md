@@ -50,8 +50,8 @@ would mean ignoring a contradiction the page itself contains.
 ```text
 uv run --offline --locked python -m shopping_advisor.study check tests/studies/pasta-bronze-die.toml
 uv run --offline --locked python -m shopping_advisor.study run tests/studies/pasta-bronze-die.toml
-uv run --offline --locked python -m shopping_advisor.study verify data/studies/pasta-bronze-die-46127870314d
-uv run --offline --locked python -m shopping_advisor.study deliver data/studies/pasta-bronze-die-46127870314d
+uv run --offline --locked python -m shopping_advisor.study verify data/studies/pasta-bronze-die-bde2b027b117
+uv run --offline --locked python -m shopping_advisor.study deliver data/studies/pasta-bronze-die-bde2b027b117
 ```
 
 `deliver` records the instant the study is handed over and says what it is
@@ -92,4 +92,6 @@ fixtures, complete claim checks and separate digest-bound semantic reviews. R13
 stage 6 adds two plan-backed examples under [tests/intake](../intake/README.md),
 bound JSON briefs over the same pasta feed whose recommendation is withheld; stage
 8 runs the first of them with a session ledger and resumes it from its bundle;
-stage 9 runs it with a committed intake review of its plan.
+stage 9 runs it with a committed intake review of its plan. Stage 10's migration
+moved every id here once — manifest v3 — without moving a decision, and reissued
+both T3 reviews under review v2.
