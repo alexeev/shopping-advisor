@@ -15,6 +15,7 @@ left open, and the ledger reads it.
 """
 import contextlib
 import copy
+from datetime import datetime, timedelta, timezone
 import io
 import json
 from pathlib import Path
@@ -74,6 +75,19 @@ class SessionCase(unittest.TestCase):
         else:
             for handle in ('_discovery', '_index'):
                 getattr(run, handle).close()
+        return run.directory
+
+    def timed_crawl(self, seconds, stats):
+        """A closed run whose manifest says, by its own clock, that it ran ``seconds``."""
+        clock = {'now': datetime(2026, 9, 17, 20, 0, 54, tzinfo=timezone.utc)}
+        with patch.object(run_module, '_utc_now', lambda: clock['now']):
+            run = run_module.CrawlRun(
+                root=str(self.directory / 'runs'), spider='amazon_product',
+                marketplace='www.amazon.de',
+                locale={'language': 'de', 'accept_language': 'de-DE,de;q=0.9', 'status': 'matches'},
+                arguments={'keyword': ['spaghetti']}).open()
+            clock['now'] += timedelta(seconds=seconds)
+            run.close(stats=stats, finish_reason='finished')
         return run.directory
 
     def study(self, name='bundle', ledger=LEDGER, plan=PLAN, brief=BRIEF, **kwargs):
@@ -230,6 +244,51 @@ class RecordingFromManifests(SessionCase):
         self.assertEqual(probe['run_manifest']['path'], str(run_dir / 'manifest.json'))
         self.assertEqual(probe['started_at'], manifest['started_at'])
         self.assertTrue(probe['finished_at'])
+
+    def test_a_closed_run_whose_stats_lack_the_elapsed_time_is_timed_by_its_own_instants(self):
+        """The 2026-09-17 run: a manifest with response and item counts but no
+        ``elapsed_time_seconds``, because the spider snapshotted the stats before
+        CoreStats wrote it on the same signal. Recording it as ``seconds: unknown``
+        left the strict ceiling unreconciled and refused every later action that
+        referenced it, while the manifest's own instants said 160 s all along."""
+        ledger = copy.deepcopy(self.ledger)
+        probe = self.planned_probe(ledger)
+        run_dir = self.timed_crawl(160, {'downloader/request_count': 57, 'downloader/response_count': 52,
+                                         'item_scraped_count': 40})
+        manifest = run_module.load_manifest(run_dir)
+        self.assertNotIn('elapsed_time_seconds', manifest['stats'])
+        self.assertEqual((manifest['started_at'], manifest['finished_at']),
+                         ('2026-09-17T20:00:54+00:00', '2026-09-17T20:03:34+00:00'))
+        session.record(ledger, 'probe-1', run_dir, result=dict(summary='s', next_action='n'),
+                       promotion=dict(promoted=False, into='none', changed_criteria=False,
+                                      supplied_candidates=False, assessment=''))
+        self.assertEqual(probe['state'], 'completed')
+        self.assertEqual(probe['consumption'], {'responses': 52, 'seconds': 160})
+        self.assertEqual(probe['consumption_source'], 'run_manifest',
+                         'the instants are the manifest speaking, not the operator')
+        self.assertTrue(session.reconcile(ledger, AT)['reconciled'])
+        row = self.limit('research-seconds', ledger)
+        self.assertEqual((row['unknown'], row['consumed']), ([], 40 + 160 + 900 + 5))
+        self.assertFalse(any('reconciled' in r for r in session.authorise(ledger, 'collect-2', AT)['reasons']))
+        # The stat, when the manifest has it, is what is read; the instants do not override it.
+        self.assertEqual(session.consumption_from_manifest(
+            dict(manifest, stats={'elapsed_time_seconds': 412.5}), ['seconds']), {'seconds': 412.5})
+
+    def test_the_run_clock_is_read_only_from_a_closed_pair_of_instants(self):
+        for manifest in ({'stats': {}},                                             # never closed
+                         {'started_at': AT},                                        # no finished_at
+                         {'started_at': AT, 'finished_at': 'yesterday'},            # not an instant
+                         {'started_at': AT, 'finished_at': 7},                      # not a string
+                         {'started_at': LATER, 'finished_at': AT},                  # runs backwards
+                         {'started_at': AT, 'finished_at': '2026-09-17T00:01:00'}):  # naive against aware
+            with self.subTest(manifest=manifest):
+                self.assertEqual(session.consumption_from_manifest(manifest, ['seconds']), {'seconds': None})
+        self.assertEqual(session.consumption_from_manifest(
+            {'started_at': AT, 'finished_at': '2026-09-17T00:02:40.500000+00:00'}, ['seconds']),
+            {'seconds': 160.5})
+        self.assertEqual(session.consumption_from_manifest(
+            {'started_at': AT, 'finished_at': AT, 'stats': {'elapsed_time_seconds': 'fast'}}, ['seconds']),
+            {'seconds': 0}, 'a run closed within the second it started ran for zero whole seconds')
 
     def test_an_interrupted_run_is_interrupted_and_its_consumption_unknown_not_zero(self):
         ledger = copy.deepcopy(self.ledger)
@@ -558,6 +617,20 @@ class CommandLine(SessionCase):
         self.assertEqual(status, 1)
         status, text = self.cli('session-record', path, 'collect-2', '--state', 'interrupted', '--assume-allocation')
         self.assertEqual(status, 2, 'a finished action is not recorded twice')
+
+    def test_session_record_times_a_run_whose_stats_lack_the_elapsed_time(self):
+        ledger = copy.deepcopy(self.ledger)
+        self.action('collect-2', ledger)['allocation'] = {'responses': 50, 'seconds': 300}
+        self.action('collect-2', ledger).update(state='authorised', authorisation='checked')
+        path = self.write('ledger.json', ledger)
+        run_dir = self.timed_crawl(160, {'downloader/response_count': 52, 'item_scraped_count': 40})
+        status, text = self.cli('session-record', path, 'collect-2', '--run', run_dir)
+        self.assertEqual(status, 0, text)
+        self.assertIn('collect-2: completed; consumption from run_manifest', text)
+        self.assertIn('seconds        160', text)
+        status, text = self.cli('session-check', path, '--reference', AT)
+        self.assertEqual(status, 0, text)
+        self.assertNotIn('unreconciled', text)
 
     def test_run_snapshots_the_ledger_and_resume_reads_it_back(self):
         output = self.directory / 'cli-bundle'

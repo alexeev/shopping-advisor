@@ -161,9 +161,12 @@ def declared_feeds(settings):
 
     Read from Scrapy's ``FEEDS`` -- which is where ``-O data/x.jsonl`` ends up
     -- so the manifest can name the feed a later replay should be given.
-    Recorded at the start, not at the end: the feed exporter and this code
-    both close on ``spider_closed`` and nothing orders them, so a digest taken
-    here would be a digest of a file still being written.
+    Recorded at the start, not at the end: the feed exporter closes its file
+    on ``spider_closed``, and a digest taken while that signal is being
+    delivered would be a digest of a file still being written. The spider now
+    writes the manifest on ``engine_stopped``, after every ``spider_closed``
+    receiver has completed, but the binding stays a declaration made when the
+    crawl was asked for, so that a run that never closed still names its feed.
     """
     bindings = []
     for uri, options in (settings.getdict('FEEDS') or {}).items():

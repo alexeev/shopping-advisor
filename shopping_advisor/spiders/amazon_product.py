@@ -174,7 +174,18 @@ class AmazonProductSpider(scrapy.Spider):
     def from_crawler(cls, crawler, *args, **kwargs):
         spider = super().from_crawler(crawler, *args, **kwargs)
         spider.begin_run()
-        crawler.signals.connect(spider.finish_run, signal=signals.spider_closed)
+        # The crawler builds the spider before it loads the extensions, so a
+        # ``spider_closed`` receiver connected here runs *before* CoreStats
+        # writes ``elapsed_time_seconds``, ``finish_time`` and
+        # ``finish_reason`` on that same signal; a stats snapshot taken there
+        # lacked all three (measured 2026-09-17). ``spider_closed`` therefore
+        # only notes why the spider closed, and the manifest is written on
+        # ``engine_stopped``, which the engine sends once every
+        # ``spider_closed`` receiver -- the feed exporter's included -- has
+        # completed.
+        crawler.signals.connect(spider.note_finish_reason,
+                                signal=signals.spider_closed)
+        crawler.signals.connect(spider.finish_run, signal=signals.engine_stopped)
         return spider
 
     def __init__(self, keyword='spaghetti hartweizen', domain='www.amazon.de',
@@ -221,6 +232,7 @@ class AmazonProductSpider(scrapy.Spider):
         self._queued_by_query = collections.Counter()
         self._seen_asins = set()
         self.run = None
+        self._finish_reason = None
 
     # -- run identity ------------------------------------------------------
 
@@ -273,10 +285,19 @@ class AmazonProductSpider(scrapy.Spider):
                          self.run.directory, locale['language'],
                          locale['status'])
 
-    def finish_run(self, spider, reason):
+    def note_finish_reason(self, spider, reason):
+        self._finish_reason = reason
+
+    def finish_run(self):
+        """Close the run with the stats as they stand once the engine stopped.
+
+        A crawl that failed before its engine started sends ``spider_closed``
+        but never ``engine_stopped``; its manifest stays open and reads as
+        interrupted, which is what it was.
+        """
         if self.run is not None:
             self.run.close(stats=self.crawler.stats.get_stats(),
-                           finish_reason=reason)
+                           finish_reason=self._finish_reason or 'unknown')
             self.logger.info(
                 'Run %s: %s discovery occurrences, %s pages retained in %s',
                 self.run.run_id, self.run.counts['discovery_occurrences'],

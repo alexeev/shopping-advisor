@@ -40,6 +40,7 @@ state with the next actions the ledger permits or names the precise missing
 dependency. It does not need the conversation that produced any of it.
 """
 
+from datetime import datetime
 import json
 from pathlib import Path
 import re
@@ -348,11 +349,41 @@ def load(path):
 # Recording what an action did, from the manifest the crawl wrote
 # ---------------------------------------------------------------------------
 
+def _number(value):
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def run_seconds(manifest):
+    """Seconds between the manifest's own ``started_at`` and ``finished_at``.
+
+    The run stamps both instants itself, at whole-second resolution, so a
+    closed manifest carries its duration whether or not Scrapy's
+    ``elapsed_time_seconds`` reached the stats snapshot. ``None`` for a run
+    that never closed, or whose instants do not parse or run backwards:
+    unknown is not zero.
+    """
+    try:
+        started = datetime.fromisoformat(manifest.get('started_at') or '')
+        finished = datetime.fromisoformat(manifest.get('finished_at') or '')
+        seconds = (finished - started).total_seconds()
+    except (TypeError, ValueError):
+        return None
+    if seconds < 0:
+        return None
+    return int(seconds) if seconds.is_integer() else seconds
+
+
 def consumption_from_manifest(manifest, units):
     """``{unit: amount or None}`` read from a run manifest, nothing inferred.
 
     A manifest without ``stats`` -- a crawl that never closed -- reports every
-    stats-backed unit as unknown. Unknown is not zero.
+    stats-backed unit as unknown. Unknown is not zero. ``seconds`` has a
+    second witness in the manifest itself: when a closed manifest's stats
+    lack ``elapsed_time_seconds`` -- until 2026-09-17 the spider snapshotted
+    the stats before CoreStats had written it on the same signal, and a stats
+    extension can be switched off -- the run's own ``started_at`` and
+    ``finished_at`` say how long it ran. That is still the run manifest
+    speaking, not the operator.
     """
     consumption = {}
     for unit in units:
@@ -364,8 +395,9 @@ def consumption_from_manifest(manifest, units):
         else:
             block, key = where
             value = (manifest.get(block) or {}).get(key)
-            consumption[unit] = value if isinstance(value, (int, float)) \
-                and not isinstance(value, bool) else None
+            if unit == 'seconds' and not _number(value):
+                value = run_seconds(manifest)
+            consumption[unit] = value if _number(value) else None
     return consumption
 
 
