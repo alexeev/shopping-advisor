@@ -927,7 +927,7 @@ byte-identical, so stages 1–9 cannot move a committed example.
 | 9 | Intake review artifact | no | no | M |
 | 10 | **Migration**: manifest v3, identity projection, review v2 | **once** | **once** | L |
 
-**Implementation status (2026-09-17): stages 1–7 shipped.** Stage 3 uses
+**Implementation status (2026-09-17): stages 1–9 shipped.** Stage 3 uses
 `LEDGER_VERSION`, `AUDIT_VERSION` and `REVIEW_VERSION`, each still 1 and tracked
 independently by the gate. Stage 4 is
 [study/controls.py](shopping_advisor/study/controls.py), exposed by
@@ -947,9 +947,22 @@ Stage 7 is [study/delivery.py](shopping_advisor/study/delivery.py) and
 the declared scope with silence read as historical, `study deliver` freezing the
 execution-clock reference in a bundle-internal record, current advice as a
 structural condition `validate-report` enforces past any semantic review, and
-replay that never reads the clock. Stages 8 onward remain planned; the four
-pre-existing study identities, decisions and report bytes stay unchanged, and
-both committed reviews stand.
+replay that never reads the clock. Stage 8 is
+[study/session.py](shopping_advisor/study/session.py) and
+[CONTRACT §12](CONTRACT.md#12-session-resource-ledger-and-resumption-r13-stage-8):
+declared research and engineering limits in observed units, action records read
+from run manifests, reconciliation that keeps unknown unknown and counts a
+resumed action once, the next-action check, and `study resume` from the bundle's
+own snapshot. Stage 9 is
+[study/intake_review.py](shopping_advisor/study/intake_review.py) and
+[CONTRACT §13](CONTRACT.md#13-intake-review-r13-stage-9): a separate intake
+review artifact bound to the plan revision, the retained user evidence, the
+resolved mappings and the live control catalogue, with the five checks of §11,
+a `limited` status that a review-limiting redaction forces, refusal of a run on
+a plan its review fails, and `validate-report --require-review` needing a
+passing one on a plan-backed study — without touching the final review or its
+version. Stage 10 remains planned; the four pre-existing study identities,
+decisions and report bytes stay unchanged, and both committed reviews stand.
 
 **1 — Worked cases and characterisation tests.** The referent, written before any
 field name. The cases in §14 become committed fixtures with their intent and

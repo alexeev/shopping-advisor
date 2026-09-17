@@ -19,8 +19,10 @@
     "evidence_ledger": 1,
     "extraction_schema": 6,
     "intake_plan": 1,
+    "intake_review": 1,
     "run_manifest": 2,
     "semantic_review": 1,
+    "session_ledger": 1,
     "stage_gates": 1,
     "study_audit": 1,
     "study_manifest": 2,
@@ -52,8 +54,10 @@
       "expect": {
         "current_advice": "not_in_scope",
         "excluded": 3,
+        "intake_review": "",
         "offers": 5,
         "outcome": "recommendation",
+        "resumable": "",
         "shortlisted": 3,
         "stop": "",
         "study_id": "pasta-bronze-die-46127870314d"
@@ -67,8 +71,10 @@
       "expect": {
         "current_advice": "not_in_scope",
         "excluded": 2,
+        "intake_review": "",
         "offers": 0,
         "outcome": "insufficient_evidence",
+        "resumable": "",
         "shortlisted": 0,
         "stop": "",
         "study_id": "pasta-low-temperature-drying-d309972b3bd0"
@@ -83,8 +89,10 @@
       "expect": {
         "current_advice": "not_in_scope",
         "excluded": 0,
+        "intake_review": "",
         "offers": 3,
         "outcome": "recommendation",
+        "resumable": "",
         "shortlisted": 3,
         "stop": "",
         "study_id": "basmati-audit-positive-571cca1a2d4b"
@@ -100,8 +108,10 @@
       "expect": {
         "current_advice": "not_in_scope",
         "excluded": 0,
+        "intake_review": "",
         "offers": 3,
         "outcome": "insufficient_evidence",
+        "resumable": "",
         "shortlisted": 0,
         "stop": "",
         "study_id": "basmati-audit-insufficient-18b88dc2bd3c"
@@ -116,15 +126,19 @@
       "expect": {
         "current_advice": "not_in_scope",
         "excluded": 3,
+        "intake_review": "pass",
         "offers": 5,
         "outcome": "recommendation",
+        "resumable": "yes",
         "shortlisted": 0,
         "stop": "requirement_unsupported",
         "study_id": "pasta-delivered-cost-608160f72d15"
       },
+      "intake_review": "tests/intake/delivered-cost-intake-review.json",
       "name": "pasta-delivered-cost",
       "plan": "tests/intake/delivered-cost-plan.json",
-      "why": "R13 stage 6's delivered-cost trap: the recommendation is withheld and the item-price finding survives under its own heading."
+      "session": "tests/intake/session-ledger.json",
+      "why": "R13 stage 6's delivered-cost trap, stage 8's resumption example and stage 9's reviewed plan: the recommendation is withheld, the item-price finding survives, the study resumes from its own session snapshot with the interrupted collection named and the exhausted next action prevented, and its committed intake review binds the plan revision and the live dry_pasta catalogue."
     },
     {
       "brief": "tests/intake/budget-brief.json",
@@ -132,8 +146,10 @@
       "expect": {
         "current_advice": "not_in_scope",
         "excluded": 3,
+        "intake_review": "",
         "offers": 5,
         "outcome": "recommendation",
+        "resumable": "",
         "shortlisted": 0,
         "stop": "requirement_unsupported",
         "study_id": "pasta-purchase-budget-85064fcacd0e"
@@ -144,14 +160,14 @@
     }
   ],
   "note": "What the maintenance gate is entitled to find. Tracked on purpose: a task-local change that lowers a floor, drops a check or moves an example's decision has to say so here, in a reviewable diff. Re-record with `maintenance baseline --update` from a tree that passes.",
-  "recorded_at": "2026-09-17T11:46:47+00:00",
+  "recorded_at": "2026-09-17T15:35:43+00:00",
   "runtime": {
     "lock_sha256": "e24bc67da2dba6c49538700bc8bce61658748c715e9103603f537c15694a32cd",
     "python": "3.14",
     "scrapy": "2.19"
   },
   "tests": {
-    "minimum": 613,
+    "minimum": 676,
     "modules": [
       "test_analysis",
       "test_attributed_search",
@@ -166,11 +182,13 @@
       "test_gates",
       "test_intake",
       "test_intake_plan",
+      "test_intake_review",
       "test_maintenance",
       "test_marketplaces",
       "test_mounting_paste",
       "test_reviews",
       "test_run",
+      "test_session",
       "test_settings",
       "test_study",
       "test_validation",

@@ -90,4 +90,6 @@ command.
 T3 adds [two basmati audit examples](t3/README.md) with synthetic record/source
 fixtures, complete claim checks and separate digest-bound semantic reviews. R13
 stage 6 adds two plan-backed examples under [tests/intake](../intake/README.md),
-bound JSON briefs over the same pasta feed whose recommendation is withheld.
+bound JSON briefs over the same pasta feed whose recommendation is withheld; stage
+8 runs the first of them with a session ledger and resumes it from its bundle;
+stage 9 runs it with a committed intake review of its plan.

@@ -1,0 +1,53 @@
+{
+  "intake_review_version": 1,
+  "plan": {
+    "id": "pasta-delivered-intake",
+    "revision": 1,
+    "sha256": "7e5d7e9c001281c259d33d6a8fdcba244b36d23cf11c55284d7e1984f1bd71d0"
+  },
+  "basis": {
+    "user_evidence_sha256": "4d10b596940f30e092af8803e830a334a8d4814ce3cd4161f3366f9eb8a57ed5",
+    "requirements_sha256": "f4e2c12a990572dbab51e0a07882f439e9833c15277242b0a82cb97cb216d4a6",
+    "readback_response": "no_response",
+    "catalogue_sha256": "80d477a1838736bc27b3c13a590714865c97da9e237947ef3132fa0dd9e87200"
+  },
+  "review_limits": [],
+  "reviewer": "Claude Fable 5.1, separate R13 stage 9 fixture intake review, 2026-09-17",
+  "checks": {
+    "omissions": {
+      "status": "pass",
+      "findings": "The retained exchange is one synthetic message, u1. It states bronze-die, dry pasta, cheapest once delivered, Amazon.de, delivery in Germany, any pack size, and that this is a historical comparison over the committed case records rather than current buying advice. The first six are recorded: four as requirement rows (bronze, dry, delivered, packs) and two as the plan's marketplace and delivery-region scope. The historical-scope sentence has no requirement row; it bears on what the answer may claim at delivery, not on which product qualifies or wins, and it is carried structurally by the brief's undeclared scope (silence is historical) and the delivery record, which marks every event not_in_scope. Nothing decisive is missing. No requirement in the plan lacks a source in u1 except the agent's own listed-price axis, which says so.",
+      "requirement_ids": [],
+      "message_ids": ["u1"]
+    },
+    "faithfulness": {
+      "status": "pass",
+      "findings": "bronze: the user said bronze-die; the statement narrows this to the vendor's claim rather than independent certification, which is the only reading these records can support and is said openly in the statement, not hidden in a mapping. Role hard constraint, stated, decisive: what the words support. delivered: cheapest once it is delivered is recorded as a decisive stated objective, priority 1, with the per-kilogram normalisation made explicit; the normalisation is the agent's operationalisation, implied by any pack size (a per-pack comparison across sizes answers nothing) and consistent with the category's default axis, and it changes neither the role nor the cost basis the user named. dry: dry pasta as a stated hard constraint. packs: any pack size recorded as operative context that folds size variants and preserves nothing the user asked to keep apart. listed: authored by the agent, settlement assumed, basis reasonableness, not decisive, with a rationale that calls it a bounded finding and never delivered cost; nothing the agent introduced is presented as the user's. Read-back status is no_response, so nothing here may be described as user-confirmed, and the plan does not.",
+      "requirement_ids": ["bronze", "delivered", "dry", "packs", "listed"],
+      "message_ids": ["u1"]
+    },
+    "adequacy": {
+      "status": "pass",
+      "findings": "bronze maps to require_claims[bronze_die], whose effect is a trusted vendor statement on the card: that is what the statement asks for, and its limit (presence, not proof) is what the statement disclaims. dry maps to classification, the existing classifier, which is the statement. packs maps to offer_grouping, which folds size variants and keeps unknown families apart, matching the statement's preservation clause. listed maps to value_usability on price_per_base in EUR/kg with explicit axis attribution: it orders on exactly the quantity it names. delivered is unsupported with gap kind evidence_and_method, and both halves hold against the live dry_pasta catalogue: none of its five controls reads a shipping quantity, so this is not the missing-evidence case INTAKE section 3 warns against misdiagnosing; collecting shipping data would still leave no control that orders on delivered cost. The next step names a bounded probe and scoped maintenance and withholds the recommendation until then, which is the honest route. No control is mapped to a requirement it does not answer; in particular nothing is routed onto the per-kilogram cap.",
+      "requirement_ids": ["bronze", "dry", "packs", "listed", "delivered"],
+      "message_ids": []
+    },
+    "assumptions": {
+      "status": "pass",
+      "findings": "One requirement is assumed: listed, the agent's choice of listed price per kilogram as the available axis. The default is defensible because it is the only price axis these records support; the rationale and the if-wrong consequence are recorded (the bounded finding would be on the wrong axis and nothing above it changes); and it is not decisive, so it cannot overturn the withheld recommendation or be mistaken for the delivered-cost answer. No requirement is delegated, and no hard constraint is assumed. No indefensible default proceeds on disclosure alone.",
+      "requirement_ids": ["listed"],
+      "message_ids": []
+    },
+    "stage_effects": {
+      "status": "pass",
+      "findings": "bronze and dry take effect at candidate assessment, where their controls run. delivered records three distinct effects: shipping would have to be collected (collection, retained and not executed by this offline study), ordering on delivered cost (comparison, where the substitution is refused), and no recommendation without shipping evidence (conclusion). listed and packs take effect at comparison. Each effect is the stage its meaning implies; none is read as an acquisition ban, and none is applied only at the last stage.",
+      "requirement_ids": ["bronze", "dry", "delivered", "listed", "packs"],
+      "message_ids": []
+    }
+  },
+  "unresolved_limits": [
+    "This reviews a synthetic, sanitized exchange of one message written for the delivered-cost trap. It establishes nothing about how faithfully arbitrary natural language is read.",
+    "The reviewer is an agent, not the buyer. A pass records that the plan is consistent with the retained wording and that its controls answer it; the read-back had no response, and nothing is user-confirmed.",
+    "The historical-scope instruction in u1 has no requirement row and is enforced by the brief's undeclared scope and the delivery record rather than by the plan. A plan revision recording it as delivery-stage context would be the more legible record; it would not change any decision."
+  ]
+}

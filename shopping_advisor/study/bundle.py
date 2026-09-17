@@ -44,7 +44,7 @@ from ..provenance import (code_identity, sha256_file, sha256_text,
 from ..analysis import report as report_module
 from ..analysis.category import is_match
 from ..run import read_jsonl
-from . import writeup, audit, intake, gates, delivery
+from . import writeup, audit, intake, intake_review, gates, delivery, session
 from .analysis import StudyError, analyse, brief_fault
 from .brief import BRIEF_VERSION, BriefError, load
 
@@ -140,7 +140,8 @@ def artifact_digests(directory):
     directory = pathlib.Path(directory)
     return {name: {'sha256': sha256_file(directory / name),
                    'bytes': (directory / name).stat().st_size}
-            for name in (*ARTIFACTS, intake.SNAPSHOT, delivery.RECORD)
+            for name in (*ARTIFACTS, intake.SNAPSHOT, intake_review.SNAPSHOT,
+                         delivery.RECORD, session.SNAPSHOT)
             if (directory / name).is_file()}
 
 
@@ -201,7 +202,8 @@ def load_manifest(directory):
 
 
 def run(brief_path, directory=None, root=DEFAULT_STUDY_ROOT, force=False,
-        started_at='', finished_at='', evidence=None, plan=None):
+        started_at='', finished_at='', evidence=None, plan=None, session_ledger=None,
+        plan_review=None):
     """Validate a brief, analyse its inputs, and write the bundle.
 
     ``(directory, manifest)``. Nothing here collects: every byte it reads was
@@ -210,6 +212,42 @@ def run(brief_path, directory=None, root=DEFAULT_STUDY_ROOT, force=False,
     brief = load(brief_path)
     plan = intake.load(plan) if isinstance(plan, (str, pathlib.Path)) else plan
     intake.check_transition(plan, brief)
+    review = (intake_review.read(plan_review)
+              if isinstance(plan_review, (str, pathlib.Path)) else plan_review)
+    if review is not None:
+        if plan is None:
+            raise BundleError('an intake review reviews a plan; run this study with '
+                              '--plan so the bundle can hold the revision it binds')
+        intake_review.check_review(review, plan)
+        if intake_review.status(review) == intake_review.FAIL:
+            # A recorded blocker at intake is a planning outcome, not
+            # authorisation to proceed through it (INTAKE §5). The study
+            # is not run on a reading its own review says is wrong.
+            failed = '; '.join(f'{name}: {findings}'
+                               for name, findings in intake_review.failures(review))
+            raise BundleError(f'the intake review records that plan {plan["id"]} '
+                              f'revision {plan["revision"]} fails review — {failed}. '
+                              f'Revise the plan and review the revision rather than '
+                              f'running a study on a reading its review says misreads '
+                              f'the request. Nothing was written.')
+    ledger_snapshot = (session.load(session_ledger)
+                       if isinstance(session_ledger, (str, pathlib.Path)) else session_ledger)
+    if ledger_snapshot is not None:
+        session.check(ledger_snapshot)
+        # The snapshot travels with the study so it resumes without the working
+        # ledger. A ledger that names another plan revision is not this study's.
+        if ledger_snapshot['plan'] is not None:
+            if plan is None:
+                raise BundleError('the session ledger names a plan; run this study with '
+                                  '--plan so the bundle can hold the same revision')
+            expected = {'id': plan['id'], 'revision': plan['revision'],
+                        'sha256': intake.digest(plan)}
+            if ledger_snapshot['plan'] != expected:
+                raise BundleError(f'the session ledger names plan '
+                                  f'{ledger_snapshot["plan"]["id"]} revision '
+                                  f'{ledger_snapshot["plan"]["revision"]}; this study runs '
+                                  f'{plan["id"]} revision {plan["revision"]}. Revise the '
+                                  f'ledger explicitly rather than snapshotting a stale one')
     inputs = input_digests(brief)
     ledger = audit.read(evidence) if evidence else audit.empty()
     if brief.category == 'basmati_rice':
@@ -242,6 +280,10 @@ def run(brief_path, directory=None, root=DEFAULT_STUDY_ROOT, force=False,
     write(brief, result, cards, target)
     if plan is not None:
         write_json_atomically(target / intake.SNAPSHOT, plan)
+    if review is not None:
+        write_json_atomically(target / intake_review.SNAPSHOT, review)
+    if ledger_snapshot is not None:
+        write_json_atomically(target / session.SNAPSHOT, ledger_snapshot)
     write_json_atomically(target / LEDGER, ledger)
     serialized = list(read_jsonl(target / CARDS))
     write_json_atomically(target / CLAIM_INDEX, audit.index(result, serialized, ledger))
@@ -251,6 +293,18 @@ def run(brief_path, directory=None, root=DEFAULT_STUDY_ROOT, force=False,
     write_json_atomically(target / VALIDATION, audit.validation_result(audit.review_template(target)))
     written = manifest(brief, result, identity, inputs, started_at,
                        finished_at, target)
+    if ledger_snapshot is not None:
+        # Integrity-bound, not identity-bearing (INTAKE §8): the same analysis
+        # is the same study whatever the session spent reaching it.
+        written['session'] = {'id': ledger_snapshot['id'],
+                              'revision': ledger_snapshot['revision'],
+                              'sha256': session.digest(ledger_snapshot)}
+    if review is not None:
+        # Approval travels in review artifacts and is checked before
+        # delivery; it is never rendered into the report it approves
+        # (INTAKE §11), and it does not enter study_id.
+        written['intake_review'] = {'status': intake_review.status(review),
+                                    'sha256': intake_review.digest(review)}
     write_json_atomically(target / MANIFEST, written)
     return target, written
 
@@ -344,7 +398,8 @@ def verify(directory, input_root=''):
     unusable = set()
     # A snapshot must agree with both the manifest and the brief binding. Its
     # presence is optional only for legacy studies, not for a bound brief.
-    optional = tuple(name for name in (intake.SNAPSHOT, delivery.RECORD)
+    optional = tuple(name for name in (intake.SNAPSHOT, intake_review.SNAPSHOT,
+                                       delivery.RECORD, session.SNAPSHOT)
                      if name in (data.get('artifacts') or {})
                      or (directory / name).exists())
     for name in (*ARTIFACTS, *optional):
@@ -515,4 +570,38 @@ def verify(directory, input_root=''):
             delivery.check(delivery.read(directory / delivery.RECORD), directory)
         except delivery.DeliveryError as exc:
             findings.append({'code': 'delivery_invalid', 'message': str(exc)})
+    if session.SNAPSHOT in optional:
+        # Shape and plan binding only: the ledger is a record of what the
+        # session spent, and nothing in this analysis re-derives it.
+        try:
+            snapshot = session.load(directory / session.SNAPSHOT)
+            recorded = data.get('session') or {}
+            if recorded.get('sha256') != session.digest(snapshot):
+                raise session.SessionError('the manifest names a different session ledger '
+                                           'digest than the snapshot holds')
+            if snapshot['plan'] is not None and plan is not None and snapshot['plan'] != {
+                    'id': plan['id'], 'revision': plan['revision'], 'sha256': intake.digest(plan)}:
+                raise session.SessionError('the session snapshot names another plan revision '
+                                           'than the bundle holds')
+        except session.SessionError as exc:
+            findings.append({'code': 'session_invalid', 'message': str(exc)})
+    if intake_review.SNAPSHOT in optional:
+        # Binding only: the review is a reviewer's record, and nothing in this
+        # analysis re-derives a judgement. What is checked is that it reviewed
+        # this bundle's plan revision against the live catalogue, and that the
+        # manifest names the same bytes and the same status.
+        try:
+            if plan is None:
+                raise intake_review.IntakeReviewError(
+                    'an intake review accompanies no intake plan snapshot: nothing '
+                    'in this bundle is what it reviewed')
+            review = intake_review.load(directory / intake_review.SNAPSHOT, plan)
+            recorded = data.get('intake_review') or {}
+            if recorded.get('sha256') != intake_review.digest(review) \
+                    or recorded.get('status') != intake_review.status(review):
+                raise intake_review.IntakeReviewError(
+                    'the manifest names another intake review digest or status than '
+                    'the snapshot holds')
+        except intake_review.IntakeReviewError as exc:
+            findings.append({'code': 'intake_review_invalid', 'message': str(exc)})
     return data, findings

@@ -233,8 +233,11 @@ still covers one marketplace: feeds spanning several stop the command until
 | `python -m shopping_advisor.study plan-check PLAN` | Validate an intake plan before category support or feeds exist; optional `--brief BRIEF` checks preservation |
 | `python -m shopping_advisor.study plan-readback PLAN` | Render the authoritative plan revision; `--record` saves presented bytes with no-response status |
 | `python -m shopping_advisor.study plan-bind BRIEF --plan PLAN -o NEW.json` | Check existing brief controls and bind the plan's requirements into a new brief |
+| `python -m shopping_advisor.study plan-review-template PLAN -o REVIEW.json` | Write a pending intake review bound to the plan revision and the live controls, and print its five questions |
+| `python -m shopping_advisor.study plan-review PLAN REVIEW.json` | Check an intake review against its plan and print what it records; exits 1 on a recorded failure |
+| `python -m shopping_advisor.study review-intake BUNDLE REVIEW.json` | Attach a separate intake review to a plan-backed bundle; a recorded failure fails `validate-report` |
 | `python -m shopping_advisor.study run BRIEF` | Analyses the feeds the brief names and writes a study bundle; collects nothing |
-| `python -m shopping_advisor.study validate-report BUNDLE --require-review` | Validate indexed claims, replay decisions and require a separate completed semantic review |
+| `python -m shopping_advisor.study validate-report BUNDLE --require-review` | Validate indexed claims, replay decisions and require a separate completed semantic review, plus a passing intake review on a plan-backed study |
 | `python -m shopping_advisor.study verify BUNDLE` | Re-derives the decisions from the bundle's own inputs and reports what moved |
 | `python -m shopping_advisor maintenance check` | The gate: runtime, offline suite, contract versions, categories, replayed examples and documentation links, against the tracked baseline |
 | `python -m shopping_advisor maintenance baseline --update` | Deliberately re-record the floors, from a tree that passes; refuses otherwise |
@@ -268,8 +271,15 @@ recommendation and keep the ranking on the available axis under a separate
 bounded-finding heading. A brief declares whether it is a historical comparison
 or current advice; `study deliver` freezes the delivery instant and blocks
 current advice on stale, undated or withheld decisive inputs, and
-`validate-report` refuses a current-advice study without a passing record.
-Resource accounting and intake semantic review remain later R13 stages.
+`validate-report` refuses a current-advice study without a passing record. A
+session ledger declares research and engineering limits in the units crawls
+report, records what each probe and collection consumed from its run manifest,
+refuses a next action that does not fit, and travels inside the bundle so that
+`study resume` can verify the retained artifacts and say what the budget still
+permits without the originating conversation. A separate intake review binds
+the plan revision and the live controls: `run --intake-review` refuses a plan
+its review says misreads the request, and an audited plan-backed report needs a
+passing one. The stage 10 migration remains planned.
 
 The `validated` CLI always supplies a category profile (default `dry_pasta`).
 For neutral validation, the Python API is `validate(record)` with no profile;

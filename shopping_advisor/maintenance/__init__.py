@@ -197,8 +197,10 @@ def _contract_versions():
     from ..study.brief import BRIEF_VERSION
     from ..study.bundle import STUDY_MANIFEST_VERSION
     from ..study.intake import PLAN_VERSION
+    from ..study.intake_review import INTAKE_REVIEW_VERSION
     from ..study.gates import STAGE_GATES_VERSION
     from ..study.delivery import DELIVERY_VERSION
+    from ..study.session import SESSION_VERSION
     from ..validation.contract import CONTRACT_VERSION
 
     return {'extraction_schema': SCHEMA_VERSION,
@@ -206,8 +208,10 @@ def _contract_versions():
             'run_manifest': RUN_MANIFEST_VERSION,
             'brief': BRIEF_VERSION,
             'intake_plan': PLAN_VERSION,
+            'intake_review': INTAKE_REVIEW_VERSION,
             'stage_gates': STAGE_GATES_VERSION,
             'delivery_record': DELIVERY_VERSION,
+            'session_ledger': SESSION_VERSION,
             'study_manifest': STUDY_MANIFEST_VERSION,
             'evidence_ledger': audit.LEDGER_VERSION,
             'study_audit': audit.AUDIT_VERSION,
@@ -385,6 +389,10 @@ def _replay_example(example, directory, root):
         return findings, {'name': name}
 
     run_argv = ['run', brief, '-o', directory, *plan_argv]
+    if example.get('intake_review'):
+        run_argv += ['--intake-review', Path(root) / example['intake_review']]
+    if example.get('session'):
+        run_argv += ['--session', Path(root) / example['session']]
     if example.get('evidence'):
         run_argv += ['--evidence', Path(root) / example['evidence']]
     if invoke(*run_argv) != 0:
@@ -395,6 +403,13 @@ def _replay_example(example, directory, root):
         # the passage of time. The record says the reference was declared.
         invoke('deliver', directory, '--reference', example['deliver_at'])
         invoke('verify', directory)
+    resumable = ''
+    if example.get('session'):
+        # The complete resumption example: from the bundle's own snapshot, at
+        # the same fixed reference, with the working ledger deliberately unused.
+        status = invoke('resume', directory, '--reference',
+                        example.get('deliver_at') or '2026-09-17T00:00:00+00:00')
+        resumable = 'yes' if status == 0 else 'no'
     invoke('validate-report', directory)
     if example.get('review'):
         invoke('review', directory, Path(root) / example['review'])
@@ -416,6 +431,8 @@ def _replay_example(example, directory, root):
                  'outcome': manifest.get('outcome'),
                  'stop': manifest.get('stop', ''),
                  'current_advice': current_advice,
+                 'resumable': resumable,
+                 'intake_review': (manifest.get('intake_review') or {}).get('status', ''),
                  'shortlisted': manifest.get('counts', {}).get('shortlisted'),
                  'offers': manifest.get('counts', {}).get('offers'),
                  'excluded': manifest.get('counts', {}).get('excluded')}

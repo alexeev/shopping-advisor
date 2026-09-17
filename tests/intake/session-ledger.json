@@ -1,0 +1,242 @@
+{
+  "session_version": 1,
+  "id": "pasta-delivered-session",
+  "revision": 1,
+  "supersedes": "",
+  "plan": {
+    "id": "pasta-delivered-intake",
+    "revision": 1,
+    "sha256": "7e5d7e9c001281c259d33d6a8fdcba244b36d23cf11c55284d7e1984f1bd71d0"
+  },
+  "limits": [
+    {
+      "id": "research-responses",
+      "kind": "research",
+      "unit": "responses",
+      "amount": 300,
+      "measurement": "observed",
+      "mode": "stops_new_work",
+      "scope": "Synthetic case 18: the pasta delivered-cost study and its probes on Amazon.de.",
+      "authorization": {
+        "source": "user_message",
+        "ref": "u1",
+        "text": "This is a historical comparison over the committed case records, not current buying advice."
+      },
+      "deadline": "",
+      "note": "Counted from downloader/response_count in each run manifest."
+    },
+    {
+      "id": "research-seconds",
+      "kind": "research",
+      "unit": "seconds",
+      "amount": 1800,
+      "measurement": "observed",
+      "mode": "strict_ceiling",
+      "scope": "Synthetic case 18: the pasta delivered-cost study and its probes on Amazon.de.",
+      "authorization": {
+        "source": "user_message",
+        "ref": "u1",
+        "text": "This is a historical comparison over the committed case records, not current buying advice."
+      },
+      "deadline": "",
+      "note": "Enforced per run by CLOSESPIDER_TIMEOUT; a timeout closure may leave requests in flight, so the last run can overshoot by its in-flight requests."
+    },
+    {
+      "id": "engineering-seconds",
+      "kind": "engineering",
+      "unit": "seconds",
+      "amount": 0,
+      "measurement": "observed",
+      "mode": "stops_new_work",
+      "scope": "Synthetic case 18: the pasta delivered-cost study and its probes on Amazon.de.",
+      "authorization": {
+        "source": "existing_authorization",
+        "ref": "",
+        "text": "No engineering is funded in this session; proposals are retained for R15."
+      },
+      "deadline": "",
+      "note": "Zero allowance: a proposal may be recorded, nothing may be built."
+    }
+  ],
+  "actions": [
+    {
+      "id": "inspect-1",
+      "kind": "inspection",
+      "purpose": "Inspect the committed pasta case feed and the dry_pasta controls.",
+      "question": "",
+      "limit_ids": [
+        "research-seconds"
+      ],
+      "allocation": {
+        "seconds": 60
+      },
+      "state": "completed",
+      "started_at": "2026-09-16T08:00:00+00:00",
+      "finished_at": "2026-09-16T08:00:40+00:00",
+      "run_id": "",
+      "run_manifest": null,
+      "consumption": {
+        "seconds": 40
+      },
+      "consumption_source": "declared",
+      "depends_on": [],
+      "resumes": "",
+      "replay_of": "",
+      "result": null,
+      "promotion": null,
+      "authorisation": "checked"
+    },
+    {
+      "id": "probe-1",
+      "kind": "probe",
+      "purpose": "Does any bronze-die listing publish shipping cost on its page?",
+      "question": "Is shipping cost present on the retained product pages?",
+      "limit_ids": [
+        "research-responses",
+        "research-seconds"
+      ],
+      "allocation": {
+        "responses": 60,
+        "seconds": 600
+      },
+      "state": "completed",
+      "started_at": "2026-09-16T08:05:00+00:00",
+      "finished_at": "2026-09-16T08:10:00+00:00",
+      "run_id": "",
+      "run_manifest": null,
+      "consumption": {
+        "responses": 45,
+        "seconds": 300
+      },
+      "consumption_source": "declared",
+      "depends_on": [],
+      "resumes": "",
+      "replay_of": "",
+      "result": {
+        "summary": "No retained page states a shipping cost; the delivered-cost objective stays unsupported.",
+        "next_action": "Run the bounded listed-price study; keep the delivered-cost gap plan."
+      },
+      "promotion": {
+        "promoted": false,
+        "into": "none",
+        "changed_criteria": false,
+        "supplied_candidates": false,
+        "assessment": "The probe confirmed an absence within the inspected pages; the committed case feed is the declared input and the probe pages were not promoted."
+      },
+      "authorisation": "checked"
+    },
+    {
+      "id": "collect-1",
+      "kind": "collection",
+      "purpose": "Collect the bronze-die shelf beyond the committed case feed.",
+      "question": "",
+      "limit_ids": [
+        "research-responses",
+        "research-seconds"
+      ],
+      "allocation": {
+        "responses": 200,
+        "seconds": 900
+      },
+      "state": "interrupted",
+      "started_at": "2026-09-16T08:15:00+00:00",
+      "finished_at": "",
+      "run_id": "",
+      "run_manifest": null,
+      "consumption": {
+        "responses": 200,
+        "seconds": 900
+      },
+      "consumption_source": "assumed_allocation",
+      "depends_on": [
+        "probe-1"
+      ],
+      "resumes": "",
+      "replay_of": "",
+      "result": null,
+      "promotion": null,
+      "authorisation": "checked"
+    },
+    {
+      "id": "analyse-1",
+      "kind": "analysis",
+      "purpose": "Run the bounded listed-price study over the committed case feed.",
+      "question": "",
+      "limit_ids": [
+        "research-seconds"
+      ],
+      "allocation": {
+        "seconds": 60
+      },
+      "state": "completed",
+      "started_at": "2026-09-16T09:00:00+00:00",
+      "finished_at": "2026-09-16T09:00:05+00:00",
+      "run_id": "",
+      "run_manifest": null,
+      "consumption": {
+        "seconds": 5
+      },
+      "consumption_source": "declared",
+      "depends_on": [],
+      "resumes": "",
+      "replay_of": "",
+      "result": null,
+      "promotion": null,
+      "authorisation": "checked"
+    },
+    {
+      "id": "collect-2",
+      "kind": "collection",
+      "purpose": "Resume the interrupted shelf collection.",
+      "question": "",
+      "limit_ids": [
+        "research-responses",
+        "research-seconds"
+      ],
+      "allocation": {
+        "responses": 100,
+        "seconds": 600
+      },
+      "state": "planned",
+      "started_at": "",
+      "finished_at": "",
+      "run_id": "",
+      "run_manifest": null,
+      "consumption": {},
+      "consumption_source": "unknown",
+      "depends_on": [
+        "probe-1"
+      ],
+      "resumes": "collect-1",
+      "replay_of": "",
+      "result": null,
+      "promotion": null,
+      "authorisation": ""
+    },
+    {
+      "id": "engineer-1",
+      "kind": "engineering",
+      "purpose": "Proposal: a delivered-cost method reading shipping from the offer block.",
+      "question": "",
+      "limit_ids": [
+        "engineering-seconds"
+      ],
+      "allocation": {
+        "seconds": 7200
+      },
+      "state": "planned",
+      "started_at": "",
+      "finished_at": "",
+      "run_id": "",
+      "run_manifest": null,
+      "consumption": {},
+      "consumption_source": "unknown",
+      "depends_on": [],
+      "resumes": "",
+      "replay_of": "",
+      "result": null,
+      "promotion": null,
+      "authorisation": ""
+    }
+  ]
+}

@@ -25,7 +25,7 @@ Exit status is 0 when there is nothing to report, 1 when a check failed, and
 import argparse
 import json
 from pathlib import Path
-from . import audit, delivery, gates, intake
+from . import audit, delivery, gates, intake, intake_review, session
 from .controls import catalogue
 from ..provenance import write_json_atomically
 from .bundle import artifact_digests
@@ -77,7 +77,8 @@ def run_command(args):
     directory, manifest = run_study(args.brief, directory=args.output,
                                     root=args.root, force=args.force,
                                     started_at=started, finished_at=_now(), evidence=args.evidence,
-                                    plan=args.plan)
+                                    plan=args.plan, session_ledger=args.session,
+                                    plan_review=args.intake_review)
     counts = manifest['counts']
     label = manifest['outcome']
     if manifest.get('stop'):
@@ -101,6 +102,10 @@ def run_command(args):
     print(f'  scope         {manifest["scope"]} ({manifest["scope_source"]})'
           + ('; run `study deliver` before issuing current advice'
              if manifest['scope'] == delivery.CURRENT_ADVICE else ''))
+    if manifest.get('intake_review'):
+        print(f'  intake review {manifest["intake_review"]["status"]}'
+              + ('; pending is not approval' if manifest['intake_review']['status']
+                 != intake_review.PASS else ''))
     return 0
 
 
@@ -159,6 +164,8 @@ def validate_command(args):
         print(json.dumps({'valid': False, 'findings': [{'code': 'unreadable_bundle', 'message': str(exc)}]}))
         return 2
     status = {'scope': manifest.get('scope'), 'current_advice': 'no_record', 'reference': ''}
+    # A bundle that does not verify is not read for its review either way.
+    intake_state = 'not_checked' if findings else 'absent'
     if not findings:
         try:
             review = json.loads((Path(args.bundle) / 'semantic-review.json').read_text())
@@ -167,6 +174,31 @@ def validate_command(args):
                 raise audit.AuditError('semantic review recorded failed checks')
         except (ValueError, OSError) as exc:
             findings.append({'code': 'semantic_review', 'message': str(exc)})
+        # The intake-phase review. verify() has already checked that it binds
+        # this bundle's plan revision; what matters here is what it recorded.
+        # A failed intake review fails the bundle whatever the final review
+        # says, and an audited plan-backed report needs a passing one.
+        snapshot = Path(args.bundle) / intake_review.SNAPSHOT
+        if snapshot.is_file():
+            recorded = intake_review.read(snapshot)
+            intake_state = intake_review.status(recorded)
+            if intake_state == intake_review.FAIL:
+                findings.append({'code': 'intake_review_failed',
+                                 'message': 'the intake review records that the plan '
+                                            'misreads the request: '
+                                            + '; '.join(f'{n}: {f}' for n, f in
+                                                        intake_review.failures(recorded))})
+            elif args.require_review and intake_state != intake_review.PASS:
+                findings.append({'code': 'intake_review_incomplete',
+                                 'message': f'the intake review is {intake_state}; an audited '
+                                            f'plan-backed report needs a completed passing one, '
+                                            f'and pending or limited is not approval'})
+        elif args.require_review and (Path(args.bundle) / intake.SNAPSHOT).is_file():
+            findings.append({'code': 'intake_review_missing',
+                             'message': 'a plan-backed study needs a separate intake review '
+                                        'before it is delivered as audited; write one with '
+                                        '`study plan-review-template` and attach it with '
+                                        '`study review-intake`'})
         # Structural, and outside the review: a completed semantic review does
         # not waive a freshness block, and cannot be edited to.
         path = Path(args.bundle) / delivery.RECORD
@@ -181,10 +213,12 @@ def validate_command(args):
             elif event['current_advice'] != delivery.PERMITTED:
                 findings.append({'code': 'current_advice_blocked',
                                  'message': event['statement']})
-    semantic = audit.review_status(review) if not findings or findings[0]['code'] in (
-        'delivery_missing', 'current_advice_blocked') else 'not_approved'
-    print(json.dumps({'valid': not findings, 'semantic': semantic, 'delivery': status,
-                      'findings': findings}, indent=2))
+    structural = ('delivery_missing', 'current_advice_blocked', 'intake_review_failed',
+                  'intake_review_incomplete', 'intake_review_missing')
+    semantic = audit.review_status(review) if not findings or all(
+        f['code'] in structural for f in findings) else 'not_approved'
+    print(json.dumps({'valid': not findings, 'semantic': semantic, 'intake_review': intake_state,
+                      'delivery': status, 'findings': findings}, indent=2))
     return 1 if findings else 0
 
 
@@ -202,6 +236,121 @@ def review_command(args):
     write_json_atomically(directory / 'manifest.json', manifest)
     print('Semantic review attached to the checked report bytes.')
     return 0
+
+
+def _reference(args):
+    if getattr(args, 'reference', None):
+        return delivery.parse_reference(args.reference), delivery.DECLARED
+    return _now(), delivery.EXECUTION_CLOCK
+
+
+def _print_limits(rows):
+    for row in rows:
+        position = ('unreconciled: ' + ', '.join(row['unknown']) if row['remaining'] is None
+                    else f'{row["remaining"]:g} remaining of {row["amount"]:g} '
+                         f'({row["consumed"]:g} consumed, {row["reserved"]:g} reserved)')
+        print(f'  {row["id"]:<20}{row["kind"]:<12}{row["unit"]:<15}{position}'
+              + ('; exhausted' if row['exhausted'] else '')
+              + (f'; deadline {row["deadline"]} passed' if row['deadline_passed'] else '')
+              + (f'; {row["mode"]}: {row["overshoot"]}' if row['overshoot'] else ''))
+
+
+def session_check_command(args):
+    """``session-check LEDGER`` -- reconcile limits against recorded actions."""
+    ledger = session.load(args.ledger)
+    reference, _source = _reference(args)
+    result = session.reconcile(ledger, reference)
+    print(f'{ledger["id"]}: session ledger v{ledger["session_version"]}, revision '
+          f'{ledger["revision"]}; {len(ledger["limits"])} limit(s), '
+          f'{len(ledger["actions"])} action(s); '
+          f'{"reconciled" if result["reconciled"] else "NOT reconciled"} at {reference}')
+    _print_limits(result['limits'])
+    for action in result['actions']:
+        print(f'  {action["id"]:<20}{action["kind"]:<12}{action["state"]:<13}'
+              f'{action["authorisation"] or "-":<10}{action["consumption_source"]}'
+              + (f'; resumes {action["resumes"]}' if action['resumes'] else '')
+              + (f'; replay of {action["replay_of"]}' if action['replay_of'] else ''))
+    for name in result['interrupted']:
+        print(f'  interrupted   {name}: not complete; resume it as a new action')
+    for decision in result['prevented']:
+        print(f'  prevented     {decision["action"]}: ' + ' | '.join(decision['reasons']))
+    for decision in result['permitted']:
+        print(f'  authorisable  {decision["action"]}')
+    for name in result['proposals']:
+        print(f'  proposal      {name}: engineering, retained; execution is R15')
+    print('Records and a check, not a scheduler: nothing here ran or will run anything.')
+    return 0 if result['reconciled'] else 1
+
+
+def session_authorise_command(args):
+    """``session-authorise LEDGER ACTION`` -- the check before a research action."""
+    ledger = session.load(args.ledger)
+    reference, _source = _reference(args)
+    decision = session.authorise(ledger, args.action, reference)
+    print(f'{args.action}: {"authorised" if decision["authorised"] else "REFUSED"} at {reference}')
+    for reason in decision['reasons']:
+        print(f'  refused       {reason}')
+    for limit_id, remaining in (decision['remaining_after'].items() if decision['authorised'] else ()):
+        print(f'  after         {limit_id}: {remaining:g} remaining')
+    if decision['authorised'] and args.record:
+        action = next(a for a in ledger['actions'] if a['id'] == args.action)
+        action.update(state='authorised', authorisation='checked')
+        session.check(ledger)
+        write_json_atomically(args.ledger, ledger)
+        print(f'  recorded      {args.action} is authorised in {args.ledger}; it has not run')
+    return 0 if decision['authorised'] else 1
+
+
+def session_record_command(args):
+    """``session-record LEDGER ACTION`` -- what an action did, from its manifest."""
+    ledger = session.load(args.ledger)
+    consumption = json.loads(args.consumption) if args.consumption else None
+    session.record(ledger, args.action, args.run, state=args.state or '',
+                   consumption=consumption, assume_allocation=args.assume_allocation,
+                   started_at=args.started_at or '', finished_at=args.finished_at or '',
+                   result=json.loads(args.result) if args.result else None,
+                   promotion=json.loads(args.promotion) if args.promotion else None)
+    write_json_atomically(args.ledger, ledger)
+    action = next(a for a in ledger['actions'] if a['id'] == args.action)
+    print(f'{args.action}: {action["state"]}; consumption from {action["consumption_source"]}'
+          f'{" (authorisation unchecked)" if action["authorisation"] == "unchecked" else ""}')
+    for unit, amount in action['consumption'].items():
+        print(f'  {unit:<15}{"unknown" if amount is None else f"{amount:g}"}')
+    if action['run_manifest']:
+        print(f'  manifest      {action["run_manifest"]["path"]} · {action["run_manifest"]["sha256"][:12]}')
+    return 0
+
+
+def resume_command(args):
+    """``resume BUNDLE`` -- verified state and permitted next actions, or the gap."""
+    reference, source = _reference(args)
+    ledger = session.load(args.session) if args.session else None
+    report = session.resume(args.bundle, ledger, reference, source, args.input_root)
+    print(f'{report["study_id"] or args.bundle}  '
+          f'[{"resumable" if report["resumable"] else "NOT resumable"}]')
+    for finding in report['findings']:
+        print(f'  {finding["code"]:<28} {finding["message"]}')
+    if report['plan']['bundle']:
+        print(f'  plan          {report["plan"]["bundle"]["id"]} revision '
+              f'{report["plan"]["bundle"]["revision"]}'
+              + {True: ' (the ledger agrees)', False: ' (the ledger DISAGREES)',
+                 None: ''}[report['plan']['match']])
+    if report['resources']:
+        _print_limits(report['resources']['limits'])
+    for name in report['interrupted']:
+        print(f'  interrupted   {name}: never assumed complete')
+    print(f'  review        {report["review"] or "none"}')
+    print(f'  intake review {report["intake_review"] or "none"}')
+    latest, recheck = report['delivery']['latest'], report['delivery']['recheck']
+    if latest:
+        print(f'  delivered     {latest["current_advice"]} at {latest["reference"]}')
+    if recheck:
+        print(f'  recheck       {recheck["current_advice"]} at {recheck["reference"]} '
+              f'({recheck["reference_source"]}); {recheck["note"]}')
+    for step in report['next_actions']:
+        print(f'  {step["status"]:<13} {step["action"]}'
+              + (': ' + ' | '.join(step['reasons']) if step['reasons'] else ''))
+    return 0 if report['resumable'] else 1
 
 
 def controls_command(args):
@@ -237,6 +386,83 @@ def plan_readback_command(args):
         intake.check(plan)
         write_json_atomically(args.plan, plan)
     print(text, end='')
+    return 0
+
+
+def plan_review_template_command(args):
+    """``plan-review-template PLAN -o OUT`` -- a pending review bound to this revision."""
+    plan = intake.load(args.plan)
+    review = intake_review.template(plan)
+    output = Path(args.output)
+    if output.suffix != '.json' or output.exists():
+        raise intake_review.IntakeReviewError('choose a new .json output for the review template')
+    write_json_atomically(output, review)
+    print(f'{output}: pending intake review bound to {plan["id"]} revision '
+          f'{plan["revision"]} ({review["plan"]["sha256"][:12]}); catalogue '
+          f'{review["basis"]["catalogue_sha256"][:12] or "none (unregistered category)"}.')
+    for name in intake_review.CHECKS:
+        print(f'  {name:<14}{intake_review.QUESTIONS[name]}')
+    for limit in review['review_limits']:
+        print(f'  limit         {limit["kind"].replace("_", " ")}'
+              + (f' in {limit["message_id"]}' if limit['message_id'] else '')
+              + f': {limit["description"]} — '
+              + ' and '.join(intake_review.BLOCKED_BY[limit['kind']]) + ' cannot pass')
+    print('Pending is not approval. Fill each check with a reviewer and findings in a '
+          'separate pass; a failure names the requirements or user messages it concerns.')
+    return 0
+
+
+def plan_review_command(args):
+    """``plan-review PLAN REVIEW`` -- does this review bind this revision, and what does it say."""
+    plan = intake.load(args.plan)
+    review = intake_review.load(args.review, plan)
+    word = intake_review.status(review)
+    print(f'{plan["id"]} revision {plan["revision"]}: intake review '
+          f'v{review["intake_review_version"]} binds this revision '
+          f'({review["plan"]["sha256"][:12]}) and the live {plan["category"]} catalogue; '
+          f'status {word}.')
+    print(f'  reviewer      {review["reviewer"] or "(none yet)"}')
+    for name in intake_review.CHECKS:
+        item = review['checks'][name]
+        refs = ', '.join(item['requirement_ids'] + item['message_ids'])
+        print(f'  {name:<14}{item["status"]:<9}{item["findings"]}'
+              + (f' [{refs}]' if refs else ''))
+    for limit in review['review_limits']:
+        print(f'  limit         {limit["kind"].replace("_", " ")}'
+              + (f' in {limit["message_id"]}' if limit['message_id'] else '')
+              + f': {limit["description"]}')
+    for text in review['unresolved_limits']:
+        print(f'  unresolved    {text}')
+    print('A binding and a record, not execution authority: a passing intake review '
+          'says the plan reads the retained request faithfully and its controls '
+          'answer it, not that the buyer confirmed it.')
+    return 1 if word == intake_review.FAIL else 0
+
+
+def review_intake_command(args):
+    """``review-intake BUNDLE REVIEW`` -- attach an intake review to a plan-backed bundle."""
+    directory = Path(args.bundle)
+    manifest, findings = verify_bundle(directory, args.input_root)
+    if findings:
+        raise intake_review.IntakeReviewError('Repair the bundle before attaching an intake '
+                                             'review: ' + '; '.join(f['code'] for f in findings))
+    if not (directory / intake.SNAPSHOT).is_file():
+        raise intake_review.IntakeReviewError(f'{directory}: not a plan-backed study; there is '
+                                             f'no plan revision for an intake review to bind')
+    review = intake_review.load(args.review, intake.load(directory / intake.SNAPSHOT))
+    word = intake_review.status(review)
+    write_json_atomically(directory / intake_review.SNAPSHOT, review)
+    manifest['intake_review'] = {'status': word, 'sha256': intake_review.digest(review)}
+    manifest['artifacts'] = artifact_digests(directory)
+    write_json_atomically(directory / 'manifest.json', manifest)
+    print(f'{manifest["study_id"]}  [intake review {word}]')
+    for name in intake_review.CHECKS:
+        print(f'  {name:<14}{review["checks"][name]["status"]}')
+    if word == intake_review.FAIL:
+        print('  The review records that this plan revision misreads the request. '
+              'validate-report fails until the plan is revised and the study re-run.')
+    elif word != intake_review.PASS:
+        print('  Pending or limited is not approval; --require-review will not accept it.')
     return 0
 
 
@@ -277,6 +503,16 @@ def main(argv=None):
     readback.add_argument('--record', action='store_true',
                           help='save presented bytes with no-response status; never confirms')
     readback.set_defaults(handler=plan_readback_command)
+    review_template = commands.add_parser(
+        'plan-review-template', help='write a pending intake review bound to this plan revision')
+    review_template.add_argument('plan')
+    review_template.add_argument('-o', '--output', required=True, help='new JSON review path')
+    review_template.set_defaults(handler=plan_review_template_command)
+    plan_review = commands.add_parser(
+        'plan-review', help='check an intake review against its plan and print what it records')
+    plan_review.add_argument('plan')
+    plan_review.add_argument('review', help='intake review JSON, pending or completed')
+    plan_review.set_defaults(handler=plan_review_command)
     binding = commands.add_parser('plan-bind', help='bind requirements after checking existing brief controls')
     binding.add_argument('brief')
     binding.add_argument('--plan', required=True)
@@ -300,7 +536,49 @@ def main(argv=None):
                          help='replace an existing bundle of the same study id')
     running.add_argument('--evidence', help='versioned external ledger with indexed claims (JSON)')
     running.add_argument('--plan', help='intake plan to check and snapshot inside the bundle')
+    running.add_argument('--session', help='session resource ledger to snapshot inside the bundle')
+    running.add_argument('--intake-review',
+                         help='intake review bound to the plan, snapshotted inside the bundle; '
+                              'a review recording a failure refuses the run')
     running.set_defaults(handler=run_command)
+
+    ledger_check = commands.add_parser(
+        'session-check', help='reconcile a session ledger: limits, actions, what is prevented')
+    ledger_check.add_argument('ledger', help=f'JSON ledger, conventionally under {session.DEFAULT_SESSION_ROOT}/')
+    ledger_check.add_argument('--reference', help='ISO 8601 instant for deadlines; default reads the clock')
+    ledger_check.set_defaults(handler=session_check_command)
+    authorising = commands.add_parser(
+        'session-authorise', help='check one planned action against the remaining limits')
+    authorising.add_argument('ledger')
+    authorising.add_argument('action')
+    authorising.add_argument('--reference', help='ISO 8601 instant for deadlines; default reads the clock')
+    authorising.add_argument('--record', action='store_true',
+                             help='mark the action authorised in the ledger when it fits')
+    authorising.set_defaults(handler=session_authorise_command)
+    recording = commands.add_parser(
+        'session-record', help='record what an action did, from its run manifest')
+    recording.add_argument('ledger')
+    recording.add_argument('action')
+    recording.add_argument('--run', help='crawl run directory whose manifest reports the consumption')
+    recording.add_argument('--state', choices=session.DONE,
+                           help='without a run: whether it completed or was interrupted')
+    recording.add_argument('--consumption', help='without a run: JSON table of unit -> amount, declared')
+    recording.add_argument('--assume-allocation', action='store_true',
+                           help='without a run: count the whole allocation as spent')
+    recording.add_argument('--started-at')
+    recording.add_argument('--finished-at')
+    recording.add_argument('--result', help='probe: JSON {"summary", "next_action"}')
+    recording.add_argument('--promotion',
+                           help='probe: JSON {"promoted", "into", "changed_criteria", '
+                                '"supplied_candidates", "assessment"}')
+    recording.set_defaults(handler=session_record_command)
+    resuming = commands.add_parser(
+        'resume', help='verify retained artifacts and say which next actions the ledger permits')
+    resuming.add_argument('bundle', help='data/studies/<study_id>')
+    resuming.add_argument('--session', help='working ledger; default is the bundle snapshot')
+    resuming.add_argument('--reference', help='ISO 8601 instant for the freshness recheck; default reads the clock')
+    resuming.add_argument('--input-root', default='')
+    resuming.set_defaults(handler=resume_command)
 
     delivering = commands.add_parser(
         'deliver', help='assess current advice at this delivery event and '
@@ -330,11 +608,17 @@ def main(argv=None):
     reviewing.add_argument('bundle')
     reviewing.add_argument('review', help='completed review JSON, bound to report digest')
     reviewing.set_defaults(handler=review_command)
+    reviewing_intake = commands.add_parser(
+        'review-intake', help='attach a separate intake review to a plan-backed bundle')
+    reviewing_intake.add_argument('bundle')
+    reviewing_intake.add_argument('review', help='intake review JSON bound to the bundle\'s plan revision')
+    reviewing_intake.add_argument('--input-root', default='')
+    reviewing_intake.set_defaults(handler=review_intake_command)
     args = parser.parse_args(argv)
     try:
         return args.handler(args)
     except (BriefError, BundleError, StudyError, audit.AuditError,
-            delivery.DeliveryError, OSError, ValueError) as exc:
+            delivery.DeliveryError, session.SessionError, OSError, ValueError) as exc:
         print(f'{exc}', file=sys.stderr)
         return 2
 

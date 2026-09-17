@@ -716,7 +716,7 @@ requirement the plan never captured, a decisive requirement recorded as
 non-decisive, or a control that runs correctly and answers the wrong question —
 a purchase budget mapped onto the per-kilogram cap passes as `enforced`, and the
 report says beside the table that enforced does not mean adequate. Those are
-intake semantic review (stage 9) and the semantic-execution question of INTAKE
+the intake review (§13) and the semantic-execution question of INTAKE
 §12. The gates do not apply discovery or acquisition effects, account for
 session resources (stage 8) or invalidate reviews (stage 10). Delivery
 freshness is §11.
@@ -782,8 +782,156 @@ change, not with the passage of time.
 
 **Limits.** The execution clock is not a trusted time service: the record
 prevents silent backdating inside the declared workflow and does not prove a
-supplied reference true; every event says where its reference came from. The
-record does not yet carry session consumption, interruption or attestation facts
-(stage 8), is not yet bound into a delivery review (stage 10), and the declared
-scope is a declaration — a brief that calls frozen fixture evidence current advice
-has made a false declaration the software cannot detect.
+supplied reference true; every event says where its reference came from. Session
+consumption and interruption facts travel beside it in the bundle's session
+snapshot (§12) rather than inside the event; neither is yet bound into a delivery
+review (stage 10), and the declared scope is a declaration — a brief that calls
+frozen fixture evidence current advice has made a false declaration the software
+cannot detect.
+
+## 12. Session resource ledger and resumption (R13 stage 8)
+
+**Session ledger v1** is `study/session.py`, tracked as `session_ledger`. It is
+JSON data with closed fields: `session_version`, slug `id`, `revision` with the
+previous ledger's canonical `supersedes` digest for a later revision (an
+extension is an explicit budget revision), an optional `plan` binding (`id`,
+`revision`, canonical `sha256`), `limits` and `actions`. It is a record and a
+check, not a scheduler or a command runner: nothing in it runs, and `resume`
+writes nothing. A private working ledger lives under `data/sessions/` or an
+explicit private path; a study run with `--session` snapshots it as
+`session.json`, digest-listed in the manifest with `manifest.session` naming its
+id, revision and digest. The sanitized example is
+[session-ledger.json](tests/intake/session-ledger.json).
+
+| Limit field | Contract |
+|---|---|
+| `kind` | `research` or `engineering`. A research allowance does not fund engineering and an engineering allowance does not fund research; an action may reference limits of its own kind only. A purchase budget is a different quantity and is not a limit |
+| `unit`, `measurement` | An **observed** unit the run manifest reports — `requests` (`downloader/request_count`), `responses` (`downloader/response_count`), `items` (`item_scraped_count`), `seconds` (`elapsed_time_seconds`), `pages_retained` (`counts.pages_saved`), `runs` (one per manifest) — or an **estimate** (`eur`, `tokens`) whose `note` says how it is estimated. Acquisition units are whole numbers |
+| `amount`, `mode` | Finite, non-negative. `stops_new_work` refuses the next action once the remainder is short; `strict_ceiling` is permitted only for `responses`, `items` and `seconds`, which `CLOSESPIDER_PAGECOUNT`, `CLOSESPIDER_ITEMCOUNT` and `CLOSESPIDER_TIMEOUT` can close on, and its `note` must state the known overshoot. Reconciliation names the overshoot beside the limit: a page-count closure does not cancel requests in flight, an item cap is not a request cap, a timeout may leave requests in flight. No mechanism enforces a ceiling on requests, runs, retained pages or an estimate, and none is promised |
+| `scope`, `authorization`, `deadline` | What the limit covers; `source` (`user_message` with a retained message `ref`, `existing_authorization`, `operator`) and text; an optional ISO instant with offset. A deadline is wall-clock: time elapsed during an interruption counts |
+
+| Action field | Contract |
+|---|---|
+| `kind`, `purpose`, `question` | `inspection`, `probe`, `collection`, `analysis` or `engineering`. A probe states its question. Inspection and analysis touch nothing live: they may not allocate acquisition units or link a run. A probe or collection allocates a finite, positive amount in an acquisition unit. Collection requires the ledger to name its plan: it is only what a brief declares |
+| `limit_ids`, `allocation` | Every allocated unit names a declared limit of the action's kind in that unit |
+| `state`, `authorisation` | `planned`, `authorised`, `running`, `completed`, `interrupted`, `abandoned`. Beyond `planned` an action says whether the check ran (`checked`) or not (`unchecked`); a run that happened without the check is recorded honestly as unchecked, never refused |
+| `consumption`, `consumption_source` | Recorded only when completed or interrupted, for every allocated unit, `null` where unknown; from `run_manifest`, `declared`, `assumed_allocation` (the whole allocation counted as spent — the conservative record for a run that left no readable count) or `unknown` |
+| `run_id`, `run_manifest`, timestamps | The crawl the action was, linked by manifest path and digest; a finished action records when it started |
+| `resumes`, `replay_of`, `depends_on` | A resumption is a new record continuing an `interrupted` action of the same kind; the predecessor's consumption is counted once, on the predecessor. A replay recomputes retained bytes and is analysis or inspection, never acquisition. Dependencies name retained actions |
+| `result`, `promotion` | A completed probe records the result that determines the next action, and whether its evidence was **promoted** into the declared inputs (`into = plan_inputs`, explicit), whether seeing it **changed the criteria** or **supplied candidates**, and — when any of those is true — an assessment of whether broader discovery or renewed comparison is needed. Provenance alone does not establish an unbiased comparison |
+| Engineering | Retained as a proposal against the engineering allowance: state `planned` or `abandoned` only, never authorised, recorded or executed here. Controlled execution is R15 |
+
+**Reconciliation** (`session-check`, `reconcile()`) computes per limit the
+consumed total over finished actions, the reserved total over authorised and
+running allocations, and the remainder; a finished action with unknown
+consumption in that unit leaves the limit **unreconciled** with the action named,
+and unknown is never read as zero. It lists interrupted actions as interrupted,
+never complete; the planned actions the remainder **prevents**, each with its
+reasons; and the engineering proposals. It writes nothing: an exhaustion stop
+deletes no record and completed evidence stands.
+
+**The next-action check** (`session-authorise`, `authorise()`) permits a
+`planned` action only when it is not engineering, every dependency is
+`completed`, no referenced limit is unreconciled or past its deadline at the
+given reference, and every allocated unit fits the remainder. Every refusal names
+its reason with the arithmetic. `--record` marks a fitting action `authorised`
+and `checked`; it runs nothing. `session-record` writes what an action did: from
+a run directory it reads the manifest's `run_id`, timestamps, `stats` and
+`counts`, links the manifest by digest, and sets `completed` or `interrupted`
+from the manifest's own state; without a run the operator declares consumption or
+assumes the allocation. A finished action is never recorded twice.
+
+**Resumption** (`resume BUNDLE [--session LEDGER] [--reference ISO]`,
+`resume()`) reads the bundle and the ledger — the bundle's own snapshot when no
+working ledger is given — and writes nothing. It verifies the retained artifacts
+with `verify`, compares the active plan revision in the bundle with the one the
+ledger names, reconciles consumed and reserved resources, checks that every
+linked run manifest is present and unaltered, reads the pending review state,
+and rechecks delivery freshness at the reference by assessing the bundle as a
+delivery would without recording an event. The study is **resumable** when
+nothing is missing; otherwise the precise missing dependency is named
+(`artifacts_not_verified`, `session_missing`, `session_invalid`,
+`plan_revision_mismatch`, `unreconciled_consumption`, `run_manifest_missing`,
+`run_manifest_altered`, `plan_snapshot_invalid`). The report lists the
+interrupted actions, the authorisable and prevented next actions with reasons,
+and the proposals. A prevented next action is a fact about the budget, not a
+failed check: the command exits 0 on a resumable study. `verify` reports
+`session_invalid` when the snapshot is malformed, names another digest than the
+manifest, or binds another plan revision than the bundle holds; `run --session`
+refuses a ledger whose plan is not the study's.
+
+**Identity and bytes.** The ledger and its snapshot enter neither `study_id` nor
+the report; they are integrity-bound artifacts (INTAKE §8), and a study run with
+or without `--session` has the same id, decisions and report bytes. The
+maintenance gate replays the delivered-cost example with the committed ledger and
+resumes it from the bundle's snapshot at a fixed reference; `resumable` is a
+recorded decision beside `stop` and `current_advice`.
+
+**Limits.** The ledger records what was declared and recorded. It cannot recover
+an action nobody recorded, cannot measure monetary or model usage — those stay
+estimates that stop new work and enforce no ceiling — and does not prove that a
+declared consumption is true. A strict ceiling is only as strict as the closure
+setting the crawl actually ran under, which `enforced_caps()` reads from the
+manifest and the record names. Resumption does not reconstruct the conversation;
+what it verifies is what the files hold. Attestation, and binding session facts
+into a delivery review, are stage 10.
+
+## 13. Intake review (R13 stage 9)
+
+**Intake review v1** is `study/intake_review.py`, tracked as `intake_review`. It
+is the semantic pass over a plan revision that the plan contract (§9) and the
+stage gates (§10) cannot perform: whether the plan reads the retained request
+faithfully and completely, whether each resolved control answers the requirement
+it is mapped to, whether each assumed default was defensible, and whether the
+recorded stage effects are the ones a requirement's meaning implies. It is a
+separate artifact under the same workflow and deliberately not the final
+semantic review of §8: that review's version, check tuple and basis are
+unchanged, and no committed review is invalidated. The sanitized completed
+example is
+[delivered-cost-intake-review.json](tests/intake/delivered-cost-intake-review.json).
+
+| Part | Contract |
+|---|---|
+| `plan` | The plan's `id`, `revision` and canonical `sha256`. A review whose digest is not the plan's is **superseded**: its findings are not this revision's and are never carried forward |
+| `basis` | Digests of the retained `user_evidence` and of the `requirements` with their resolved control metadata, the read-back `readback_response` status, and `catalogue_sha256`, the digest of the category's live control catalogue (empty for an unregistered category). Every one is recomputed from the plan and the registry at each check; a changed catalogue refuses, because adequacy was judged against other controls |
+| `review_limits` | Recomputed from the plan, never authored: every redaction the plan marked `limits_review` and any non-empty `missing_context`. A review that omits one refuses. While a redaction limit stands, `omissions` and `faithfulness` cannot be `pass`; while context is missing, `omissions` cannot |
+| `checks` | Exactly `omissions`, `faithfulness`, `adequacy`, `assumptions` and `stage_effects`, each with `status` (`pending`, `pass`, `fail`, `limited`), `findings`, and `requirement_ids` and `message_ids` that resolve in the plan. `limited` means not established from the retained evidence and is not a pass. A non-pending check needs a `reviewer` and non-empty findings, never a bare approval; a pending one records nothing. A failed `omissions` names the user messages that carry the missing instruction; a failed check of the other four names the requirements it concerns |
+| `reviewer`, `unresolved_limits` | Text, and the limits the review leaves open |
+
+**Status** is `fail` if any check failed, else `pending` if any is pending, else
+`limited` if any is limited, else `pass`.
+
+**Consumers.** `study plan-review-template PLAN -o OUT` writes the pending
+template and prints the five questions; `study plan-review PLAN REVIEW` checks a
+review against its plan and exits 1 when it records a failure. `study run --plan
+PLAN --intake-review REVIEW` snapshots the review as `intake-review.json`,
+digest-listed in the manifest with `manifest.intake_review` naming its status and
+digest, and **refuses to run** a study on a plan revision whose review records a
+failure: a recorded blocker at intake is a planning outcome, not authorisation to
+proceed through it. `study review-intake BUNDLE REVIEW` attaches or replaces the
+review on an existing plan-backed bundle after `verify`; a recorded failure is
+attached and recorded as one. `verify` reports `intake_review_invalid` when the
+snapshot binds another plan revision or catalogue, accompanies no plan snapshot,
+or the manifest names another digest or status than it holds. `validate-report`
+reports the status as `intake_review` (`absent` when there is none), fails with
+`intake_review_failed` when it records a failure whether or not `--require-review`
+is passed, and under `--require-review` requires a plan-backed bundle to carry a
+passing one (`intake_review_missing`, `intake_review_incomplete`). `resume`
+reports the state beside the final review's. A legacy study without a plan is
+asked for nothing.
+
+**Identity and bytes.** The review enters neither `study_id` nor the report: a
+study run with or without it has the same id, decisions and report bytes.
+Approval travels in review artifacts and is checked before delivery, never
+rendered into the report it approves (INTAKE §11). The maintenance gate replays
+the delivered-cost example with its committed review and pins `intake_review`
+beside `stop`, `current_advice` and `resumable`.
+
+**Limits.** The review is a reviewer's record; the checks keep it bound and
+honest, and nothing here judges. It cannot detect an instruction absent from both
+the plan and the retained evidence, and a reviewer can pass an inadequate mapping.
+A passing review says the plan reads the retained request faithfully and its
+controls answer it, not that the buyer confirmed it: the read-back response
+status is bound, not waived, and the review authorises no engineering. Reuse of
+unchanged findings across plan revisions, the phase-aware final review that
+requires valid intake findings, and invalidation across revisions are stage 10.

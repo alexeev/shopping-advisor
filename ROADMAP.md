@@ -1663,6 +1663,70 @@ was honest, or that a declared scope is true — a brief calling fixture evidenc
 current advice has lied in a way no check here detects. Stages 8–10 remain
 planned.
 
+**2026-09-17 — INTAKE §16 stage 8 shipped.** A session ledger declares aggregate
+limits — research and engineering kept apart, in the units the run manifest
+actually reports or marked as estimates that can only stop new work — and holds
+one record per inspection, probe, collection, analysis or engineering proposal
+with its allocation, state, timestamps, linked run manifest and observed
+consumption. `session-record` reads consumption from the manifest the crawl
+wrote; `session-authorise` is the check before a research action, refusing what
+does not fit the remainder, what depends on interrupted work, what is past a
+deadline, and every engineering action; `session-check` reconciles and names the
+prevented next actions. Unknown consumption stays unknown and blocks new
+acquisition until recorded or conservatively assumed; a replay is not
+acquisition; a resumed action is a new record and its predecessor is counted
+once. A completed probe records whether its evidence was promoted and whether
+seeing it changed the criteria or supplied candidates. `run --session` snapshots
+the ledger into the bundle, and `study resume` verifies artifacts, plan revision,
+resources, linked manifests and review state, rechecks delivery freshness without
+recording an event, and reports the verified state or the precise missing
+dependency — from the files, without the conversation.
+
+Measured effect: the delivered-cost example resumes from its own snapshot with
+the working ledger deleted, listing the interrupted collection as interrupted,
+preventing the resumed collection by name (100 responses asked, 55 remaining of
+300) and retaining the engineering proposal unexecuted; the gate replays it and
+records `resumable`. The gate gains `session_ledger: 1`; 39 new offline tests
+raise the floor from 613 to 652, and no study id, decision, report byte or
+completed review moves. Not established: that a declared consumption is true,
+that monetary or model usage can be measured here, or that a ceiling is stricter
+than the closure setting the crawl ran under. Stages 9 and 10 remain planned.
+
+**2026-09-17 — INTAKE §16 stage 9 shipped.** The intake review is a separate
+artifact under the study workflow, not a variant of the final semantic review:
+`intake-review.json` binds the plan's id, revision and canonical digest, the
+digests of the retained user evidence and of the requirements with their
+resolved control metadata, the read-back response status, and the digest of the
+category's live control catalogue. Its five checks are the ones INTAKE §11
+names — omissions, faithfulness, adequacy, assumptions, stage effects — each
+`pending`, `pass`, `fail` or `limited`; a completed check carries a reviewer and
+findings, and a failure names the requirements or user messages it concerns.
+Redactions the plan marked as limiting review, and missing context, are
+recomputed from the plan and forbid a `pass` on what could not be seen.
+`plan-review-template` writes the template, `plan-review` checks a review
+against its plan, `run --intake-review` snapshots it and refuses a plan whose
+review records a failure, `review-intake` attaches one to a study that has run,
+`verify` reports a snapshot bound to another revision or catalogue,
+`validate-report` fails a recorded failure and under `--require-review` requires
+a passing review on a plan-backed study, and `resume` reports its state beside
+the final review's.
+
+Measured effect: case 7's semantic limit now has a record and a consequence — a
+plan that maps the purchase budget onto the per-kilogram cap still passes the
+gates as `enforced`, and an intake review failing `adequacy` on `budget` refuses
+the run with the finding quoted and nothing written. The committed delivered-cost
+plan carries a completed fixture review the gate replays, pinning
+`intake_review: pass` beside `stop`, `current_advice` and `resumable`; a review
+of another revision, or one relabelled with a new digest without re-review,
+refuses as superseded rather than being carried forward. The gate gains
+`intake_review: 1`; 24 new offline tests raise the floor from 652 to 676. No
+study id, decision, report byte or completed review moves: a study run with and
+without its review has the same id and the same report bytes, and the final
+review's version, checks and basis are untouched. Not established: that a
+reviewer's pass is right — the checks bind and keep the review honest, they do
+not judge — or that a plan captured everything the buyer said, which no review
+of the plan alone can establish. Stage 10, the one migration, remains planned.
+
 ### Scope
 
 Make the existing coding-agent conversation the tested product entry point.

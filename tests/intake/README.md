@@ -55,6 +55,45 @@ uv run --offline --locked python -m shopping_advisor.study plan-check tests/inta
 uv run --offline --locked python -m shopping_advisor.study run tests/intake/budget-brief.json --plan tests/intake/budget-plan.json -o data/intake-budget-study
 ```
 
+**Stage 8 resumption coverage (2026-09-17).** `session-ledger.json` is the
+sanitized session for the delivered-cost study, case 18: two research limits in
+observed units (responses, and seconds as a strict ceiling naming its overshoot),
+a zero engineering allowance, a completed inspection and probe with declared
+consumption, a collection recorded as interrupted with its whole allocation
+conservatively counted, the analysis, a resumed collection the remaining 55
+responses prevent, and an engineering proposal that is retained and never
+authorised. [test_session.py](../test_session.py) exercises the contract, records
+from real run manifests, reconciliation and resumption; the maintenance gate runs
+the study with this ledger and resumes it from the bundle's own snapshot.
+
+```text
+uv run --offline --locked python -m shopping_advisor.study session-check tests/intake/session-ledger.json --reference 2026-09-17T00:00:00+00:00
+uv run --offline --locked python -m shopping_advisor.study run tests/intake/delivered-cost-brief.json --plan tests/intake/delivered-cost-plan.json --session tests/intake/session-ledger.json -o data/intake-resumption-study
+uv run --offline --locked python -m shopping_advisor.study resume data/intake-resumption-study --reference 2026-09-17T00:00:00+00:00
+```
+
+**Stage 9 review coverage (2026-09-17).** `delivered-cost-intake-review.json` is a
+completed intake review of the delivered-cost plan, written as a separate pass
+against the case 6 expectation below and the retained message, never against the
+plan's own output: five checks passed with findings that name the requirements and
+message they concern, one agent-authored assumption assessed, the historical-scope
+sentence recorded as carried by the brief's undeclared scope rather than by a
+requirement row, and unresolved limits saying the reviewer is an agent and nothing
+is user-confirmed. It binds the plan's canonical digest and the live `dry_pasta`
+control catalogue; editing either supersedes it. Like the T3 reviews, it is a
+fixture approval and must never be reused for another plan.
+[test_intake_review.py](../test_intake_review.py) exercises the contract, the
+redaction limits, the bundle snapshot, `verify`, `validate-report`, `resume`, and
+case 7's semantic limit: a plan that maps the budget onto the per-kilogram cap
+passes the gates as enforced, and an intake review that fails `adequacy` on
+`budget` refuses the run. The maintenance gate runs the delivered-cost example
+with this review and records `intake_review`.
+
+```text
+uv run --offline --locked python -m shopping_advisor.study plan-review tests/intake/delivered-cost-plan.json tests/intake/delivered-cost-intake-review.json
+uv run --offline --locked python -m shopping_advisor.study run tests/intake/delivered-cost-brief.json --plan tests/intake/delivered-cost-plan.json --intake-review tests/intake/delivered-cost-intake-review.json -o data/intake-reviewed-study
+```
+
 The [runbook](../../RESEARCH.md#retain-an-intake-plan-before-the-executable-brief)
 contains the full bind/run/verify sequence. The test suite exercises those CLIs,
 checks the expected original decisions, and replays after deleting the originating
@@ -126,7 +165,10 @@ orders on pack size, so the cap would land on the wrong quantity there too.
 recommendation; the brief carries no cap; adding one refuses at the transition
 as a cap no requirement maps to; writing the budget into `unacceptable`
 satisfies nothing. A plan that maps the budget onto the cap passes as enforced,
-which is the semantic-review limit, stated in the report.
+which is the semantic-review limit, stated in the report. **Stage 9**: an intake
+review that fails `adequacy` on `budget`, naming the cap as euros per kilogram
+rather than a purchase total, refuses the run and nothing is written; the same
+plan without the review still runs, enforced and wrong, as stage 6 documented.
 
 **8 — An external finding as a hard condition.** *"Only ones an independent
 test rated well."* — Acceptable: the finding is retained, the absence of any
@@ -173,7 +215,10 @@ stays in the plan. Not acceptable: it becomes a fact about the product class.
 This is the failure the roadmap already records — mounting paste ranks the
 smallest pack first because one reader was fitting one scooter tyre, and that
 is now indistinguishable from a property of the product. R13 adds a third
-author to it. Awaits stage 5.
+author to it. Awaits stage 5 for the conversational trial. **Stage 9**: the
+`faithfulness` check asks whether anything the agent introduced is presented as
+the user's, and a failure must name the requirement; the committed review
+assesses the agent's listed-price axis as its own, non-decisive assumption.
 
 **13 — A decisive requirement dropped in translation.** The requirement is in
 the buyer's words and in the plan, and absent from the brief. — Acceptable:
@@ -196,7 +241,12 @@ question and its observations are later used. — Acceptable: reuse is permitted
 with explicit promotion, and the record says whether the probe changed the
 criteria or supplied candidates that entered the plan. Not acceptable:
 provenance alone offered as proof of an unbiased comparison; re-collecting
-identical evidence solely because it came from a probe. Awaits stage 8.
+identical evidence solely because it came from a probe. **Stage 8**: a completed
+probe must record its result and a promotion record — promoted or not, into
+what, whether it changed the criteria or supplied candidates — and a material
+change requires an explicit assessment; promotion moves evidence into the plan
+and never consumption out of the ledger. What the ledger cannot do is tell that
+an operator recorded the record falsely.
 
 **16 — Age, and the difference between two reference dates.** Three requests:
 decisive prices that breach the declared policy; an old study delivered again
@@ -221,14 +271,22 @@ not lift a block.
 intake findings and any downstream approval are invalidated; an unresolved
 disagreement leaves the finding pending or failed; a structural failure is
 never overridden by a semantic approval. Not acceptable: copying a `pass`
-forward to make new digests validate. Awaits stage 10.
+forward to make new digests validate. **Stage 9**, the intake half: a review
+bound to a superseded plan revision, or relabelled with the new digest without
+re-review, refuses; a `fail` leaves the plan blocked at `run`; a `limited` check
+is not approval. Invalidation of the final review and reuse of unchanged
+findings await stage 10.
 
 **18 — A budget stop and a resumption.** Research budget exhausts mid-run and
 the conversation is gone. — Acceptable: completed evidence is preserved, the
 prevented next actions are named, and work resumes from verified artifacts
 alone; delivery freshness is rechecked before any new current advice. Not
 acceptable: treating interrupted work as complete, or depending on the
-originating session. Awaits stage 8.
+originating session. **Stage 8**: the interrupted collection stays interrupted
+with its allocation counted as spent, `resume` runs from the bundle's snapshot
+after the working ledger and plan are deleted, names the resumed collection the
+55 remaining responses prevent, keeps the engineering proposal unexecuted, and
+rechecks freshness at its reference without recording a delivery.
 
 **19 — A hard constraint that cannot be met.** — Acceptable: the refusal is
 presented without a recommendation-style shortlist beneath it, while permitted

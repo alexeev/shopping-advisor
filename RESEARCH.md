@@ -286,11 +286,47 @@ unsupported objective onto it: the second is the substitution the comparison
 gate refuses when it can see it, and cannot see when the plan disguises it. A
 decisive hard constraint whose bound assessment `failed` renders as "Requirement
 cannot be met"; one still `awaiting_evidence` is routed to collection or a
-coverage stop, not to a capability gap. Resource accounting and intake semantic
-review remain planned; delivery freshness is the section below. A passing
+coverage stop, not to a capability gap. The intake review is the next
+subsection; delivery freshness and the session ledger follow it. A passing
 `plan-check` is neither
 semantic approval nor authorization for engineering, and a gate that reports
 every requirement `enforced` has not established that the controls answer them.
+
+### Review the plan in a separate pass
+
+A structurally valid plan is not a faithful one. The
+[intake review](CONTRACT.md#13-intake-review-r13-stage-9) is the semantic pass
+the gates cannot perform: whether every instruction in the retained messages
+reached the plan, whether each requirement's role and settlement are what the
+words support, whether each control answers the requirement it is mapped to —
+the budget mapped onto the per-kilogram cap passes the gates as `enforced` and
+fails here — whether each assumed default was defensible, and whether the stage
+effects are the ones the meaning implies.
+
+```text
+uv run --offline --locked python -m shopping_advisor.study plan-review-template data/plans/<plan>.json -o data/plans/<plan>-review.json
+uv run --offline --locked python -m shopping_advisor.study plan-review data/plans/<plan>.json data/plans/<plan>-review.json
+uv run --offline --locked python -m shopping_advisor.study run BRIEF --plan data/plans/<plan>.json --intake-review data/plans/<plan>-review.json
+uv run --offline --locked python -m shopping_advisor.study review-intake data/studies/<study_id> data/plans/<plan>-review.json
+```
+
+Fill each check with findings and name the reviewer; a failure names the
+requirements or user messages it concerns. Record `limited`, not `pass`, where a
+redaction or missing context kept wording from you: the template lists those
+limits and the contract refuses a pass over them. The review binds the plan
+revision and the category's live control catalogue — revise the plan and it is
+superseded, change the catalogue and its adequacy finding is stale, and neither
+is carried forward. `run --intake-review` refuses a plan its review says
+misreads the request; `review-intake` attaches a review to a study that has
+already run; `validate-report --require-review` needs a passing one on a
+plan-backed study. A passing review is not the buyer's confirmation — the
+read-back response status stays what it was — and it authorises no engineering.
+The committed delivered-cost review is the reference:
+
+```text
+uv run --offline --locked python -m shopping_advisor.study plan-review tests/intake/delivered-cost-plan.json tests/intake/delivered-cost-intake-review.json
+uv run --offline --locked python -m shopping_advisor.study run tests/intake/delivered-cost-brief.json --plan tests/intake/delivered-cost-plan.json --intake-review tests/intake/delivered-cost-intake-review.json -o data/intake-reviewed-study
+```
 
 ### Deliver the study, and say what it is
 
@@ -322,6 +358,63 @@ historical comparison with its reference date, or recollect. Delivering an old
 study again is a new event and a new assessment; `verify` recomputes every event
 from its frozen reference and never reads today's clock. None of this proves the
 clock honest, and none of it can tell that a declaration is false.
+
+### Keep the session's resource ledger, and resume from the files
+
+Per-crawl provenance says what one run spent; the
+[session ledger](CONTRACT.md#12-session-resource-ledger-and-resumption-r13-stage-8)
+says what the session was allowed, what it has spent across inspections, probes,
+collections and interrupted runs, and what it may still do. Keep the working
+ledger under `data/sessions/` or an explicit private path, and snapshot it into
+every study it funds with `run --session`. Declare limits in the units the run
+manifest reports — responses, requests, items, seconds, retained pages, runs —
+and keep research and engineering allowances apart: willingness to investigate
+products does not fund development, and an engineering proposal is recorded
+against its own allowance and never authorised here. Say whether a limit stops
+new work or is a strict ceiling, and for a ceiling name the closure setting and
+its known overshoot; a monetary or token figure is an estimate and can only stop
+new work.
+
+Before a probe or a collection, check it, and record what it did from the
+manifest the crawl wrote:
+
+```text
+uv run --offline --locked python -m shopping_advisor.study session-authorise data/sessions/<session>.json <action> --record
+uv run --offline --locked python -m shopping_advisor.study session-record data/sessions/<session>.json <action> --run data/runs/<run_id>
+uv run --offline --locked python -m shopping_advisor.study session-check data/sessions/<session>.json
+```
+
+Give a completed probe its `--result` and `--promotion` record in the same step;
+the contract refuses a completed probe without them.
+A crawl that never closed is recorded as interrupted with unknown consumption,
+and unknown is not zero: the limit stays unreconciled and nothing new is
+authorised until you record the manifest or, conservatively, count the whole
+allocation as spent with `--assume-allocation`. A replay of retained bytes is
+not acquisition. Resume an interrupted action as a new one that names it; the
+predecessor's consumption is counted once. A completed probe records the result
+that determined the next action and whether its evidence was promoted into the
+declared inputs, whether seeing it changed the criteria, and whether it supplied
+candidates — provenance alone does not make a comparison unbiased, and a material
+change asks explicitly whether broader discovery is needed. Exhaustion refuses
+the next action and names it; it deletes nothing.
+
+Resumption needs the files, not the conversation:
+
+```text
+uv run --offline --locked python -m shopping_advisor.study resume data/studies/<study_id>
+```
+
+`resume` verifies the retained artifacts, checks the plan revision the ledger
+names against the bundle's snapshot, reconciles the resources, confirms every
+linked run manifest is present and unaltered, reads the review state, and
+rechecks delivery freshness at the current instant without recording an event —
+issue current advice only through `study deliver`. It either reports the
+verified state with the next actions the ledger permits and prevents, or names
+the precise missing dependency. Interrupted work is listed as interrupted, never
+assumed complete. The committed
+[delivered-cost example](tests/intake/README.md) is the reference: its session
+ledger holds an interrupted collection recorded conservatively, a resumed
+collection the remaining responses prevent, and a retained engineering proposal.
 
 ### Agree the brief
 
@@ -640,8 +733,10 @@ Review `semantic-review.json` in a separate pass against the actual source,
 variant and user priorities. Fill each checklist finding, name the reviewer
 and preserve unresolved limits. Keep its report/evidence digest bindings.
 Attach it with `study review BUNDLE COMPLETED_REVIEW.json`, then run
-`study validate-report BUNDLE --require-review`. Generated pending checklists
-are not approvals. Arbitrary hand-written report additions fail exact rendering
+`study validate-report BUNDLE --require-review`; on a plan-backed study the
+same flag also requires a passing
+[intake review](#review-the-plan-in-a-separate-pass). Generated pending
+checklists are not approvals. Arbitrary hand-written report additions fail exact rendering
 checks; revise the structured evidence/brief and generate a new report instead.
 
 Basmati's seven-part score remains optional category interpretation, completely

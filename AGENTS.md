@@ -111,8 +111,14 @@ convenience, never the authority.
   enters bounded execution: the stage gates withhold the recommendation, put no
   candidate forward, and report the ranking on the available axis as a bounded
   finding under its own heading. Never map an unsupported objective onto the
-  axis that happens to exist. See
-  [the intake workflow](RESEARCH.md#retain-an-intake-plan-before-the-executable-brief).
+  axis that happens to exist. Review the plan in a separate pass:
+  `plan-review-template` and `plan-review` bind an intake review to the plan
+  revision and the live controls, `run --intake-review` refuses a plan its
+  review says misreads the request, and `validate-report --require-review`
+  needs a passing one on a plan-backed study. A structurally valid plan is
+  not a faithful one, and a passing review is not the buyer's confirmation. See
+  [the intake workflow](RESEARCH.md#retain-an-intake-plan-before-the-executable-brief)
+  and [the review pass](RESEARCH.md#review-the-plan-in-a-separate-pass).
 - Inspect before asking, then ask in one batched round. Ask before dependent work
   when unresolved information could invalidate the purchase decision or cause
   substantial avoidable work **and** existing context provides no defensible
@@ -148,6 +154,15 @@ convenience, never the authority.
 - Keep runs sequential for now, with unique feed output paths, explicit locale,
   baseline pacing and finite query/product/time limits. Do not silently increase
   request rates or retries to get around challenges. Record partial results.
+  Account for the session in its ledger: declare limits in the units the run
+  manifest reports, check a probe or collection with `study session-authorise`
+  before it runs, record what it did with `session-record` from its manifest,
+  and snapshot the ledger into the study with `run --session`. Unknown
+  consumption is unknown, not zero; an interrupted run is interrupted, not
+  complete; a replay is not acquisition; engineering is a retained proposal
+  against its own allowance. `study resume` says from the files alone whether
+  a study can continue and what its budget still permits. See
+  [the session ledger](RESEARCH.md#keep-the-sessions-resource-ledger-and-resume-from-the-files).
 - Use one marketplace per analysis; the tools enforce it and `--marketplace`
   states which. `rank` refuses a mixed mass/volume ordering and an axis with no
   stated preference — name the unit the use case needs rather than overriding
