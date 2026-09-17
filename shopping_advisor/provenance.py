@@ -163,6 +163,11 @@ def acquisition_settings(settings):
     middlewares = _component_names(settings, 'DOWNLOADER_MIDDLEWARES')
     recorded['DOWNLOADER_MIDDLEWARES'] = middlewares
     recorded['EXTENSIONS'] = _component_names(settings, 'EXTENSIONS')
+    # Add-ons configure the crawler before its middlewares exist. The one this
+    # project ships decides where the public suffix list came from -- which is
+    # whether the process contacted anything besides the marketplace -- so a
+    # manifest without it in this list is a crawl that may have.
+    recorded['ADDONS'] = _component_names(settings, 'ADDONS')
     # Stated rather than left to be inferred from a class path: whether the
     # requests went through a third party is the first thing that decides
     # what a challenge count or an IP-dependent price means.

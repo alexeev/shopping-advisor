@@ -53,6 +53,21 @@ DOWNLOADER_MIDDLEWARES = {
     'scrapy.downloadermiddlewares.retry.RetryMiddleware': 550,
 }
 
+# The cookies middleware decides whether a Set-Cookie domain is a public
+# suffix with tldextract, whose default extractor *downloads* the Public
+# Suffix List from publicsuffix.org and a GitHub mirror the first time it is
+# asked. The school-backpack probe of 2026-09-17 -- 15 requests, all 200 --
+# therefore opened connections to two hosts that are not the marketplace,
+# both failed TLS verification on this machine, and its log carried twelve
+# tracebacks from a failure that changed nothing; the manifest's request
+# count never saw the two requests. This add-on has the middleware read the
+# snapshot bundled with the *locked* tldextract instead: no download, no
+# per-machine cache, and the list a crawl used is fixed by uv.lock. The
+# optional ScrapeOps profile inherits it. See shopping_advisor/addons.py.
+ADDONS = {
+    'shopping_advisor.addons.BundledPublicSuffixList': 0,
+}
+
 # --- Conservative local crawl profile --------------------------------------
 CONCURRENT_REQUESTS = 1
 CONCURRENT_REQUESTS_PER_DOMAIN = 1

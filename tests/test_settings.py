@@ -16,15 +16,26 @@ existing command and report uses still resolves to it.
 
 import configparser
 import importlib
+import os
 import pathlib
 import sys
+import tempfile
+import types
 import unittest
+from unittest import mock
 
+import requests
+import scrapy
+from scrapy.crawler import Crawler
+from scrapy.downloadermiddlewares import cookies
 from scrapy.settings import Settings
+from tldextract import TLDExtract
+from tldextract.cache import DiskCache
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
+from shopping_advisor import addons  # noqa: E402
 from shopping_advisor import settings as default_profile  # noqa: E402
 from shopping_advisor import settings_baseline  # noqa: E402
 from shopping_advisor.extraction import for_domain  # noqa: E402
@@ -75,7 +86,8 @@ class NoCredentials(unittest.TestCase):
         and it is the one `scrapy list` does not perform."""
         from scrapy.utils.misc import load_object
         named = (list(default_profile.DOWNLOADER_MIDDLEWARES)
-                 + list(default_profile.EXTENSIONS))
+                 + list(default_profile.EXTENSIONS)
+                 + list(default_profile.ADDONS))
         self.assertTrue(named, 'the stock retry middleware should be restored')
         for component in named:
             with self.subTest(component=component):
@@ -123,6 +135,119 @@ class LocaleAndPacing(unittest.TestCase):
         self.assertEqual(sorted(recorded['DEFAULT_REQUEST_HEADERS']),
                          ['Accept', 'Accept-Language',
                           'Upgrade-Insecure-Requests'])
+        self.assertEqual(recorded['ADDONS'],
+                         ['shopping_advisor.addons.BundledPublicSuffixList'],
+                         'a manifest says where the suffix list came from')
+
+
+class NoThirdParty(unittest.TestCase):
+    """The proxy-free profile talks to the marketplace, and to nothing else.
+
+    Scrapy's cookies middleware asks tldextract whether a ``Set-Cookie`` domain
+    is a public suffix, and tldextract's default extractor answers, the first
+    time, by downloading the Public Suffix List. On the school-backpack probe
+    of 2026-09-17 -- 15 requests, 15 HTTP 200, ``finished`` -- that was two
+    connections to hosts that are not Amazon, both failing TLS verification,
+    and twelve tracebacks in the log of a crawl that had no error of its own.
+    :mod:`shopping_advisor.addons` puts the snapshot bundled with the locked
+    tldextract in place of the download; these tests pin the add-on.
+    """
+
+    ADDON = 'shopping_advisor.addons.BundledPublicSuffixList'
+
+    def setUp(self):
+        self.original = getattr(cookies, addons.SCRAPY_EXTRACTOR_ATTRIBUTE)
+        self.addCleanup(setattr, cookies, addons.SCRAPY_EXTRACTOR_ATTRIBUTE,
+                        self.original)
+
+    @staticmethod
+    def blocked_network():
+        """Every HTTP request tldextract could make fails at once, locally."""
+        return mock.patch.object(
+            requests.Session, 'request',
+            side_effect=requests.ConnectionError('blocked by the test'))
+
+    def test_both_profiles_enable_the_add_on(self):
+        self.assertIn(self.ADDON, default_profile.ADDONS)
+        scrapeops = importlib.import_module('shopping_advisor.settings_scrapeops')
+        self.assertIn(self.ADDON, scrapeops.ADDONS,
+                      'a proxied crawl has no more business fetching the '
+                      'list than a direct one')
+
+    def test_scrapy_still_holds_the_extractor_the_add_on_replaces(self):
+        """Pinned so that a Scrapy release which moves the attribute fails
+        here, in the suite, and not by quietly downloading again."""
+        self.assertIsInstance(self.original, TLDExtract)
+        self.assertTrue(self.original.include_psl_private_domains)
+
+    def test_without_the_add_on_scrapy_would_download_the_list(self):
+        """The counterexample: Scrapy's own construction of the extractor,
+        with only its cache redirected to scratch so that this test touches
+        nothing under ~/.cache."""
+        with tempfile.TemporaryDirectory() as scratch:
+            stock = TLDExtract(cache_dir=scratch,
+                               include_psl_private_domains=True)
+            with self.blocked_network() as request, \
+                    self.assertLogs('tldextract', level='WARNING') as log:
+                self.assertEqual(stock('www.amazon.de').domain, 'amazon',
+                                 'the snapshot answers in the end')
+            urls = [call.args[1] for call in request.call_args_list]
+            self.assertEqual(urls, list(stock.suffix_list_urls))
+            self.assertEqual(len(urls), 2)
+            self.assertTrue(all(url.startswith('https://') for url in urls))
+            self.assertEqual(len(log.records), 2)
+            self.assertTrue(
+                os.listdir(scratch),
+                'and it caches the fallback under the same key, which is why '
+                'the tracebacks appear once per cache identity, not per crawl')
+
+    def test_the_installed_extractor_has_nowhere_to_fetch_from(self):
+        extractor = addons.install()
+        self.assertIs(getattr(cookies, addons.SCRAPY_EXTRACTOR_ATTRIBUTE),
+                      extractor)
+        self.assertEqual(extractor.suffix_list_urls, ())
+        self.assertTrue(extractor.fallback_to_snapshot)
+        self.assertTrue(extractor.include_psl_private_domains,
+                        "Scrapy's cookie decision must not move with the "
+                        "list's origin")
+        self.assertIs(addons.install(), extractor,
+                      'a second crawler in the process keeps the first one')
+
+    def test_the_snapshot_answers_without_a_request_a_cache_or_a_warning(self):
+        with self.blocked_network() as request, \
+                mock.patch.object(DiskCache, 'set',
+                                  side_effect=AssertionError('cache write')), \
+                self.assertNoLogs('tldextract', level='WARNING'):
+            split = addons.install()
+            self.assertEqual(split('co.uk').domain, '',
+                             'a public suffix: the cookie check says public')
+            self.assertEqual(split('amazon.de').domain, 'amazon',
+                             'a registrable domain: a cookie may be set on it')
+            self.assertEqual(split('github.io').domain, '',
+                             'a private-section suffix stays public for '
+                             "cookies, as in Scrapy's own extractor")
+        self.assertEqual(request.call_count, 0)
+
+    def test_a_crawler_built_from_the_profile_installs_it_before_the_engine(self):
+        """Through Scrapy's own add-on manager, which is how `scrapy crawl`
+        gets there: `Crawler.crawl()` loads add-ons before it builds the
+        engine and its middlewares."""
+        crawler = Crawler(scrapy.Spider, as_settings(default_profile))
+        with self.blocked_network() as request:
+            crawler.addons.load_settings(crawler.settings)
+        self.assertEqual([repr(addon) for addon in crawler.addons.addons],
+                         [self.ADDON], 'and the crawl log names it')
+        installed = getattr(cookies, addons.SCRAPY_EXTRACTOR_ATTRIBUTE)
+        self.assertEqual(installed.suffix_list_urls, ())
+        self.assertEqual(request.call_count, 0)
+
+    def test_the_add_on_refuses_a_scrapy_that_moved_the_extractor(self):
+        elsewhere = types.ModuleType('elsewhere')
+        with self.assertRaises(RuntimeError) as raised:
+            addons.install(module=elsewhere)
+        self.assertIn('elsewhere._split_domain', str(raised.exception))
+        self.assertIs(getattr(cookies, addons.SCRAPY_EXTRACTOR_ATTRIBUTE),
+                      self.original, 'and it leaves Scrapy alone')
 
 
 if __name__ == '__main__':

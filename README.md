@@ -102,7 +102,10 @@ review, and impossible to skip by accident. Run the suite alone with
 including when re-recording the baseline is legitimate.
 
 **The default crawl profile is the validated, proxy-free local one** (T1). It
-needs no API key and no optional packages, and it asks Amazon.de for German.
+needs no API key and no optional packages, it asks Amazon.de for German, and
+the crawl process contacts no host but the marketplace: the public suffix list
+that cookie handling consults is the snapshot bundled with the locked
+`tldextract`, not a download.
 `SCRAPY_PROJECT` no longer has to be set; `SCRAPY_PROJECT=baseline` still
 selects the same profile, so existing commands keep working.
 

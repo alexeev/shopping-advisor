@@ -652,7 +652,12 @@ uv run --offline --locked scrapy crawl amazon_product -a keyword="spaghetti hart
 ```
 
 Here **`--offline` applies to uv, not the crawler**: Scrapy makes marketplace
-requests. `CLOSESPIDER_TIMEOUT` bounds crawl duration, but in-flight requests
+requests, and those are the process's only network contact. The public suffix
+list that Scrapy's cookie handling consults comes from the snapshot bundled
+with the locked `tldextract`, through the `shopping_advisor.addons` add-on the
+profile enables, never from a download; a `[tldextract] WARNING` about reading
+the Public Suffix List, with its tracebacks, means that add-on was not in
+place. `CLOSESPIDER_TIMEOUT` bounds crawl duration, but in-flight requests
 can take time to finish; timeout closure means partial results. The product cap
 bounds discovery, not retries or the exact number of HTTP requests. The baseline
 uses concurrency 1, configured delay 9 seconds with jitter/AutoThrottle, and two
@@ -929,6 +934,7 @@ recommendation when a decisive requirement resolves to no control at all.
 | Setup/profile/locale failure | README troubleshooting, `scrapy.cfg`, current shell variables, `settings.py` |
 | Challenge, failed download or missing candidates | `run inspect`, the manifest stats, retained `failures/` samples, discovery occurrences, planned queries/ASINs |
 | A crawl that stopped without a summary | `run inspect`: an `interrupted` state means the manifest never closed and coverage is partial |
+| `[tldextract] WARNING: Exception reading Public Suffix List url …` followed by tracebacks | The process tried to download the suffix list from a third party. `Enabled addons` in the log and `settings.ADDONS` in the manifest should name `shopping_advisor.addons.BundledPublicSuffixList`; a manifest without it is a crawl that may have contacted hosts its request count does not cover |
 | Missing or wrong extracted field | `extraction.errors`, raw content/tables, retained page; reproduce with `reextract` |
 | A replay that refuses a feed or a page | The feed belongs to another crawl/marketplace, or the stored bytes no longer match the run's recorded digest |
 | Disputed number | Evidence card and source fields, quantity/price units, category profile |
