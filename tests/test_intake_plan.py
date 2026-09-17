@@ -72,6 +72,23 @@ class PlanContract(PlanCase):
         self.assertEqual(unknown['requirements'][0]['assessment']['path'], 'unsupported')
         self.assertIn('No hedge-trimmer', intake.render_readback(unknown))
 
+    def test_plan_check_keeps_a_space_after_a_long_requirement_id(self):
+        # A requirement id wider than the fixed 14-column id field used to run into
+        # the disposition (``marketplace_scopeunsupported``); the column now grows
+        # with the longest id while the fixtures' 14-wide layout is unchanged.
+        renamed = json.loads(json.dumps(intake.load(UNSUPPORTED)).replace('"suitability"', '"marketplace_scope"'))
+        intake.check(self.refreshed(renamed))
+        status, output = self.cli('plan-check', self.write('long-id-plan.json', renamed))
+        self.assertEqual(status, 0, output)
+        self.assertIn('  marketplace_scope unsupported ', output)
+        self.assertNotIn('marketplace_scopeunsupported', output)
+        self.assertIn('  readiness         bounded', output)
+        self.assertIn('  next action       A bounded probe', output)
+        status, output = self.cli('plan-check', SUPPORTED)
+        self.assertEqual(status, 0, output)
+        self.assertIn('  bronze        enforced          hard_constraint', output)
+        self.assertIn('  readiness     full_request', output)
+
     def test_closed_fields_versions_and_types(self):
         for change in (lambda p: p.update(plan_version=2),
                        lambda p: p.update(plan_version=True),

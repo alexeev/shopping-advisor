@@ -402,12 +402,16 @@ def plan_check_command(args):
     print(f'{plan["id"]}: valid intake plan v{plan["plan_version"]}, '
           f'revision {plan["revision"]}; {len(plan["requirements"])} requirements.')
     readiness = gates.intake_gate(plan)
-    for row in readiness['requirements']:
-        print(f'  {row["id"]:<14}{row["disposition"]:<18}{row["role"]}, '
+    rows = readiness['requirements']
+    # The id column grows with the longest id so a long id (``marketplace_scope``)
+    # keeps at least one space before the disposition; 14 keeps the fixtures' layout.
+    width = max([14] + [len(row['id']) + 1 for row in rows])
+    for row in rows:
+        print(f'  {row["id"]:<{width}}{row["disposition"]:<18}{row["role"]}, '
               f'{row["settlement"]}, by {row["author"]}'
               + ('; restricts the conclusion' if row['restricts_conclusion'] else ''))
-    print(f'  readiness     {readiness["readiness"]}')
-    print(f'  next action   {readiness["next_action"]}')
+    print(f'  {"readiness":<{width}}{readiness["readiness"]}')
+    print(f'  {"next action":<{width}}{readiness["next_action"]}')
     print('Structural preservation only; not semantic approval or execution authority.')
     return 0
 
