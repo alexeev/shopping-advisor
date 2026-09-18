@@ -22,6 +22,7 @@ from shopping_advisor.validation import (  # noqa: E402
     ATTRIBUTES, CONTRACT_VERSION, CategoryProfile, DERIVED, DISPUTED,
     PUBLISHED, STRUCTURED, TEXT, TRUSTED, UNKNOWN, UNVERIFIED, nutrition,
     pricing, quantity, validate)
+from shopping_advisor.validation.evidence import text_fields  # noqa: E402
 
 PASTA_BANDS = {'protein_g': (4.0, 30.0), 'energy_kcal': (280.0, 420.0),
                'energy_kj': (1150.0, 1800.0), 'carbohydrates_g': (35.0, 90.0),
@@ -479,6 +480,52 @@ class Contract(unittest.TestCase):
         self.assertEqual(fields, {'key', 'label', 'nutrition_bands',
                                   'price_band'})
 
+
+
+class AplusTextFields(unittest.TestCase):
+    """R15's third adaptation: what of the A+ block counts as this product's words."""
+
+    COMPARISON = {'columns': [{'label': 'Modell A', 'asin': 'B0OTHER0001'},
+                              {'label': 'Modell B', 'asin': 'B000000000'}],
+                  'rows': [['Akkulaufzeit GPS-Modus', 'Bis zu 42 Stunden', 'Bis zu 47 Stunden'],
+                           ['Garmin Pay', '\u2714', '\u2718'],
+                           ['Wasserdicht', '10 ATM', '10 ATM'],
+                           ['Solar', '\u2714', '\u2014']],
+                  'self_column': 1}
+
+    def fields(self, aplus):
+        return dict(text_fields(record(content={
+            'feature_bullets': [], 'description': '', 'important_information': [],
+            'aplus': aplus})))
+
+    def test_an_old_record_with_only_text_reads_as_before(self):
+        fields = self.fields({'text': 'Akkulaufzeit GPS-Modus Bis zu 42 Stunden Bis zu 47 Stunden'})
+        self.assertEqual(fields['content.aplus'],
+                         'Akkulaufzeit GPS-Modus Bis zu 42 Stunden Bis zu 47 Stunden')
+
+    def test_prose_replaces_the_flattened_text_where_a_record_has_it(self):
+        fields = self.fields({'text': 'Welche Uhr? Akkulaufzeit GPS-Modus Bis zu 42 Stunden',
+                              'prose': 'Welche Uhr?', 'comparison': []})
+        self.assertEqual(fields['content.aplus'], 'Welche Uhr?')
+        self.assertFalse(any('Stunden' in v for v in fields.values()),
+                         'another column\'s runtime is nobody\'s statement')
+
+    def test_only_the_own_column_is_read_and_only_where_it_affirms(self):
+        fields = self.fields({'text': 'x', 'prose': 'x', 'comparison': [self.COMPARISON]})
+        rows = {k: v for k, v in fields.items() if k.startswith('content.aplus.comparison')}
+        self.assertEqual(rows, {
+            'content.aplus.comparison[0].Akkulaufzeit GPS-Modus': 'Akkulaufzeit GPS-Modus: Bis zu 47 Stunden',
+            'content.aplus.comparison[0].Wasserdicht': 'Wasserdicht: 10 ATM'})
+
+    def test_a_table_without_the_product_yields_nothing(self):
+        absent = dict(self.COMPARISON, self_column=None)
+        fields = self.fields({'text': 'x', 'prose': 'x', 'comparison': [absent]})
+        self.assertFalse(any(k.startswith('content.aplus.comparison') for k in fields))
+
+    def test_an_empty_prose_with_tables_only_yields_no_aplus_text(self):
+        fields = self.fields({'text': 'Akkulaufzeit GPS-Modus Bis zu 42 Stunden', 'prose': '',
+                              'comparison': [dict(self.COMPARISON, self_column=None)]})
+        self.assertNotIn('content.aplus', fields)
 
 if __name__ == '__main__':
     unittest.main()

@@ -372,5 +372,64 @@ class PackageWeightFromDimensions(unittest.TestCase):
         self.assertNotIn('item_weight_origin', package)
 
 
+class AplusComparisonTable(unittest.TestCase):
+    """R15's third adaptation: a comparison table is structure, not copy.
+
+    Modelled on the ``premium-module-5-comparison-table`` of the retained fenix
+    8, fenix 9 and Instinct 3 pages: one product per ``th.aplus-data-column``,
+    the page's own product sometimes the first column, sometimes the third,
+    sometimes absent, and the first column carrying ``active`` whichever it is.
+    """
+
+    TABLE = (
+        '<div id="aplus_feature_div"><div class="aplus-module premium-module-5-comparison-table-scroller">'
+        '<p>Welche Uhr ist die Richtige?</p>'
+        '<table class="a-bordered">'
+        '<tr><td class="attribute empty"></td>'
+        '<th class="aplus-data-column top-header active active-item"><a href="/Other-Model/dp/B0OTHER001/ref=x">Modell A</a></th>'
+        '<th class="aplus-data-column top-header"><a href="/This-Model/dp/B000000001/ref=x">Modell B</a></th>'
+        '<th class="aplus-data-column top-header"><a href="/Third-Model/dp/B0OTHER002/ref=x">Modell C</a></th></tr>'
+        '<tr><td class="attribute">Akkulaufzeit GPS-Modus</td><td>Bis zu 42 Stunden</td><td>Bis zu 47 Stunden</td><td>Bis zu 73 Stunden</td></tr>'
+        '<tr><td class="attribute">Garmin Pay</td><td>\u2714</td><td>\u2718</td><td>\u2714</td></tr>'
+        '</table></div></div>'
+    )
+
+    def aplus(self, html, asin='B000000001'):
+        return blocks.aplus_content(Selector(html), asin=asin)
+
+    def test_prose_leaves_the_table_cells_out_and_text_keeps_them(self):
+        aplus = self.aplus(self.TABLE)
+        self.assertIn('Bis zu 42 Stunden', aplus['text'], 'text is unchanged since schema v1')
+        self.assertEqual(aplus['prose'], 'Welche Uhr ist die Richtige?')
+
+    def test_the_own_column_is_found_by_asin_not_by_position(self):
+        aplus = self.aplus(self.TABLE)
+        (table,) = aplus['comparison']
+        self.assertEqual([c['asin'] for c in table['columns']],
+                         ['B0OTHER001', 'B000000001', 'B0OTHER002'])
+        self.assertEqual(table['self_column'], 1,
+                         'the active first column is the scroller\'s, not the product\'s')
+        self.assertEqual(table['rows'][0], ['Akkulaufzeit GPS-Modus', 'Bis zu 42 Stunden',
+                                            'Bis zu 47 Stunden', 'Bis zu 73 Stunden'])
+
+    def test_a_table_without_the_product_has_no_own_column(self):
+        aplus = self.aplus(self.TABLE, asin='B0NOTHERE00')
+        self.assertIsNone(aplus['comparison'][0]['self_column'])
+        self.assertEqual(len(aplus['tables']), 1, 'the verbatim table is still retained')
+
+    def test_a_spec_table_is_not_a_comparison(self):
+        html = ('<div id="aplus"><table><tr><th>Kalorien</th><td>355 kcal</td></tr>'
+                '<tr><th>Fett</th><td>1,5 g</td></tr></table></div>')
+        aplus = self.aplus(html)
+        self.assertEqual(aplus['comparison'], [])
+        self.assertEqual(len(aplus['tables']), 1)
+        self.assertEqual(aplus['prose'], '')
+
+    def test_the_extractor_passes_the_page_asin_through(self):
+        record = PdpExtractor(DE).extract(Selector('<div id="productTitle">Uhr</div>' + self.TABLE),
+                                         self.TABLE, {'asin': 'B000000001'})
+        self.assertEqual(record['content']['aplus']['comparison'][0]['self_column'], 1)
+
+
 if __name__ == '__main__':
     unittest.main()

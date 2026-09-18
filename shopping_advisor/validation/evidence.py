@@ -186,10 +186,34 @@ def text_fields(record):
         yield (f'content.important_information[{index}]',
                f'{heading}: {body}' if heading else body)
 
-    aplus = (content.get('aplus') or {}).get('text') or ''
-    if aplus:
-        yield 'content.aplus', aplus
+    aplus = content.get('aplus') or {}
+    # Schema v6 records written since R15's third adaptation carry ``prose``,
+    # the A+ copy without table cells; older records have only ``text`` and
+    # read exactly as before. A comparison table's cells are statements about
+    # the products in its columns, so only the column that links this page's
+    # own ASIN is read, one labelled row at a time, and a row whose own cell
+    # is a cross or a dash states nothing.
+    prose = aplus.get('prose')
+    text = prose if prose is not None else (aplus.get('text') or '')
+    if text:
+        yield 'content.aplus', text
+    for index, table in enumerate(aplus.get('comparison') or []):
+        own = table.get('self_column')
+        if own is None:
+            continue
+        width = len(table.get('columns') or ()) + 1
+        for row in table.get('rows') or []:
+            if len(row) != width or own + 1 >= len(row):
+                continue
+            label, value = row[0], row[own + 1]
+            if not label or not value or _NEGATIVE_CELL.match(value):
+                continue
+            yield f'content.aplus.comparison[{index}].{label}', f'{label}: {value}'
 
+
+#: A comparison-table cell that denies or lacks the feature: a cross, a dash,
+#: "no data", a bare no. Such a cell is not a statement the row's label makes.
+_NEGATIVE_CELL = re.compile(r'^\s*(?:[\u2718\u2717\u00d7\u2715\u274c\u2013\u2014\-]+|no data|k\.\s*a\.|n/a|nein|no|keine?)\s*$', re.I)
 
 _SENTENCE_SPLIT = re.compile(r'(?<=[.!?;])\s+')
 QUOTE_MAX = 180

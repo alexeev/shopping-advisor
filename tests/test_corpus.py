@@ -85,8 +85,9 @@ def load_snapshot(name, filename=SNAPSHOT):
         return {r['asin']: r for r in map(json.loads, fh)}
 
 
-def write_snapshot(name, records, filename=SNAPSHOT):
-    with gzip.open(CORPUS / name / filename, 'wt', encoding='utf-8',
+def write_snapshot(name, records, filename=SNAPSHOT, root=CORPUS):
+    (root / name).mkdir(parents=True, exist_ok=True)
+    with gzip.open(root / name / filename, 'wt', encoding='utf-8',
                    compresslevel=9) as fh:
         for asin in sorted(records):
             fh.write(json.dumps(records[asin], ensure_ascii=False,
@@ -166,12 +167,19 @@ class Corpus(unittest.TestCase):
 
 if __name__ == '__main__':
     if '--update' in sys.argv:
+        # ``--output DIR`` writes the snapshots under DIR instead of in place,
+        # so that they can be regenerated inside an R15 execution boundary,
+        # whose one writable directory is never the tree, and copied in after
+        # the diff has been read.
+        root = CORPUS
+        if '--output' in sys.argv:
+            root = pathlib.Path(sys.argv[sys.argv.index('--output') + 1]).resolve()
         for marketplace in MARKETPLACES:
             records = extract_dir(marketplace)
-            write_snapshot(marketplace, records)
-            write_snapshot(marketplace, validate_all(records), VALIDATED)
+            write_snapshot(marketplace, records, root=root)
+            write_snapshot(marketplace, validate_all(records), VALIDATED, root=root)
             print(f'{marketplace}: wrote {len(records)} records to '
-                  f'{CORPUS / marketplace / SNAPSHOT} and '
-                  f'{CORPUS / marketplace / VALIDATED}')
+                  f'{root / marketplace / SNAPSHOT} and '
+                  f'{root / marketplace / VALIDATED}')
     else:
         unittest.main()

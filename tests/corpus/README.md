@@ -1,13 +1,13 @@
 # Extraction corpus
 
-39 real Amazon product detail pages, saved to disk, with two snapshots each:
+41 real Amazon product detail pages, saved to disk, with two snapshots each:
 the record the page is expected to extract to, and the **validated record**
 that record is expected to produce under the published contract.
 `../test_corpus.py` re-runs both on every test run and fails if any field
 changes.
 
 ```
-amazon_de/    38 pages + expected.jsonl.gz + validated.jsonl.gz
+amazon_de/    40 pages + expected.jsonl.gz + validated.jsonl.gz
 amazon_com/    1 page  + expected.jsonl.gz + validated.jsonl.gz
 redact.py                                    run before adding a page
 ```
@@ -63,6 +63,16 @@ with no price and a mineral-oil base declared in its bullets, and `B07J2W1S6Q`
 a tube of bicycle grease whose German label, *Fett*, the food parser reads as
 a nutrition declaration. They were added because a corpus made entirely of one
 category cannot catch a layer that has quietly learned that category.
+
+Two are smartwatches (R15's third adaptation, 2026-09-18): `B0DSC8GLRX`, a
+Garmin Instinct 3 50 mm whose A+ comparison table compares five *other*
+Instincts and does not contain the page's own product, so `comparison[].self_column`
+is `null` and the 40 h GPS runtime the flattened text used to lend it is gone;
+and `B0HFP18YKP`, a fenix 9 whose own column is the third of five, found by
+the ASIN its header links and not by the `active` class the first column
+carries. They were added because the cells of a table that compares products
+are the one kind of vendor text that is *about someone else*, and no page in
+the corpus had one with the product in it before.
 
 One caution the repository has already paid for: these pages are picked for
 diversity, which makes them a **bad basis for a frequency claim**. The

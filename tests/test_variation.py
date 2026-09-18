@@ -221,19 +221,27 @@ class AgainstTheCorpus(unittest.TestCase):
     def setUpClass(cls):
         cls.records = extract_dir('amazon_de')
 
+    # The two smartwatch pages added with R15's third adaptation (2026-09-18)
+    # carry a size label too -- "50mm" and "51mm", a case diameter -- and a
+    # length is not a pack quantity: the right reading is no hint at all.
+    CASE_SIZES = {'B0DSC8GLRX': '50mm', 'B0HFP18YKP': '51mm'}
+
     def test_every_size_label_on_the_corpus_parses(self):
-        # 22 of the 38 amazon.de pages carry a size label: 20 groceries, and
-        # the two non-food pages added in R2, labelled "50 ml" and "100g" --
-        # the first size dimension in the corpus that is a volume.
+        # 24 of the 40 amazon.de pages carry a size label: 20 groceries, the
+        # two non-food pages added in R2, labelled "50 ml" and "100g" -- the
+        # first size dimension in the corpus that is a volume -- and the two
+        # watches, whose label is a length.
         labelled = {asin: rec for asin, rec in self.records.items()
                     if variation.size_label(rec)}
-        self.assertEqual(len(labelled), 22)
+        self.assertEqual(len(labelled), 24)
         for asin, rec in labelled.items():
             with self.subTest(asin=asin):
-                hints = checks.pack_hints(rec)
-                self.assertTrue(
-                    [g for g, e in hints if e.field == 'variation.size_name'],
-                    f'{asin}: {variation.size_label(rec)!r} produced no quantity')
+                hints = [g for g, e in checks.pack_hints(rec) if e.field == 'variation.size_name']
+                if asin in self.CASE_SIZES:
+                    self.assertEqual(variation.size_label(rec), self.CASE_SIZES[asin])
+                    self.assertEqual(hints, [], f'{asin}: a case diameter is not a quantity')
+                else:
+                    self.assertTrue(hints, f'{asin}: {variation.size_label(rec)!r} produced no quantity')
 
     def test_no_size_label_contradicts_a_quantity_that_was_already_right(self):
         for asin, rec in self.records.items():
