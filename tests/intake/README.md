@@ -188,6 +188,12 @@ which is the semantic-review limit, stated in the report. **Stage 9**: an intake
 review that fails `adequacy` on `budget`, naming the cap as euros per kilogram
 rather than a purchase total, refuses the run and nothing is written; the same
 plan without the review still runs, enforced and wrong, as stage 6 documented.
+**2026-09-18**: the first acceptable branch now exists — `axis_bound`, a floor
+or ceiling on any published axis at candidate assessment — and
+[test_gates.py](../test_gates.py) exercises it on a pack-size ceiling over the
+bronze-die brief. This case's plan is unchanged: dry pasta still publishes no
+pack-price axis to bound, so the budget stays an unsupported hard constraint
+and nothing here is routed anywhere.
 
 **8 — An external finding as a hard condition.** *"Only ones an independent
 test rated well."* — Acceptable: the finding is retained, the absence of any

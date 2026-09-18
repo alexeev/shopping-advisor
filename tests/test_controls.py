@@ -25,7 +25,7 @@ class Controls(unittest.TestCase):
                 self.assertEqual([c['key'] for c in found['claims']], list(live.claim_keys))
                 self.assertEqual(found['default_axis'], live.default_axis)
                 self.assertEqual(set(found['controls']), {'require_claims', 'max_axis_value',
-                    'classification', 'value_usability', 'offer_grouping'})
+                    'axis_bound', 'classification', 'value_usability', 'offer_grouping'})
                 self.assertEqual(controls.resolve(key, 'value_usability')['axis']['key'],
                                  live.default_axis)
 
@@ -157,6 +157,60 @@ class ControlMeaning(unittest.TestCase):
             decisions = {c['asin']: c['decision'] for c in result['candidates']}
             self.assertEqual(decisions, {'4': 'shortlisted', '5': 'shortlisted', '6': 'over_budget'})
             self.assertEqual(result['shortlist'], ['4', '5'] if axis == 'price_per_base' else ['5', '4'])
+
+    def test_a_bound_filters_each_card_on_a_trusted_value_before_grouping(self):
+        """Case 7 of intake/README, now with a supported independent constraint:
+        the ceiling sits on one axis and the ordering on another."""
+        bound = controls.resolve('dry_pasta', 'axis_bound', axis='quantity', unit='g', max=1000)
+        self.assertEqual(bound['metadata']['stage'], 'candidate_filter')
+        self.assertEqual(bound['parameters'], {'axis': 'quantity', 'unit': 'g', 'min': None, 'max': 1000})
+        cards = []
+        for asin, grams, status in (('inside', 500, 'trusted'), ('edge', 1000, 'trusted'),
+                                    ('over', 5000, 'trusted'), ('unverified', 500, 'unverified'),
+                                    ('disputed', 500, 'disputed')):
+            card = self.card(asin=asin, number=len(cards) + 1)
+            card['axes']['quantity'] = Value(grams, unit='g', status=status)
+            cards.append(card)
+        absent = self.card(asin='absent', number=9)
+        absent['axes'].pop('quantity', None)
+        cards.append(absent)
+        ranked = report.ranking(cards, bounds=[bound['parameters']])
+        self.assertEqual([r['asin'] for r in ranked['rows']], ['inside', 'edge'])
+        outside = {r['asin']: r for r in ranked['filtered_out']}
+        self.assertEqual(set(outside), {'over', 'unverified', 'disputed', 'absent'})
+        self.assertTrue(all(r['reason_code'] == report.OUTSIDE_BOUND for r in outside.values()))
+        self.assertIn('above the 1000 g', outside['over']['reason'])
+        self.assertIn('no trusted', outside['unverified']['reason'])
+        self.assertEqual(ranked['counts']['out_of_bounds'], 4)
+        self.assertEqual(ranked['bounds'], [bound['parameters']])
+        # Without bounds nothing about the ranking output changes shape.
+        plain = report.ranking(cards)
+        self.assertNotIn('bounds', plain)
+        self.assertNotIn('out_of_bounds', plain['counts'])
+
+    def test_a_bound_names_its_unit_and_refuses_a_conversion(self):
+        bound = controls.resolve('dry_pasta', 'axis_bound', axis='quantity', unit='g', min=100)
+        card = self.card(asin='litres')
+        card['axes']['quantity'] = Value(500, unit='ml', status='trusted')
+        ranked = report.ranking([card], bounds=[bound['parameters']])
+        self.assertEqual(ranked['rows'], [])
+        self.assertIn('measured in ml, not the g', ranked['filtered_out'][0]['reason'])
+
+    def test_a_bound_may_sit_on_a_directionless_axis_but_never_orders(self):
+        controls.resolve('school_backpack', 'axis_bound', axis='review_count', min=50)
+        with self.assertRaisesRegex(controls.ControlError, 'no ranking direction'):
+            controls.resolve('school_backpack', 'value_usability', axis='review_count')
+
+    def test_invalid_bounds_refuse(self):
+        for parameters in (dict(max=100), dict(axis='', max=100), dict(axis='flavour', max=1),
+                           dict(axis='quantity'), dict(axis='quantity', min=5, max=1),
+                           dict(axis='quantity', max='100'), dict(axis='quantity', max=True),
+                           dict(axis='quantity', min=float('nan')), dict(axis='quantity', unit=5, max=1),
+                           dict(axis='quantity', max=1, value=1)):
+            with self.subTest(parameters=parameters), self.assertRaises(controls.ControlError):
+                controls.resolve('dry_pasta', 'axis_bound', **parameters)
+        self.assertEqual(controls.resolve('dry_pasta', 'axis_bound', axis='quantity', min=0)
+                         ['parameters']['min'], 0)
 
     def test_grouping_folds_size_but_preserves_non_size_and_unknown_identity(self):
         controls.resolve('dry_pasta', 'offer_grouping')

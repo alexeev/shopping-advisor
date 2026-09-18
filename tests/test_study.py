@@ -130,6 +130,25 @@ class BriefValidation(Temporary):
         self.refuses([('shortlist = 3', 'shortlst = 3')],
                      'has no key shortlst')
 
+    def test_a_bound_names_a_real_axis_and_a_non_empty_range(self):
+        """constraints.axis_bounds, 2026-09-18: eligibility on one dimension,
+        ordering on another. Each refusal names the line to change."""
+        line = 'shortlist = 3'
+        for bound, expected in (
+                ('{axis = "flavour", max = 1}', 'is not an axis of dry pasta'),
+                ('{axis = "quantity"}', 'names neither min nor max'),
+                ('{axis = "quantity", min = 5, max = 1}', 'exceeds max'),
+                ('{axis = "quantity", top = 1}', 'has no key top'),
+                ('{axis = "quantity", max = "1"}', 'must be a number')):
+            with self.subTest(bound=bound):
+                self.refuses([(line, f'{line}\naxis_bounds = [{bound}]')], expected)
+        path = rewrite(BRONZE, [(line, f'{line}\naxis_bounds = [{{axis = "quantity", unit = "g", max = 1000}}]')],
+                       self.scratch)
+        loaded = brief_module.load(path)
+        self.assertEqual(loaded.axis_bounds, ({'axis': 'quantity', 'unit': 'g', 'min': None, 'max': 1000},))
+        self.assertEqual(loaded.as_dict()['constraints']['axis_bounds'], list(loaded.axis_bounds))
+        self.assertNotIn('axis_bounds', brief_module.load(BRONZE).as_dict()['constraints'])
+
     def test_a_freshness_policy_without_a_reference_date_is_refused(self):
         self.refuses([('as_of = "2026-09-16"\n', '')],
                      'would make the same study decide differently tomorrow')

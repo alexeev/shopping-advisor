@@ -258,6 +258,15 @@ class ContractUse(unittest.TestCase):
         self.assertIs(self.card['axes']['weight'], validated.quantity)
         self.assertIs(self.card['axes']['price'], validated.price)
 
+    def test_the_review_axes_are_the_validation_layers_values(self):
+        """Added on 2026-09-18 so a buyer's rating threshold can be bounded on;
+        identity, not a copy, and they rank nothing by default."""
+        validated = self.card['validated']
+        self.assertIs(self.card['axes']['review_rating'], validated.review_rating)
+        self.assertIs(self.card['axes']['review_count'], validated.review_count)
+        self.assertEqual(CATEGORY.axis('review_count').better, '')
+        self.assertEqual(CATEGORY.default_axis, 'weight')
+
     def test_a_dimensions_row_weight_reaches_the_card_trusted(self):
         """"Produktabmessungen: 22 x 30 x 45 cm; 1,1 Kilogramm", confirmed by
         the A+ copy's "Gewicht 1200 g": the two generic changes this category
@@ -362,6 +371,14 @@ class RealCases(unittest.TestCase):
                          '140–180 cm')
         self.assertEqual(self.cards['B09MCRN848']['axes']['body_height'].value,
                          '135–180 cm')
+
+    def test_the_rating_block_reaches_the_card_as_two_axes(self):
+        """Satch Pack: a published average with a complete histogram behind it."""
+        card = self.cards['B0GM19PXKV']
+        self.assertEqual(card['axes']['review_count'].unit, 'ratings')
+        self.assertEqual(card['axes']['review_count'].status, TRUSTED)
+        self.assertGreater(card['axes']['review_count'].value, 20)
+        self.assertEqual(card['axes']['review_rating'].status, TRUSTED)
 
     def test_the_warranty_row_is_read_where_it_exists(self):
         for asin, years in (('B0GGV5ZNFC', 4.0), ('B0GGJHD7M6', 4.0),

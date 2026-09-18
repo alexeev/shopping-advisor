@@ -173,13 +173,15 @@ settlement that execution never reads is `cost_basis` with more fields.
 
 ## 4. Current capability boundaries
 
-Today the brief carries two controls that move the candidate set, and they are not
-the only mechanisms that do:
+When this was written the brief carried two controls that move the candidate
+set; a third, `axis_bounds`, entered on 2026-09-18 after the second
+school-backpack trial. They are not the only mechanisms that do:
 
 | Mechanism | Where | What it actually does |
 |---|---|---|
 | `require_claims` | `report.ranking()` in [ranking](shopping_advisor/analysis/report.py) | Filters on claim keys the **category evaluation derived from the record**, requiring `trusted` status — the presence of a vendor statement, not its truth |
 | `max_axis_value` | `analyse()` in [study analysis](shopping_advisor/study/analysis.py) | Caps the ranking row's **selected-axis** value |
+| `axis_bounds` (2026-09-18) | `report.ranking()` | A floor and/or ceiling on **any** category axis, per card and before grouping, on trusted values only; the supported independent constraint case 7 asks for, where the category publishes the axis |
 | Category classification | `is_match()` | Removes records the classifier does not place in the category |
 | Value usability | `ranked_value()` | Removes values that are absent, not usable, or measured in a non-comparable unit |
 | Offer grouping | `variation.group_offers()` | Folds pack-size variants into one ranked row |
