@@ -1048,8 +1048,8 @@ observation → reproducible case → proposed change → review → versioned a
 | Category reasoning or a new preference method | The category module and its cases, with applicability limits |
 | A time-sensitive external product finding | Dated evidence with its source and applicability — never a permanent instruction |
 | A repeatable operator procedure | This runbook or `AGENTS.md`, with the commands verified against the committed example |
-| An architectural or collection-policy decision | A dated entry in `ROADMAP.md`, linked to the measurement that argues for it |
-| A capability's maturity, applicability and retention decision | Its `Lifecycle` declaration beside the category module, published by `study capabilities` and pinned by the gate; the decision that moved it is a dated `ROADMAP.md` entry under R16 |
+| An architectural or collection-policy decision | The decision under its milestone in `ROADMAP.md`; the dated entry with the measurement that argues for it in `HISTORY.md` |
+| A capability's maturity, applicability and retention decision | Its `Lifecycle` declaration beside the category module, published by `study capabilities` and pinned by the gate; the decision that moved it is recorded under R16 in `ROADMAP.md`, with its dated entry in `HISTORY.md` |
 | An unproven improvement | A roadmap candidate with an experiment **and a stopping criterion** — R9 and R10 are the precedent |
 
 Promote to the narrowest home that holds. Every promoted rule needs its scope

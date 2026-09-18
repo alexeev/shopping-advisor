@@ -91,8 +91,8 @@ stand in for it. The rules:
   the coding interface records the request, authorises each action and keeps
   the transcript; git keeps the diff and the review; the maintenance gate is
   the acceptance check. Do not build a repository record of those. What enters
-  the repository is the decision and its measured effect — a dated ROADMAP
-  entry for a discussion that changed direction, a commit whose message argues
+  the repository is the decision and its measured effect — a dated `HISTORY.md`
+  entry for a discussion that changed direction, with the consequence in ROADMAP, a commit whose message argues
   its baseline diff for a change — so that another agent resumes from the
   files without the chat. Engineering the agent spawns inside a study is the
   exception and is R15's: its scope and authority bind to the study. See
@@ -270,8 +270,9 @@ HTML; it must not be exported or promoted. Read
    test module that merged into another, a versioned contract change, an
    example whose decision genuinely moved — re-record it with
    `maintenance baseline --update` **as a separate, explained part of the same
-   change**. A lifecycle move is recorded in ROADMAP first, with its evidence;
-   the gate refuses the declaration until the roadmap heading it cites exists. Never lower a floor to make a run green: a baseline edit is a
+   change**. A lifecycle move is recorded first — the evidence as a dated `HISTORY.md`
+   entry, the decision under the milestone in ROADMAP — and the gate refuses the
+   declaration until the ROADMAP heading it cites exists. Never lower a floor to make a run green: a baseline edit is a
    claim about the repository, and it is reviewed like one.
 6. Update current docs alongside behavior. Record evidence-backed learnings as
    fixtures, code, source observations or dated roadmap decisions. Hypotheses
@@ -292,11 +293,13 @@ questions asked of a user are revised from what actually decided past answers.
 `PURPOSE.md` owns what the product is for: the buyer's problem, the agent's
 role and its limits, and what a finished outcome owes the buyer. `CONTRACT.md`
 owns data semantics; `RESEARCH.md` owns operational procedure;
-`ROADMAP.md` owns priorities and measured decisions. `BASELINE.md`, `EXTRACTION.md`,
-and `USABILITY.md` retain dated investigations, not alternate current instructions.
+`ROADMAP.md` owns priorities and the decisions in force; `HISTORY.md` owns the
+dated records that earned them. `BASELINE.md`, `EXTRACTION.md` and `USABILITY.md`
+retain dated investigations, not alternate current instructions.
 Use code/tests for verified behavior and study notes for observations awaiting
 verification. A capability's maturity, applicability and last retention
 decision live in its `Lifecycle` declaration beside the code, published by
-`study capabilities` and pinned by the gate; the decision that moved it is a
-dated ROADMAP entry. Do not create provider-specific hidden memory as a source
+`study capabilities` and pinned by the gate; the decision that moved it is
+recorded under R16 in ROADMAP with its dated entry in `HISTORY.md`. Do not
+create provider-specific hidden memory as a source
 of truth.
