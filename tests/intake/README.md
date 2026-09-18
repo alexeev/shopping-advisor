@@ -228,6 +228,25 @@ uv run --offline --locked python -m shopping_advisor.study run tests/intake/smar
 uv run --offline --locked python -m shopping_advisor.study verify data/smartwatch-v3-example-study
 ```
 
+**R15 phase 5 coverage (2026-09-18).** `nfc-payment-claim.json` is the
+**fourth adaptation record**, predecessor the third: the category's
+`nfc_payment` claim narrowed to a payment service or a contactless-payment
+phrase after the independent review of plan revision 8 found a connectivity
+row's bare "NFC" credited as a payment statement. Three files from base
+`703be57`, three checks inside the kernel boundary — the whole budget — the
+first two failing on a pin the hypothesis had wrong (the Amazfit states
+"Mit Zepp Pay und NFC bezahlst du" and rightly keeps the claim), the third on
+exactly the declared `method_version` move; review, adoption and rollback
+before the ledger accounted 85.3 s. The ninth example now binds this record:
+`smartwatch-dive-nfc-reextracted-d83a15c291ca`, with five Huawei cards losing
+`nfc_payment`, fifteen keeping it, and every decision unchanged.
+`smartwatch-session.json` carries `engineer-5` and `analyse-6`.
+
+```text
+uv run --offline --locked python -m shopping_advisor.study adaptation-check tests/intake/nfc-payment-claim.json
+uv run --offline --locked python -m shopping_advisor.study run tests/intake/smartwatch-brief-v2.json --plan tests/intake/smartwatch-plan.json --session tests/intake/smartwatch-session.json --adaptation tests/intake/nfc-payment-claim.json -o data/smartwatch-v4-example-study
+```
+
 The [runbook](../../RESEARCH.md#retain-an-intake-plan-before-the-executable-brief)
 contains the full bind/run/verify sequence. The test suite exercises those CLIs,
 checks the expected original decisions, and replays after deleting the originating
