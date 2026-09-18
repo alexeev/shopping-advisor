@@ -170,8 +170,8 @@ convenience, never the authority.
   authorization; confirming a brief is not a new permission ritual.
   [RESEARCH.md](RESEARCH.md#agree-the-brief) has the procedure and an example.
 - Say when a category is not supported instead of working around it. Only
-  `dry_pasta`, `tyre_mounting_paste`, `basmati_rice` and `school_backpack`
-  ship; [README's supported scope](README.md#supported-scope) is the canonical
+  `dry_pasta`, `tyre_mounting_paste`, `basmati_rice`, `school_backpack` and
+  `smartwatch` ship; [README's supported scope](README.md#supported-scope) is the canonical
   written list and wins where another document disagrees, and
   `study capabilities` is the index of what each has earned: its lifecycle
   state, the marketplaces it was measured on, what it declines with the case

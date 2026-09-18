@@ -16,6 +16,11 @@
       "method_version": 1,
       "state": "experiment"
     },
+    "smartwatch": {
+      "decision": "retained",
+      "method_version": 1,
+      "state": "experiment"
+    },
     "tyre_mounting_paste": {
       "decision": "retained",
       "method_version": 1,
@@ -26,6 +31,7 @@
     "basmati_rice",
     "dry_pasta",
     "school_backpack",
+    "smartwatch",
     "tyre_mounting_paste"
   ],
   "checks": [
@@ -206,14 +212,14 @@
     }
   ],
   "note": "What the maintenance gate is entitled to find. Tracked on purpose: a task-local change that lowers a floor, drops a check, promotes or retires a capability or moves an example's decision has to say so here, in a reviewable diff. Re-record with `maintenance baseline --update` from a tree that passes; a capability's lifecycle moves only after ROADMAP records the decision.",
-  "recorded_at": "2026-09-18T17:16:05+00:00",
+  "recorded_at": "2026-09-18T18:05:17+00:00",
   "runtime": {
     "lock_sha256": "e24bc67da2dba6c49538700bc8bce61658748c715e9103603f537c15694a32cd",
     "python": "3.14",
     "scrapy": "2.19"
   },
   "tests": {
-    "minimum": 857,
+    "minimum": 888,
     "modules": [
       "test_adaptation",
       "test_analysis",
@@ -241,6 +247,7 @@
       "test_school_backpack",
       "test_session",
       "test_settings",
+      "test_smartwatch",
       "test_study",
       "test_validation",
       "test_variation"

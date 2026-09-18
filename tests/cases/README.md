@@ -19,6 +19,7 @@ fails loudly.
 pasta_v1.jsonl.gz           25 records · dry pasta
 mounting_paste_v1.jsonl.gz  34 records · tyre mounting paste
 school_backpack_v1.jsonl.gz 43 records · school backpack
+smartwatch_v1.jsonl.gz      55 records · smartwatch
 ```
 
 ## `pasta_v1.jsonl.gz`
@@ -75,6 +76,34 @@ title the way mounting paste is.
 | The warranty row | `B0GGV5ZNFC` `B0GGJHD7M6` `B00JPZ0B2S` `B003OSUDOS` `B0CKTHQVXF` | "Garantie für das Produkt: 4 Jahre" / "20+ Jahre" state a manufacturer warranty; "Gesetzlich" on the Puma states only the statutory right and is not one. |
 | Body-height ranges | `B0GM19PXKV` `B09MCRN848` `B09MCSCQGD` | "1,40 - 1,80 m" and "von 135 cm bis 180 cm": shown on the card, ranked on by nobody. |
 | A weight in pounds | `B00JPZ0B2S` `B0B6H24C3H` | "1,32 Pfund" and "1,5 Pfund" in the Artikelgewicht row, which the extractor keeps as text and does not yet convert. |
+
+## `smartwatch_v1.jsonl.gz`
+
+The fifth category, and the first written through R15's procedure, on
+2026-09-18. The 55 unique records are the three committed probe feeds of the
+third R13 conversational trial (`data/evidence/probe-amazon-de-smartwatch-*`)
+merged on ASIN, first occurrence kept: two class queries, five named-model
+queries whose candidates the agent supplied from manufacturer documentation
+(the ledger records that as selection bias), and seven ASIN fetches. The
+classifier was written against the 48 unique records of the two search feeds;
+the 7 ASIN-fetched records were run once when the rules were fixed and are a
+check, not a validation. Titles here name the class in most cases and stuff
+"Smart Watch" into a fitness band's title for the traffic, and Amazon files
+dive computers, smartwatches and trackers under several nodes, so the
+classifier is positional on the title the way mounting paste is and consults
+the node or the body text only when the title names nothing.
+
+| Group | ASINs | Why |
+|---|---|---|
+| Smartwatches that state a dive function | `B0CZ6S2SX7` `B0CZ6G2XC1` `B0CZ6KJVZZ` `B0DX21FHWP` `B0DX1T7JQ3` `B0CNSG78ZQ` `B0CNSF5DK2` `B0CPF2Q5PB` `B0CNSCY41D` `B0CPF5C7XH` `B0B45XTKRN` `B0FL1YW13Z` `B0DBV9ZV69` `B0FL2JXW3B` `B0GKPJLHNH` `B0DC6ZD321` `B0DC71V3ZD` `B0DC6ZD31R` `B0FPMK7KYX` `B0FR8LXTWP` | Suunto Ocean in three colours, Garmin Descent G2, Mk3, Mk3i and G1, Huawei Watch Ultimate and Ultimate 2, Garmin fenix 8 ("tauchfähig bis 40m") and a Kospet that names underwater activities. The dive function is the vendor's sentence; whether the watch may replace a dive computer is on no page. |
+| Smartwatches without a dive statement | `B0DSG9VCRH` `B0DSC8GLRX` `B0BXM1RQR5` `B0DFLTQTDB` `B0HFP18YKP` `B0H7HZNYRC` `B0H7J5FZ99` `B0HFSHKPJL` `B0G1ZGK7MV` `B0CXHJRWN9` `B0HCN4V5KD` `B0HG9QLSLY` `B0GT96NZX8` `B0H98JPZRT` `B0GVMTW5CD` `B0H6F8LPVX` `B0FQFJQK5K` `B0FQFBW86Q` | Garmin Instinct and fenix 9, Huawei GT 7 Pro and D3, Amazfit, Polar, the low-price shelf, and Apple Watch Ultra 3. `not_claimed` on the dive function, which is not evidence of absence: the Instinct names diving in a list of eighty sport apps, Apple names it as an activity the case is protected for and detects *sleep* apnoea, and the pattern reads a dive function, not the word. |
+| Titles that name no class | `B0CP819M6S` `B0CPF5C7XH` `B0DFLYZ28M` | Two Descent Mk3 listings named by model and finish only: the first is accepted from Amazon's Smartwatches node, the second from a description that calls it a smartwatch, both as `unverified`. The fenix 8 51 mm listing names no class in its title, node or bullets and is filed as `other`: a stated limit of a title classifier. |
+| Dive computers | `B0CRDZ35S8` `B082B8WMBD` `B0DQ2MHKHW` `B0719H6GGH` `B07P1WV8VP` `B0G1S9FV62` | Mares Quad, three Cressi, Suunto D5 and Suunto Nautic S: "Tauchcomputer" and no smartwatch word in the title. The Nautic S bullets list GPS and offline maps; the classifier reads the title, and the declaration says so. |
+| Accessories | `B0F9WXLL2X` `B0H8P8FT5Q` `B0D4F71WQC` `B07D6HM812` `B09V7CJZWQ` `B07DJ92CFR` `B09TRS84XP` | A case, two straps, a charging adapter, a screen protector, a charger and a dive-computer interface, returned for watch queries. The accessory noun heads the title or a compatibility phrase names the watch it fits; the Apple Watch's own "Armband" after the watch word is not one. |
+| Bands and trackers | `B0DYF82545` `B0GNNFBJ3H` | A Xiaomi Smart Band with "Smart Watch" stuffed in after the head noun, and a 4G GPS tracker. |
+| No price | `B0DC6ZD321` `B0CPF5C7XH` `B0B45XTKRN` | Listed without a buyable offer at crawl time; excluded from a price ranking with the reason. |
+| Runtimes on incompatible scales | `B0CZ6S2SX7` `B0DSG9VCRH` `B0CPF5C7XH` `B0HCN4V5KD` `B0FQFJQK5K` | "bis zu 40 Stunden GPS-Tracking", "bis zu 28 Tage Akkulaufzeit", "bis zu 10 Tage im Smartwatch-Modus und bis zu 30 Stunden im Tauchmodus", "Standby-Zeit von bis zu 25 Tagen", "bis zu 42 Stunden bei normaler Nutzung". Shown with the mode the vendor named; ranked on by nobody, because the independent review of the trial's plan failed exactly that ranking twice. |
+| Depth in metres and pressure in ATM | `B0CZ6S2SX7` `B0CPF5C7XH` `B0DYF82545` `B0GT96NZX8` `B0FL1YW13Z` | "wasserdicht bis 100 m", "200-Meter-Tauch-bewertetes Gehäuse", "5ATM Wasserdichtigkeit (50 Meter)", "20 ATM". Metres and ATM are two axes, never converted into each other. |
 
 ## Privacy
 

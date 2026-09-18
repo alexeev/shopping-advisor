@@ -1522,9 +1522,25 @@ It stays in `basmati_rice.py`.
 
 ## R11 — Category synthesis as a default step
 
-**Status: PLANNED. Depends on R13 intake and R15 execution/validation gates.**
-This is the first category application of the general adaptation loop, not a
+**Status: IN PROGRESS. The first category application of the general
+adaptation loop landed on 2026-09-18 (`smartwatch`, through R15's procedure);
+synthesis as a *default* step still waits for its own gates below.** This is
+the first category application of the general adaptation loop, not a
 standalone generator project.
+
+**2026-09-18 — First category written through R15 (smartwatch).** Recorded in
+full under [R15](#r15--controlled-task-driven-capability-adaptation); what
+belongs here is the R11 reading of it. Created within a recorded study budget:
+14 400 s of engineering allowance, 22.8 s used, one attempt of three. Positive
+cases, false-positive guards and missing-evidence cases: 39 smartwatches, 16
+declined listings each with its reason and the six declines proven by case
+records, and every unstated criterion `not_claimed` rather than false. The
+report distinguishes established observations from provisional interpretation
+by saying, beside its conclusion, that it rests on an experiment — and
+maturity upgraded no value's status. No plausibility band was invented. What
+this does not yet show: that a changed buyer preference changes the brief and
+not the category (the study revision is Phase 2), and that R16 records a
+promotion — this one stays `experiment`, retained.
 
 **2026-09-17 — First category written mid-study, as reviewed maintenance
 (school backpack).** The intake conversation recorded under R13 ended with the
@@ -2045,13 +2061,98 @@ hard requirement must remain missing regardless of any score.
 
 ## R15 — Controlled task-driven capability adaptation
 
-**Status: IN PROGRESS. Phase 0 — the procedure, with no real adaptation
-through it yet — shipped on 2026-09-18 and is recorded below. T4's local
-maintenance gate is the baseline R15 validates against; the provider and
-platform trials deferred from T4 are not a dependency. Next: the first
-category written through the procedure (R11's first case, the smartwatch
-task experiment over the third R13 trial's committed feeds) and the
-extraction case.**
+**Status: IN PROGRESS. Phase 0 — the procedure — and Phase 1 — the first
+category written through it, `smartwatch` — shipped on 2026-09-18 and are
+recorded below. T4's local maintenance gate is the baseline R15 validates
+against; the provider and platform trials deferred from T4 are not a
+dependency. Next: the study revision over the trial's plan (Phase 2) and the
+extraction case decided by inspection (Phase 3).**
+
+**2026-09-18 — Phase 1: the first adaptation through the procedure, a
+`smartwatch` task-experiment category.** The gap is the third R13 trial's
+`engineer-1`, funded the same day by the maintainer's decision as ledger
+revision 5 (session ledger v2, `1c511ecaebfc`, bound to plan revision 7): the
+engineering allowance moved from 0 to 14 400 s, the action was authorised
+through `session-authorise`, and the adaptation record `smartwatch-category`
+(private under `data/adaptations/`, digest `fb9a5b1b5ca1`, method descriptor
+`e184aad39bab`) was opened against it. The patch — 10 files, digest
+`e6aeed0a6859`, captured whole from a clean worktree against base `37a922b` —
+is the category module, its 55-record case feed and 30-test module, its
+registration, the provisional-method status in the analysis result, the
+ranking artifact and the report, and the documentation that names a fifth
+category. Static inspection before any import flagged seven module-level
+constructions (the declarations every category makes) and fifteen pre-existing
+writes in the modified bundle module, nothing else; the evaluator set was
+byte-identical to the base. One check ran inside the kernel boundary — the
+full gate, 22.8 s — and failed on exactly the two moves the record had
+declared at capture: `capability_untracked` for the new category and the
+five tests in `test_maintenance` that pin the tree's capabilities to the
+committed baseline; 888 tests in 30 modules, 5 failed, 0 errored, the six
+committed studies replaying with their recorded decisions under the patched
+tree. The review read that output and passed; adoption was recorded by the
+maintainer's role; the ledger records `engineer-1` completed at 22.8 s from
+the record; the patch was applied to the main checkout and the baseline
+re-recorded there as the explained part of this change; rollback was
+demonstrated against the untouched base worktree (tree and evaluator digests
+equal to the record's, the gate green at the base).
+
+**What the procedure changed on the way.** The first real patch found the
+adoption rule of record v1 wrong for the case R15 exists for: the evaluator
+set is frozen inside a trial and its own tests pin the tree to the baseline,
+so a patch that *adds* a capability cannot pass the gate before adoption.
+Record v2 (`baseline_moves`, [CONTRACT §15](CONTRACT.md#15-adaptation-record-v1-and-session-ledger-v2-r15-phase-0))
+lets the patch say so in the same diff, and accepts a failing last check only
+with the moves declared and a passing review; that change and two test
+repairs went through ordinary maintenance *before* the trial captured its
+base, so the procedure never judged its own change.
+
+**What the category is.** A positional title classifier: an accessory noun
+before the watch word or with a compatibility phrase, a band or tracker word
+before it, or a dive computer that names no smartwatch function, each files
+the listing as `other` with the reason; a title naming no class is accepted
+from the Smartwatches node or from a body text that says so, as `unverified`.
+Six vendor statements, named as the ledger named them — `gps`,
+`heart_rate_sensor`, `barometric_altimeter`, `scuba_dive_mode`,
+`nfc_payment`, `android_compatible` — each the vendor's sentence and none a
+verified property; the dive claim reads a dive *function* and not the word
+"Tauchen" in a list of sport apps or in "Schlafapnoe". `price` is the one
+ranked axis; the stated depth rating in metres, the ATM rating, the GPS
+runtime and the watch-mode runtime in the vendor's own mode, and the display
+technology are shown and ranked on by nobody, because the trial's plan review
+failed a runtime ranking across vendor scales twice. A report resting on this
+or any `experiment` category now carries a **provisional-method paragraph**
+beside its conclusion and a `method` entry in `ranking.json`, both absent for
+a maintained category so that no committed byte moved — the debt the first
+R16 review assigned here.
+
+**Measured.** On the 55 unique records: 37 smartwatches `trusted`, 2
+`unverified` (one from the node, one from a description that says
+"Edelstahl-Smartwatch"), 16 `other` — 6 dive computers including the Suunto
+Nautic S, whose title names only a dive computer while its bullets list GPS
+and maps, 7 accessories including a dive-computer interface, 2 bands and
+trackers, and one fenix 8 listing whose title, node and bullets never name a
+class. Among the 39 smartwatches: 20 state a dive function, 20 NFC or a
+payment service, 31 Android, 9 a barometer; 34 carry a price and 3 do not;
+31 a depth in metres, 15 an ATM rating, 12 a GPS runtime, 15 a watch-mode
+runtime, 34 a display name. Development and check sets: 48 unique records
+from the two search feeds, 7 ASIN-fetched records held back and run once
+when the rules were fixed — all seven classified as the titles read, one of
+them `unverified` from its body text. After adoption: 888 tests in 30 modules
+(858 → 888), 5 capabilities pinned (2 experiments), 7 of 7 examples with
+their ids unchanged, gate 25 s. The runner's second measured fact: the
+kernel boundary's own tests skip inside a nested boundary (the probe fails
+there as it does in the reviewing agent's container), and say so.
+
+**Not established, and not claimed.** Classifier accuracy beyond these 55
+titles; anything about measurement quality, dive suitability or payment in
+Germany, which stay withheld conditions; any ordering of battery life. That
+the category is *right* is the study's question (Phase 2): the hand-read
+table of the trial's `analyse-2` has not yet been compared with the
+category's, and the R13 report's shortlist included the Nautic S that this
+classifier declines — a difference the study revision must explain. The
+extraction case (Phase 3) is still undecided by inspection. This is the first
+shipped adaptation for the purposes of [R16](#r16--capability-lifecycle-and-architectural-review)'s
+review trigger, and the second architectural review is now due.
 
 **2026-09-18 — Phase 0: the procedure, built as reviewed maintenance before
 any adaptation used it.** The maintainer accepted the plan the same day, with
@@ -2249,11 +2350,15 @@ Retrieved text remains evidence, never execution instructions.
 
 **Status: IN PROGRESS.** The capability index, the lifecycle records of the four
 registered categories and the first architectural review shipped on 2026-09-18
-and are recorded below. What still waits for [R15](#r15--controlled-task-driven-capability-adaptation)
-is the *task-experiment entry*: a capability arriving inside a study with a patch
-digest, a scope bound to the study and isolated checks, and the promotion
-evidence that flows from being reused. The minimum lifecycle precedes R14;
-periodic review continues after the first operating-model release.
+and are recorded below. The *task-experiment entry* — a capability arriving
+inside a study with a patch digest, a scope bound to the study and isolated
+checks — happened on 2026-09-18: `smartwatch` is the first capability whose
+lifecycle record points at an adaptation record rather than at reviewed
+maintenance ([R15](#r15--controlled-task-driven-capability-adaptation),
+Phase 1). What still waits is the promotion evidence that flows from being
+reused, and the second architectural review that the first shipped adaptation
+triggers. The minimum lifecycle precedes R14; periodic review continues after
+the first operating-model release.
 
 **2026-09-18 — Capability index, lifecycle records and the first review.**
 The question put to this milestone was whether it was blocked or could start.
@@ -2361,6 +2466,8 @@ semantic diff of its own rather than riding on this one.
 **Next review.** [R15](#r15--controlled-task-driven-capability-adaptation)'s
 first shipped adaptation, or the fifth extension-bearing study, whichever
 comes first; the count stands at one. Owner: the repository maintainer.
+**Triggered 2026-09-18:** the `smartwatch` adaptation shipped through the
+procedure; review 2 is due and has not been held.
 
 ### Scope and promotion gates
 

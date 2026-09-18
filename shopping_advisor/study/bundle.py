@@ -133,6 +133,10 @@ def write(brief, result, cards, directory):
         # Plan-backed only, so a legacy bundle's bytes do not move.
         ranking['stop'] = result['stop']
         ranking['gates'] = result['gates']
+    if result.get('method'):
+        # Present only for a task experiment: a maintained category writes
+        # the bytes it always wrote.
+        ranking['method'] = result['method']
     write_json_atomically(directory / RANKING, ranking)
     return directory
 
@@ -658,6 +662,9 @@ def verify(directory, input_root=''):
              'a candidate decision', findings, key='asin')
     for key in ('ranking', 'constraints', 'classification', 'freshness'):
         _compare(stored[key], result[key], key, findings)
+    if 'method' in stored or result.get('method'):
+        _compare(stored.get('method'), result.get('method'), 'the provisional method status',
+                 findings)
     serialized = [report_module.card_json(c) for c in
                   sorted((c for c in _cards if is_match(c)), key=lambda c: c['asin'])]
     _compare(list(read_jsonl(directory / CARDS)), serialized, 'evidence cards and scores', findings)
