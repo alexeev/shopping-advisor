@@ -2745,17 +2745,17 @@ Retrieved text remains evidence, never execution instructions.
 
 **Status: IN PROGRESS.** The capability index, the lifecycle records of the four
 registered categories and the first architectural review shipped on 2026-09-18
-and are recorded below. The count toward the five-study cadence stands at
-**two** since R15's Phase 2 (the smartwatch study), and the second review is
-due: R15's first shipped adaptation was its trigger. The *task-experiment entry* — a capability arriving
-inside a study with a patch digest, a scope bound to the study and isolated
-checks — happened on 2026-09-18: `smartwatch` is the first capability whose
-lifecycle record points at an adaptation record rather than at reviewed
-maintenance ([R15](#r15--controlled-task-driven-capability-adaptation),
-Phase 1). What still waits is the promotion evidence that flows from being
-reused, and the second architectural review that the first shipped adaptation
-triggers. The minimum lifecycle precedes R14; periodic review continues after
-the first operating-model release.
+and are recorded below; the [second review](#architectural-review-2--2026-09-19)
+was held on 2026-09-19, after R15's four adaptations, and the count toward the
+five-study cadence stands at **three** under the rule it states. The
+*task-experiment entry* — a capability arriving inside a study with a patch
+digest, a scope bound to the study and isolated checks — happened on
+2026-09-18: `smartwatch` is the first capability whose lifecycle record points
+at an adaptation record rather than at reviewed maintenance
+([R15](#r15--controlled-task-driven-capability-adaptation), Phase 1). What
+still waits is the promotion evidence that flows from being reused: no
+capability has had a distinct second use. The minimum lifecycle precedes R14;
+periodic review continues after the first operating-model release.
 
 **2026-09-18 — Capability index, lifecycle records and the first review.**
 The question put to this milestone was whether it was blocked or could start.
@@ -2864,7 +2864,79 @@ semantic diff of its own rather than riding on this one.
 first shipped adaptation, or the fifth extension-bearing study, whichever
 comes first; the count stands at one. Owner: the repository maintainer.
 **Triggered 2026-09-18:** the `smartwatch` adaptation shipped through the
-procedure; review 2 is due and has not been held.
+procedure; [review 2](#architectural-review-2--2026-09-19) was held on
+2026-09-19, after the fourth adaptation.
+
+### Architectural review 2 — 2026-09-19
+
+**Trigger.** R15's first shipped adaptation (`smartwatch`, Phase 1,
+2026-09-18), which review 1 named as its next checkpoint; held after the
+fourth, once the extraction case and the plan revision 8–10 chain were on
+record, so that the review reads a procedure that has been used rather than
+one that has been used once. Reviewer: the operating agent, on the
+maintainer's request; owner of every decision below: the **repository
+maintainer**. Supporting study IDs are the nine the gate replays —
+`pasta-bronze-die-bde2b027b117`, `pasta-low-temperature-drying-48df9d940ced`,
+`pasta-delivered-cost-43425b41286a`, `pasta-purchase-budget-5c28fb92681b`,
+`basmati-audit-positive-49ef55740633`, `basmati-audit-insufficient-50e21e1c7b99`,
+`pasta-bronze-die-306e33f25417` (the fixture adaptation),
+`smartwatch-dive-nfc-8f62da3c1256` and
+`smartwatch-dive-nfc-reextracted-d83a15c291ca` — the four private
+school-backpack bundles and the smartwatch scratch bundles under R13 and R15,
+whose IDs are not in the repository, and the four adaptation records
+(`data/adaptations/`, two of them committed as fixtures under
+[tests/intake](tests/intake/README.md)).
+
+**The count.** The cadence counts *extension-bearing* studies, and until now
+nothing said what one is. The rule used here: a committed study whose manifest
+binds an adaptation record with a method descriptor no earlier committed study
+bound, or a study for which a category entered as reviewed maintenance. That
+gives the school backpack (one), `smartwatch-dive-nfc` (two; records one and
+two), `smartwatch-dive-nfc-reextracted` (three; records three and four). The
+fixture adaptation carries a semantic-free patch and does not count.
+
+**Measurements.** Import edges from the AST of every module under
+`shopping_advisor/` (a script, one run); leakage and usage counts are greps
+over the tree; times are one run each on the development machine, before this
+review's own additions.
+
+| Item | Measured |
+|---|---|
+| Cross-layer imports | 60 modules. Categories import `analysis` (6 edges) and `validation` (7) — `basmati_rice` still also reaches `extraction.marketplaces` and `evidence`, as at review 1. Downstream layers importing the acquisition module: the three `read_jsonl` edges review 1 recorded (`analysis.feeds`, `study.bundle`, `study.delivery`) **and one new**: `study.session` reads `load_manifest` and `run_state` from `run.py` since `89c854b`, to time an action from its own run manifest — the run manifest is `run.py`'s own contract, so that edge points the right way. `maintenance` imports `study` (12), `analysis` (3), `extraction`, `validation`, `provenance` — by design; `study.__main__` imports `maintenance` once (the `capabilities` command, recorded at review 1). `validation` imports two `extraction` text utilities. No layer imports `spiders`. After this review's one move (below): the three `read_jsonl` edges are gone and `study → run` is the single manifest-reading edge |
+| Category leakage | 68 lines in generic layers name a category (43 at review 1). The code lines are the same three — `study/bundle.py`'s basmati branch, the spider's default query, the analysis CLI's default category — plus `evidence.legacy_basmati`, the retained external evidence's own module. All growth is comments and docstrings citing the smartwatch and backpack measurements a rule was built from |
+| Duplication | `claims()` now in **five** categories (12–19 lines each), in three variants: a bare `search` (pasta, basmati), `stated()` with the affirmative scope (backpack, smartwatch — smartwatch adds per-claim exclusions), mounting paste's kit note. `stated()` three copies. The positional title classifier three (mounting paste, backpack, smartwatch), sharing a rule shape and no code. `source='text'` literal in three modules, the `TEXT` constant in two — unchanged |
+| Unused capabilities | `Category.render_extra`: one consumer (basmati). `Axis.render`: three categories (pasta, backpack, smartwatch), up from two. `content.aplus.comparison` (schema v6): one consumer, `text_fields`; `PROSE_XPATH`: one, `blocks.aplus_content`. The `harness-only` path: exercised in the suite by this review's companion change, never needed by a real adaptation on this machine. `amazon.co.uk`, `amazon.it`, `settings_scrapeops`: as at review 1 |
+| Replay compatibility | Nine committed studies replay with the recorded decisions; the six review-1 IDs unchanged. Contract moves since review 1, each with its baseline row: `extraction_schema` 5 → 6 (additive: `aplus.prose`, `aplus.comparison`; the 40 amazon.de snapshots regenerated inside the boundary), `adaptation_record` 1 → 2, `session_ledger` 1 → 2, `intake_plan` 1 and `intake_review` 1 new, baseline version 2. Manifest v3 unchanged |
+| Test cost | The full gate **34.4 s** on the development machine, 902 tests in 30 modules — against 15 s for 797 at review 1 and 26.4 s for 857 at R15 Phase 0. The suite alone 31.4 s; the nine replays and the documentation index about 3 s. Per test 19 → 38 ms: the growth is in the tests that spawn an interpreter inside the kernel profile and those that run whole studies |
+| Size | 19 000 lines in 60 modules. `study/__main__.py` 1 106 lines and 28 commands (R13 and R15 each added a block of seven or more); `basmati_rice.py` 1 003; `run.py` 868; `session.py` 782; `bundle.py` 757 |
+| Unresolved debt | Two review-1 checkpoints **fired and were missed**: `run.py` changed (`89c854b`) without moving `read_jsonl`; `school_backpack.py` changed (`1c1dde5`, the `axis_bound` control) without adding the committed brief the debt row asked for. Mounting paste and school backpack still have no committed replayable study. The `.tmp-*` writes beside fixtures: nine sites in seven test modules, allowed by the kernel profile's one regex; since `brief.py` resolves absolute inputs, the allowance is no longer necessary. The provisional-method report status is **closed** (R15 Phase 1, `ProvisionalMethod`). `cost_basis`, `unacceptable`, `limits` remain narrative. A tenth gate example under plan revision 10 is the maintainer's open decision |
+
+**Decisions.** Retain, simplify or retire, each with its evidence, its owner
+(the repository maintainer throughout) and a next checkpoint. One
+simplification was carried out in this review as its own commit, because its
+checkpoint had already fired and been missed; everything else is scheduled
+against a change that will touch the file anyway, or against a date.
+
+| Decision | Subject | Evidence and reasoning | Next checkpoint |
+|---|---|---|---|
+| **Retain** as maintained | `dry_pasta`, `tyre_mounting_paste`, `basmati_rice` | Nothing since review 1 moved their evidence or their decisions; the gate replays six of their studies unchanged. Mounting paste's second buyer and basmati's committed record set are still absent, and still written in their declarations | Review 3 |
+| **Retain** as experiment | `school_backpack` | No distinct second use. The `axis_bound` control was built on its cases as reviewed maintenance — a control the category publishes, not a reuse of the category | The next backpack-class study |
+| **Retain** as experiment | `smartwatch` | Method version 3 after four adaptations; two committed studies from one brief lineage and one buyer. One buyer is not a distinct subsequent use, and the plan revision 8–10 chain established that the category answers one control, the classifier | A second buyer or a distinct brief |
+| **Simplified now** | `read_jsonl` housed in `run.py` | Review 1's checkpoint fired at `89c854b` and was missed. Moved to `shopping_advisor/jsonl.py`; `run.py` keeps the documented name; three importers switched. Measured: the `analysis → run` and `study.delivery → run` edges gone, `study → run` down to the one manifest-reading edge; no test changed; every example decision unchanged | — |
+| **Retain** the copies, checkpoint moved with reasons | Five `claims()` loops, three `stated()` helpers | Both of review 1's triggers fired — the fifth category, and it agent-written — and the evidence points the other way: the agent reproduced the loop correctly at the first attempt, and the four adaptations changed a classifier boundary and two claim patterns, never a loop. A shared helper would not have prevented any of the four and would carry parameters for three variants. The argument that changes this is a defect *in* a loop | A loop-level defect, or the sixth category |
+| **Retain** | `study/bundle.py`'s basmati branch; spider and CLI defaults; `render_extra`; the two unvalidated marketplace profiles; `settings_scrapeops` | Unchanged since review 1: one consumer, documented defaults, unproven is not obsolete | Review 3; R4 on a stated need |
+| **Retain** as the v6 structure | `content.aplus.comparison`, `aplus.prose` | One consumer each, in the layer that reads text; the change moved ten card values on 16 of 55 pages and no decision. The A+ alt-text hypothesis (image captions versus the brand carousel) stays labelled and unbuilt | The next extraction adaptation |
+| **Retain**, and decide the open question | The `harness-only` exception path | Exercised end to end in the suite; the bundle now names it wherever it is read. **No ledger field for the exception:** the record's `runner.exception` names the maintainer's message and travels with the study; a ledger field would be a second copy of a decision the record already binds | A real exception, if one is ever needed |
+| **Simplify, scheduled to a date** | The `.tmp-*` write allowance in the kernel profile | Nine brief writes beside fixtures in seven test modules exist only for relative input resolution; `brief.py` resolves absolute inputs, so the briefs can live in `TMPDIR` and the profile's regex can go. A boundary tightening deserves its own change with the probe re-run, not a ride on this review | Before R14's first trial; review 3 verifies |
+| **Debt, hardened** | No committed replayable study for mounting paste or school backpack | The soft checkpoint ("the next change touching either category") was missed once. A brief over each committed cases file, as gate examples with baseline rows | Before R14's first trial; review 3 verifies |
+| **Debt, recorded** | `study/__main__.py` growth | 1 106 lines and 28 commands is a size, not a defect; each milestone has added a block of commands to one file | The next milestone that adds commands moves its block to its own module in the same diff; review 3 verifies |
+| **Fixed on this branch** | A `harness-only` study looked like a kernel one wherever the bundle was read | `code_caveats` names the boundary; the label in the binding is verified | — |
+| **Closed** | Provisional-method report status | R15 Phase 1: the report and the ranking artifact say the method is provisional; `ProvisionalMethod` pins it | — |
+
+**Next review.** The fifth extension-bearing study under the rule above, or
+the next operating-model milestone — R15 closing or R14's first trial —
+whichever comes first; the count stands at three. Owner: the repository
+maintainer.
 
 ### Scope and promotion gates
 

@@ -510,8 +510,8 @@ LIFECYCLE = cat.Lifecycle(
     milestones=('r2--generic-validation-layer--published-extraction-contract',
                 'r7--attributed-search-finding-a-claim-vs-crediting-it',
                 'r8--marketplace-aware-text-matching'),
-    reviewed='2026-09-18',
-    review='architectural-review-1--2026-09-18',
+    reviewed='2026-09-19',
+    review='architectural-review-2--2026-09-19',
     method_version=1,
 )
 

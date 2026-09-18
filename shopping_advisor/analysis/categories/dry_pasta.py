@@ -319,8 +319,8 @@ LIFECYCLE = cat.Lifecycle(
                 'r2--generic-validation-layer--published-extraction-contract',
                 'r3--variation-aware-product-families',
                 'r7--attributed-search-finding-a-claim-vs-crediting-it'),
-    reviewed='2026-09-18',
-    review='architectural-review-1--2026-09-18',
+    reviewed='2026-09-19',
+    review='architectural-review-2--2026-09-19',
     method_version=1,
 )
 
