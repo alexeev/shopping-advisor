@@ -525,7 +525,12 @@ proceed on the default, and do not describe what follows as confirmed.
 The marketplace and delivery region, a requirement that eliminates most of the
 shelf, and the cost basis of a "cheapest" question are the common sources of
 material divergence — worth checking every time, but not a fixed questionnaire
-to read out. Each passes the test on its own. Nothing in a request settles which
+to read out. Each passes the test on its own. The marketplace is checked in the
+read-back rather than by a separate question: state Amazon.de with delivery in
+Germany as the default with its if-wrong consequence, and let the buyer correct
+it there. Three buyers in a row confirmed it unchanged
+([decided 2026-09-18](ROADMAP.md#r13--the-conversation-as-the-entry-point)),
+and a correction still stops the study before anything is collected. Nothing in a request settles which
 marketplace a stranger buys on, and an Amazon.de ranking is useless to someone
 buying elsewhere — the answer there is that only
 [Amazon.de is validated](README.md#supported-scope), not a `.de` ranking handed
@@ -542,6 +547,33 @@ read the existing cases.
 
 "You decide" is an answer. Record it as an assumption with the default you
 chose, and make the report show what would change if that default were wrong.
+
+Two questions earned their place in the third R13 trial and are asked in the
+same round when they apply (decided 2026-09-18; the trial is recorded under
+[R13](ROADMAP.md#r13--the-conversation-as-the-entry-point)):
+
+- **Condition or reading.** When a buyer names a quality no listing field
+  carries — style, wearability with a suit, "looks solid" — ask whether it
+  excludes candidates or only orders and shows them. A stated default of
+  "shown, excludes nobody" that the buyer does not object to is not agreement;
+  one buyer's pre-filter was recorded as a reading that way.
+- **Durability, for durable goods.** Where the product class is expected to
+  serve for years or a failure costs real money or time — a watch, a vacuum
+  cleaner — raise one agent-authored candidate question: what would count as
+  durability evidence for this buyer (a stated warranty, an ingress or depth
+  rating, materials)? Where the class is consumed within weeks — a pack of
+  pasta — do not. The distinction is the agent's reading of expected service
+  life and failure cost, recorded in the plan as a hypothesis with that
+  reason; the proxy the buyer names enters the plan as theirs, and none of
+  them is a category fact or something the harness can assess. Two buyers
+  expected the criterion; neither had been asked.
+
+Stated defaults a category has earned by repeated trials belong in the plan
+and brief as assumptions, never in the category module. For `school_backpack`,
+after two trials in which every buyer accepted them: a stated warranty is a
+reading beside the row, not a filter, and the design is the child's choice.
+Fit — whether the vendor's stated height range is a condition or a reading —
+was settled differently by the two buyers and stays a question.
 
 #### Say so when the category is not supported
 

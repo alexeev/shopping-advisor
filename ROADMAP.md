@@ -23,7 +23,7 @@ measurements as history.
 | **R10** | Scoring as a shared facility | **DEFERRED** — one consumer is not two |
 | **R11** | Category synthesis as a default step | PLANNED (first R15 application) |
 | **R12** | Discovery that states its own coverage | PLANNED |
-| **R13** | The conversation as the entry point | **IN PROGRESS** (INTAKE §16 machinery shipped; two conversational trials recorded, 2026-09-17 and 2026-09-18; a trial graded against expectations written before it remains) |
+| **R13** | The conversation as the entry point | **IN PROGRESS** (INTAKE §16 machinery shipped; three conversational trials recorded and the defaults they suggested decided on 2026-09-18; an independent intake review of the third trial's plan by another agent remains before closing) |
 | **R14** | A recommendation in a category nobody validated | PLANNED (R11–R13, R15, R16 gates) |
 | **R15** | Controlled task-driven capability adaptation | PLANNED (after R13; T4's local maintenance gate has shipped) |
 | **R16** | Capability lifecycle and architectural review | **IN PROGRESS** (index, lifecycle records and the first review shipped 2026-09-18; the task-experiment entry waits for R15) |
@@ -1664,17 +1664,20 @@ the reviews deliberately — the one commit INTAKE §16 priced for exactly that 
 and no decision moved with them. No runtime lock, extraction or generic
 validation semantics changed in any stage.
 
-**What remains for R13.** Two trials are recorded below: the first
+**What remains for R13.** Three trials are recorded below: the first
 (2026-09-17) by the user who wrote the documentation, the second (2026-09-18)
-by a reader who had not, which meets the Done-when's first bullet once. What
-remains is the grading INTAKE §12 and §14 ask for: a third trial whose expected
-intent and acceptable outcomes are written down, by someone other than the
-operating agent, **before** the buyer's first message, and graded against that
-record rather than against the generic case boundaries after the fact; the
-question close of the runbook repeated on it; and a decision on the two
-school-backpack defaults the trials suggest. A passing gate protects the tested
-machinery; it does not establish understanding of arbitrary purchase requests,
-and no fixture in this repository claims to.
+by a reader who had not, and the third (2026-09-18) on an unsupported category
+by a buyer who recorded his intent, requirements, chosen product and acceptable
+outcomes privately **before** his first request and graded the result against
+that record afterwards, which is the grading INTAKE §12 and §14 ask for, once.
+The question close of the runbook was repeated on each, and the defaults the
+trials suggested were decided on 2026-09-18 (entry below). What remains is an
+independent intake review of the third trial's plan (revision 5) by an agent
+other than the one that operated it, against the buyer's messages and his
+private record rather than the plan's own output; the operating agent reviewed
+nothing of its own. A passing gate protects the tested machinery; it does not
+establish understanding of arbitrary purchase requests, and no fixture in this
+repository claims to.
 
 
 **2026-09-17 — Observation from the first unsupported-category conversation
@@ -1789,6 +1792,103 @@ axis at candidate assessment plus rating and rating-count axes on
 as reviewed maintenance; it landed the same day and is recorded under
 [R15](#r15--controlled-task-driven-capability-adaptation) as its first
 control case.
+**2026-09-18 — Third conversational trial (smartwatch with a scuba dive
+computer and NFC payment; unsupported category; graded against a record written
+before the first message).** A buyer referred by the maintainer, using the
+maintainer's account, first asked whether to disclose the product he had
+already chosen; the agent asked him to record intent, requirements, the chosen
+product and acceptable outcomes outside the conversation before his request,
+and to withhold the choice. The request then named the class, three sports, an
+annual two-week scuba trip to 30 m the watch should cover instead of a separate
+dive computer, and NFC payment; it named no phone, marketplace, budget, ordering
+criterion or definition of "stylish". Measured: four user messages; four plan
+revisions, each read back — revision 1 corrected by the answers, revision 2
+recording them, revision 3 adding 26 cited sources, revision 4 recording the
+grading; one round of five questions, no second round; the plan `blocked` on
+one decisive unresolved requirement (the phone platform) until answered, then
+`bounded` on six requirements without a control; three probes under a session
+ledger with a zero engineering allowance — two class queries (22 responses),
+five named-model queries (35), seven ASIN fetches (7) — 64 responses, 57 product
+pages, no challenges; no study bundle, because no category exists, so the
+comparison was a person's reading of listings and manufacturer manuals,
+attributed as such, with the recommendation withheld and a conditional reading
+delivered under each of the buyer's two ordering criteria. The written result is
+in the buyer's language under `reports/`, gitignored like the plans and ledger;
+the engineering proposal (a `smartwatch` task-experiment category) is retained
+in the ledger unfunded.
+
+Class queries surfaced three dive-capable smartwatches (Suunto Ocean, Suunto
+Nautic S, Garmin Descent G2); the Garmin Descent Mk3, fenix 8/9 and Huawei
+Watch Ultimate candidates were supplied by the agent from manufacturer
+documentation and confirmed on the shelf by name, recorded in the ledger as
+agent-supplied candidates (selection bias) with no criterion moved. Two
+candidates were excluded on manufacturer evidence of absence (no payment
+feature anywhere in Suunto's documentation), one on incompatibility (Apple
+Watch, iPhone only). Two facts decided more than any listing: every
+manufacturer disclaims use as a sole dive computer, and Huawei's NFC payment in
+Germany runs through a third-party wallet since 2026-03, sourced from an
+enthusiast blog and marked so.
+
+**Graded by the buyer (u4).** Every candidate in the report was on his private
+shortlist. He chose the Huawei Watch Ultimate 2 on style with a suit and sensor
+richness — fourth under his stated "battery, then display" ordering, first under
+display-first. In a second message (u5) he said style had been a **pre-filter**,
+ahead of both ordering criteria: the agent had proposed style as a reading that
+excludes nobody, the buyer answered "with a suit" without objecting, and the
+agent recorded a stated preference — silence on a default read as wider
+agreement than it was. Applied to the delivered table the filter removes one
+candidate (the polymer-cased Descent G2) and leaves the ordering. He added a
+criterion the plan never carried: reliability, proxied by the maximum stated
+depth rating, which he expects to be assumed important unless a buyer excludes
+it — then withdrew the proxy himself: depth rating is a proxy for water and dust
+ingress protection, a durability property, not for reliability. Recorded in
+revisions 4 and 5; the depth ratings were already in the table and were not
+read that way because nobody had named durability. The second trial's buyer had
+named reliability unprompted and it went unsupported there too.
+
+The questions, reviewed at close against the uncertainty and expected effect
+recorded when asked:
+
+| Question | What depended on the answer | Verdict |
+|---|---|---|
+| Amazon.de with delivery in Germany? | Nothing changed; payment-service availability depends on the country | Third German-context confirmation in a row; keep until repeated evidence says otherwise |
+| iPhone or Android? | Load-bearing: excluded Apple Watch Ultra 3, which the searches returned four times, and fixed the candidate payment services | Keep; it was the one blocking question |
+| Primary dive computer or backup gauge; certification? | Load-bearing: set the reading of the dive requirement and the evidence bar (manufacturer documentation, never a water-resistance rating) | Keep |
+| What does "stylish" mean? | "With a suit" became a reading shown per candidate and filtered nobody; the buyer later said it had been his pre-filter and decided his choice | Keep, and ask the missing half: when a buyer names a quality no field carries, is it a condition or a reading? The stated default was not enough |
+| Budget, and what orders the survivors? | "No budget" removed the price question; "battery and display" replaced price as the ordering and shaped the table, yet did not predict the choice | Keep; the runbook's absent-budget default was confirmed by being overridden |
+
+Observations, logged and not adopted: (1) a reliability proxy was expected by
+this buyer by default and named by the previous one unprompted — a candidate
+default question for unsupported-category intakes, whose proxies (depth rating,
+warranty, materials) are each contestable and none of which the harness can
+assess; (2) the ordering question's answer and the actual decision diverged,
+which the report's dual-ordering presentation happened to cover; (3) tooling:
+`sources[].id` must be a lowercase slug, `garmin.com` and `suunto.com` are
+refused by the built-in browser while Garmin's static manual pages read fine,
+and a PDF manual cannot be read on this machine without poppler.
+
+**2026-09-18 — Defaults decided after three trials.** Four decisions, all
+about questions and stated defaults, none about code; the runbook's
+[agree-the-brief](RESEARCH.md#agree-the-brief) section carries the operating
+text. (1) `school_backpack`: a stated warranty is a reading, not a filter, and
+the design is the child's choice — stated assumptions in the plan and brief,
+accepted by both buyers, never a category fact; fit stays a question. (2) A
+quality no field carries is asked about as **condition or reading** in the same
+round; the third buyer's pre-filter had been recorded as a reading after he did
+not object to that default. (3) **Durability** is raised as one agent-authored
+candidate question for durable goods, where the class is expected to serve for
+years or a failure costs real money or time, and not for consumables; the
+distinction is the agent's reading of expected service life and failure cost,
+recorded as a hypothesis, and the buyer's proxy enters the plan as theirs.
+Rejected: a reliability default for every category, and any agent-chosen proxy
+presented as a fact. A registry-level distinction between durable and
+consumable classes is not built; if the reading repeats across trials it is a
+candidate for the R16 index. (4) The **marketplace** is stated in the read-back
+as a default with its if-wrong consequence and no longer asked as a separate
+question; three buyers confirmed it unchanged, and a correction still stops the
+study. Measured effect: none yet — the next trial's question count and close
+are where these are graded.
+
 ### Scope
 
 Make the existing coding-agent conversation the tested product entry point.
