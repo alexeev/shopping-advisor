@@ -43,7 +43,7 @@ from ..provenance import (code_identity, sha256_file, sha256_text,
                           write_json_atomically)
 from ..analysis import report as report_module
 from ..analysis.category import is_match
-from ..run import read_jsonl
+from ..jsonl import read_jsonl
 from . import (writeup, audit, intake, intake_review, gates, delivery,
                delivery_review, session, inventory, adaptation)
 from .inventory import (ARTIFACTS, BINDINGS, BRIEF, CANDIDATES, CARDS, CLAIM_INDEX,

@@ -75,6 +75,7 @@ import re
 import secrets
 import sys
 
+from .jsonl import read_jsonl  # noqa: F401  -- the documented name; the reader lives in .jsonl (R16 review 2)
 from .provenance import (RUN_MANIFEST_VERSION, acquisition_settings,
                          code_identity, sha256_text, write_json_atomically)
 from .redaction import APPLIED, redact_page
@@ -513,13 +514,6 @@ def failure_samples(directory):
 def read_page(path):
     with gzip.open(path, 'rt', encoding='utf-8') as fh:
         return fh.read()
-
-
-def read_jsonl(path):
-    """Every record of a feed, gzipped or not."""
-    opener = gzip.open if str(path).endswith('.gz') else open
-    with opener(path, 'rt', encoding='utf-8') as fh:
-        return [json.loads(line) for line in fh if line.strip()]
 
 
 # ---------------------------------------------------------------------------
