@@ -26,6 +26,7 @@ import argparse
 import json
 from pathlib import Path
 from . import audit, delivery, delivery_review, gates, intake, intake_review, session
+from . import capabilities
 from .controls import catalogue
 from ..provenance import write_json_atomically
 from .bundle import artifact_digests, code_caveats
@@ -395,6 +396,17 @@ def controls_command(args):
     return 0
 
 
+def capabilities_command(args):
+    # The gate's committed examples are the replayed studies a row lists; the
+    # import is local so that the index itself owes the gate nothing.
+    from ..maintenance import load_baseline
+    data = capabilities.index(category_key=args.category,
+                              marketplace=args.marketplace or '',
+                              examples=load_baseline()['examples'])
+    print(json.dumps(data, indent=2, ensure_ascii=False))
+    return 0
+
+
 def plan_check_command(args):
     plan = intake.load(args.plan)
     if args.brief:
@@ -606,6 +618,17 @@ def main(argv=None):
     controls.add_argument('--category', required=True,
                           help='registered category key (no default)')
     controls.set_defaults(handler=controls_command)
+
+    capability_index = commands.add_parser(
+        'capabilities', help='the capability index as JSON: what each registered '
+                             'capability has earned, where it applies, what it '
+                             'declines and the evidence behind it')
+    capability_index.add_argument('--category', default=None,
+                                  help='one registered category key (default: all)')
+    capability_index.add_argument('--marketplace', default='',
+                                  help='a marketplace host to compare each row '
+                                       'against, e.g. www.amazon.de')
+    capability_index.set_defaults(handler=capabilities_command)
 
     planning = commands.add_parser('plan-check', help='validate an intake plan without feeds')
     planning.add_argument('plan', help=f'JSON plan, conventionally under {intake.DEFAULT_PLAN_ROOT}/')

@@ -371,6 +371,23 @@ values themselves are `Value`s that serialise as they always did, and until
 T2 the JSON view named two such keys by hand and silently dropped basmati's
 six. A key a category adds and does not declare is not published.
 
+Since R16 a category also declares a **`Lifecycle`**, and cannot register
+without one. Like the profile it is data and never procedure: the state the
+capability has earned (`experiment`, `maintained`, `foundation`, `retired`),
+the last keep/promote/reject/retire decision with its date and responsible
+role, an `Applicability` — the marketplaces it was measured on, what the
+classifier accepts, and what it declines with the committed case ASINs that
+prove it — the evidence paths and roadmap anchors behind it, the last review,
+and a **method version**. The declaration changes no value, no status and no
+decision; `study capabilities` publishes it and the maintenance gate pins the
+state, decision and method version in its baseline, so a change to any of
+them is a reviewed diff whose reason is a dated ROADMAP entry. The method
+version follows the spirit of §6: it moves when a change moves a decision on
+the category's committed cases — a classifier boundary, an axis direction,
+what a claim means — and stays when a pattern merely reaches more phrasings
+of the same statement. No study manifest records it yet; binding the method
+that produced a study into its bundle is R15's.
+
 ---
 
 ## 6. Compatibility policy

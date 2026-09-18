@@ -939,6 +939,50 @@ def render_extra(card):
     return lines
 
 
+# What this capability has earned (R16). Maintained on the strength of the
+# original study (USABILITY.md), the two audited T3 examples and R7's rework
+# over 1,361 record occurrences; but the acquired records behind it are not
+# committed, so its classifier guards rest on synthetic titles and the
+# ``declines`` below carry no case ASINs. That gap is recorded, not hidden.
+LIFECYCLE = cat.Lifecycle(
+    state=cat.MAINTAINED,
+    decision='retained',
+    decided='2026-09-18',
+    maintainer='repository maintainer',
+    applicability=cat.Applicability(
+        marketplaces=('www.amazon.de',),
+        accepts='Bags of dry basmati rice whose title or ingredient declaration '
+                'names basmati and that are not filed or described as a cooked '
+                'dish, a blend, a set or a non-rice product.',
+        declines=(
+            cat.Decline('unnamed long-grain rice, rice blends, sets and cooked '
+                        'pouches, and non-rice search returns -- pinned on '
+                        'synthetic titles in tests/test_basmati.py, not on '
+                        'committed records'),
+        ),
+        not_established=(
+            'no committed acquired record set: the original 2026-09 study inputs '
+            'are not all tracked, and the T3 examples run on synthetic records',
+            'current-batch safety or aroma: the legacy laboratory findings are '
+            'dated, unverified and carry no score credit',
+            'that the seven-part score orders anything: rank uses price per '
+            'kilogram and no CLI produces a score-ordered shortlist',
+        )),
+    evidence=('tests/test_basmati.py', 'tests/studies/t3/records.jsonl',
+              'tests/studies/t3/positive.toml',
+              'tests/studies/t3/insufficient.toml',
+              'tests/studies/t3/evidence.json',
+              'shopping_advisor/evidence/basmati-legacy.json',
+              'USABILITY.md'),
+    milestones=('r5--reviews-as-an-evidence-source',
+                'r7--attributed-search-finding-a-claim-vs-crediting-it',
+                't3--done-2026-09-16-external-evidence-and-recommendation-audits'),
+    reviewed='2026-09-18',
+    review='architectural-review-1--2026-09-18',
+    method_version=1,
+)
+
+
 CATEGORY = cat.register(cat.Category(
     key=KEY,
     label='basmati rice',
@@ -948,6 +992,7 @@ CATEGORY = cat.register(cat.Category(
     evaluate=evaluate,
     default_axis='price_per_base',
     render_extra=render_extra,
+    lifecycle=LIFECYCLE,
     extras=('grain_type', 'cultivar', 'declaration_conflict',
             'review_signals', 'external_test', 'score'),
     blurb='Judged on three things the page answers with three different '

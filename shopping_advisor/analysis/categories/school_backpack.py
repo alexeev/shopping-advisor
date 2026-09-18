@@ -397,6 +397,57 @@ def evaluate(record):
     return cat.card(record, validated, CATEGORY, classification, axes, found)
 
 
+# What this capability has earned (R16): one study, one buyer, one shelf. It
+# was built as reviewed maintenance during the 2026-09-17 intake conversation,
+# with no R15 gate to pass through, and retained at study close nominated for
+# reuse. That is a task experiment, whatever the registry calls it: promotion
+# to maintained needs a distinct subsequent use, and this declaration is where
+# that decision will be recorded when it happens.
+LIFECYCLE = cat.Lifecycle(
+    state=cat.EXPERIMENT,
+    decision='retained',
+    decided='2026-09-18',
+    maintainer='repository maintainer',
+    applicability=cat.Applicability(
+        marketplaces=('www.amazon.de',),
+        accepts='Secondary-school backpacks sold as such on Amazon.de: the title '
+                'names a school bag and no other backpack class, adult wearer or '
+                'primary-school marker comes before it. A title naming no '
+                'school use is accepted only from the school-bag node, as '
+                'unverified.',
+        declines=(
+            cat.Decline("adults' laptop and men's packs with a school word "
+                        'stuffed into the title',
+                        ('B0BRKHTWB1', 'B07RW36W3K', 'B0CYBW4V5H', 'B0DSPQ96PH',
+                         'B0B2RC7F6M')),
+            cat.Decline("first-graders' satchel sets, and a satchel Amazon "
+                        'files in the satchel-set node',
+                        ('B0GYS582DH', 'B0CYZKT2V5')),
+            cat.Decline('trekking, hiking, leisure and adult daypacks the brand '
+                        'queries return',
+                        ('B0D5R73HZ2', 'B0FHKWFVDR', 'B0FHL3BH68', 'B0F8W25VDC',
+                         'B000RE5A4U', 'B07DNZCRVX', 'B07P6M89HV', 'B0DCH9D4H9',
+                         'B0B1VXPQF9', 'B0CKTHQVXF', 'B0B6H24C3H', 'B0GPNQ54YZ',
+                         'B0HCPS1THW')),
+        ),
+        not_established=(
+            'a distinct subsequent use: one study, one buyer, one shelf of 43 '
+            'records on 2026-09-17',
+            'classifier accuracy beyond those 43 titles',
+            'durability, or fit for a given child: the body-height range a '
+            'vendor states is shown and ranked on by nobody',
+            'weights stated in pounds, which the extractor keeps as text',
+        )),
+    evidence=('tests/cases/school_backpack_v1.jsonl.gz',
+              'tests/test_school_backpack.py'),
+    milestones=('r11--category-synthesis-as-a-default-step',
+                'r13--the-conversation-as-the-entry-point'),
+    reviewed='2026-09-18',
+    review='architectural-review-1--2026-09-18',
+    method_version=1,
+)
+
+
 CATEGORY = cat.register(cat.Category(
     key=KEY,
     label='school backpack',
@@ -405,6 +456,7 @@ CATEGORY = cat.register(cat.Category(
     claims=CLAIMS,
     evaluate=evaluate,
     default_axis='weight',
+    lifecycle=LIFECYCLE,
     blurb='Ranked by the bag\'s own stated weight, lighter first, among '
           'listings the vendor sells as school backpacks and not as '
           'primary-school satchels. Reflective elements, a manufacturer '

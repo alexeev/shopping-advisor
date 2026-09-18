@@ -1,5 +1,27 @@
 {
-  "baseline_version": 1,
+  "baseline_version": 2,
+  "capabilities": {
+    "basmati_rice": {
+      "decision": "retained",
+      "method_version": 1,
+      "state": "maintained"
+    },
+    "dry_pasta": {
+      "decision": "retained",
+      "method_version": 1,
+      "state": "maintained"
+    },
+    "school_backpack": {
+      "decision": "retained",
+      "method_version": 1,
+      "state": "experiment"
+    },
+    "tyre_mounting_paste": {
+      "decision": "retained",
+      "method_version": 1,
+      "state": "maintained"
+    }
+  },
   "categories": [
     "basmati_rice",
     "dry_pasta",
@@ -7,6 +29,7 @@
     "tyre_mounting_paste"
   ],
   "checks": [
+    "capabilities",
     "categories",
     "contracts",
     "docs",
@@ -161,20 +184,21 @@
       "why": "R13 stage 6's budget-plus-unit-price case: the unsupported purchase budget is detected without changing its units, and nothing is put forward."
     }
   ],
-  "note": "What the maintenance gate is entitled to find. Tracked on purpose: a task-local change that lowers a floor, drops a check or moves an example's decision has to say so here, in a reviewable diff. Re-record with `maintenance baseline --update` from a tree that passes.",
-  "recorded_at": "2026-09-17T21:28:44+00:00",
+  "note": "What the maintenance gate is entitled to find. Tracked on purpose: a task-local change that lowers a floor, drops a check, promotes or retires a capability or moves an example's decision has to say so here, in a reviewable diff. Re-record with `maintenance baseline --update` from a tree that passes; a capability's lifecycle moves only after ROADMAP records the decision.",
+  "recorded_at": "2026-09-18T08:04:53+00:00",
   "runtime": {
     "lock_sha256": "e24bc67da2dba6c49538700bc8bce61658748c715e9103603f537c15694a32cd",
     "python": "3.14",
     "scrapy": "2.19"
   },
   "tests": {
-    "minimum": 772,
+    "minimum": 797,
     "modules": [
       "test_analysis",
       "test_attributed_search",
       "test_audit",
       "test_basmati",
+      "test_capabilities",
       "test_cli",
       "test_controls",
       "test_corpus",

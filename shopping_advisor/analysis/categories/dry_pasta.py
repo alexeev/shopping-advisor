@@ -285,6 +285,46 @@ def evaluate(record):
     return card
 
 
+# What this capability has earned (R16). The state is pinned by the
+# maintenance gate; moving it is a recorded decision, and the ASINs below are
+# case records ``tests/test_capabilities.py`` re-classifies on every run.
+LIFECYCLE = cat.Lifecycle(
+    state=cat.MAINTAINED,
+    decision='retained',
+    decided='2026-09-18',
+    maintainer='repository maintainer',
+    applicability=cat.Applicability(
+        marketplaces=('www.amazon.de',),
+        accepts='Dry pasta filed under the Amazon.de pasta breadcrumbs and not '
+                'described as fresh, chilled, canned or a ready meal; a listing '
+                'with no breadcrumbs is unclassified, not excluded.',
+        declines=(
+            cat.Decline('a cleaning brush and a cookbook the pasta searches '
+                        'return, filed outside the pasta nodes',
+                        ('B0CZ473RQT', '3969301173')),
+        ),
+        not_established=(
+            'classifier accuracy beyond the 25 committed records and the '
+            '195-record validation crawl of 2026-09',
+            'taste, cooking behaviour, or anything about a batch',
+            'current prices: the committed records are a fixed regression set, '
+            'not buying advice',
+        )),
+    evidence=('tests/cases/pasta_v1.jsonl.gz', 'tests/test_analysis.py',
+              'tests/studies/pasta-bronze-die.toml',
+              'tests/studies/pasta-low-temperature-drying.toml',
+              'tests/intake/delivered-cost-brief.json',
+              'tests/intake/budget-brief.json'),
+    milestones=('r0--pasta-v1-evidence-backed-comparison-over-existing-records',
+                'r2--generic-validation-layer--published-extraction-contract',
+                'r3--variation-aware-product-families',
+                'r7--attributed-search-finding-a-claim-vs-crediting-it'),
+    reviewed='2026-09-18',
+    review='architectural-review-1--2026-09-18',
+    method_version=1,
+)
+
+
 CATEGORY = cat.register(cat.Category(
     key=KEY,
     label='dry pasta',
@@ -294,6 +334,7 @@ CATEGORY = cat.register(cat.Category(
     evaluate=evaluate,
     default_axis='price_per_base',
     extras=('drying',),
+    lifecycle=LIFECYCLE,
     blurb='Price per kilogram is the axis this category rests on, so the pack '
           'size behind it is checked against every other statement of it on '
           'the page before any ranking happens.',

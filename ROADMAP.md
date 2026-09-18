@@ -26,7 +26,7 @@ measurements as history.
 | **R13** | The conversation as the entry point | **IN PROGRESS** (INTAKE §16 machinery shipped; conversational trials pending) |
 | **R14** | A recommendation in a category nobody validated | PLANNED (R11–R13, R15, R16 gates) |
 | **R15** | Controlled task-driven capability adaptation | PLANNED (after R13; T4's local maintenance gate has shipped) |
-| **R16** | Capability lifecycle and architectural review | PLANNED (minimum lifecycle before R14) |
+| **R16** | Capability lifecycle and architectural review | **IN PROGRESS** (index, lifecycle records and the first review shipped 2026-09-18; the task-experiment entry waits for R15) |
 | **R17** | Portability evidence: a second platform and a second provider | **DEFERRED** — gates the portability claim only |
 
 ## Product vision — the shopping conversation
@@ -184,7 +184,7 @@ catalogue phase — see [decision principle 9](#decision-principles).
 |---|---|---|
 | 1 — in progress | R13 intake/evidence/gap planning | INTAKE §16's ten stages shipped on 2026-09-17 on top of T2/T3 and T4's gate; what remains is the conversational acceptance trial, which no fixture stands in for |
 | 2 | R15 bounded adaptation, with R11 as the first category case | Needs R13's recorded gap. T4's executable baseline is in place. Prove isolation, validation, traceability and rollback before making adaptation routine |
-| 3 | R12 coverage and R16 minimum lifecycle/index | Evidence planning can start with R13; integrate after R15 artifacts exist. Coverage and deliberate retention are necessary before claiming the full loop works |
+| 3 | R12 coverage and R16 minimum lifecycle/index | The index and the lifecycle records shipped on 2026-09-18 over the four registered categories, ahead of R15, because nothing in them depends on a patch artifact; what waits for R15 is the task-experiment entry and the promotion evidence that flows from it. R12 evidence planning can start with R13. Coverage and deliberate retention are necessary before claiming the full loop works |
 | 4 | R14 unseen-problem and reuse acceptance trials | Needs R11–R13, R15 and R16's minimum lifecycle, on top of the shipped maintenance gate. [R17](#r17--portability-evidence)'s trials — cross-platform paths, provider interchangeability and handoff — test these same artifacts afterwards, and gate only the portability claim |
 | Ongoing | R16 architectural reviews; study-driven expansion | Use measurements from completed studies to simplify or extend; there is no final supported-category count |
 
@@ -1506,7 +1506,10 @@ classifier accuracy beyond these 43 titles, anything about durability, or fit
 for a given child — the body-height range a vendor states is shown and ranked on
 by nobody. This does not make synthesis a default step; the R15 gates are still
 the missing piece, and the case set is in
-[tests/cases](tests/cases/README.md).
+[tests/cases](tests/cases/README.md). **Lifecycle recorded 2026-09-18:** a
+task experiment, retained and nominated for reuse; the
+[capability index](#r16--capability-lifecycle-and-architectural-review) says so,
+and promotion to a maintained capability waits for a distinct subsequent use.
 
 ### Scope
 
@@ -1810,8 +1813,119 @@ Retrieved text remains evidence, never execution instructions.
 
 ## R16 — Capability lifecycle and architectural review
 
-**Status: PLANNED. Minimum lifecycle depends on R15 artifacts and precedes R14;
-periodic review continues after the first operating-model release.**
+**Status: IN PROGRESS.** The capability index, the lifecycle records of the four
+registered categories and the first architectural review shipped on 2026-09-18
+and are recorded below. What still waits for [R15](#r15--controlled-task-driven-capability-adaptation)
+is the *task-experiment entry*: a capability arriving inside a study with a patch
+digest, a scope bound to the study and isolated checks, and the promotion
+evidence that flows from being reused. The minimum lifecycle precedes R14;
+periodic review continues after the first operating-model release.
+
+**2026-09-18 — Capability index, lifecycle records and the first review.**
+The question put to this milestone was whether it was blocked or could start.
+The answer was that it has three parts with three different dependencies, and
+two of them depended on nothing that was missing.
+
+- **The index is the registry, read with more questions.** A category now
+  registers with a `Lifecycle` declaration beside its code — state, last
+  decision and date, responsible role, applicability, evidence paths, roadmap
+  anchors, last review, method version — and `register()` refuses one without
+  it. `study capabilities` publishes every registered capability from that
+  declaration and the live registry on each call, so there is no second list
+  to drift, exactly as the R13 controls catalogue is built; `--marketplace`
+  compares hosts and `--category` narrows. Applicability is falsifiable:
+  each `Decline` cites committed case ASINs, and `tests/test_capabilities.py`
+  re-classifies all **36** of them as `other` on every run, and checks that
+  every marketplace a case names is one the category declares. The index is
+  inspection, not authorisation, and it names its own limits, the first being
+  that maturity is not trust.
+- **The promotion gate is executable.** The maintenance gate gained a
+  `capabilities` check and its baseline moved to **version 2**, which pins
+  each capability's `state`, `decision` and `method_version`. A declaration
+  that is incomplete, cites evidence the tree does not hold or a roadmap
+  heading that does not exist fails by field; a state that moved without the
+  baseline moving fails as a `capability_lifecycle_changed` finding naming
+  ROADMAP as the place the decision is recorded first. A new category is
+  `capability_untracked` until the baseline records what it declared:
+  retention is a decision, and the baseline is where the repository records
+  one reviewably.
+- **The four lifecycle records.** `dry_pasta`, `tyre_mounting_paste` and
+  `basmati_rice` are **maintained**, each with the evidence its declaration
+  cites and with what it does not establish written next to it: mounting
+  paste has never had a second buyer, and basmati has no committed acquired
+  record set. `school_backpack` is a **task experiment**, retained and
+  nominated for reuse — one study, one buyer, one shelf of 43 records, built
+  as reviewed maintenance with no R15 gate to pass through. It is registered
+  and usable, and the index says what that is worth.
+- **Measured effect.** Offline tests 774 → 797 in 27 → 28 modules;
+  36 decline ASINs proven on the committed cases; six committed studies
+  cross-referenced onto the categories their briefs name (four pasta, two
+  basmati, none for the other two — the review below records that debt);
+  221 local links and 277 anchors across 17 documents; every
+  example decision, every contract version and every snapshot unchanged. The
+  gate baseline diff is two deliberate parts — the version and the pinned
+  lifecycles — and one re-recorded floor, the test count.
+- **Not established, and not claimed.** That a state is deserved: the three
+  `maintained` records rest on the evidence they cite, and the judgement is
+  this entry's, not the gate's. That an agent will consult the index before
+  deciding fit: the runbook now says to, and R13's conversational trials are
+  where that is graded. The first Done-when bullet — a second study finding a
+  capability through the index — has a fixture (a foreign marketplace finds
+  no applicable category, and every declined class stays declined) and no
+  conversational trial yet. Nothing here binds a method version into a study
+  manifest; that is R15's.
+
+### Architectural review 1 — 2026-09-18
+
+**Trigger.** INTAKE §16's ten stages shipped on 2026-09-17, which is an
+operating-model milestone, and the same week produced the first
+extension-bearing study (the school backpack). The count toward the
+five-study cadence stands at **one**. Reviewer: the operating agent, on the
+maintainer's request; owner of every decision below: the **repository
+maintainer**. Supporting study IDs are the six the gate replays —
+`pasta-bronze-die-bde2b027b117`, `pasta-low-temperature-drying-48df9d940ced`,
+`pasta-delivered-cost-43425b41286a`, `pasta-purchase-budget-5c28fb92681b`,
+`basmati-audit-positive-49ef55740633`, `basmati-audit-insufficient-50e21e1c7b99`
+— and the four private school-backpack bundles recorded under
+[R13](#r13--the-conversation-as-the-entry-point), whose IDs are not in the
+repository.
+
+**Measurements.** Import edges were read from the AST of every module under
+`shopping_advisor/`; leakage and usage counts are greps over the tree; times
+are one run each on this container.
+
+| Item | Measured |
+|---|---|
+| Cross-layer imports | Categories import `validation` and `category` only, except `basmati_rice`, which also reaches `extraction.marketplaces` for word boundaries and `evidence` for its legacy ledger. `analysis`, `study` and `study/delivery` import `read_jsonl` from `run.py`: three downstream layers depend on the acquisition module for a JSONL reader. `validation` imports two text utilities from `extraction` (downstream, correct direction). `maintenance` imports everything, by design. No layer imports `spiders`, and none imported `maintenance` until this change: the study CLI's `capabilities` command now reads the gate's committed examples through a local import, so that the index can list the replayed studies without owning a second list of them |
+| Category leakage | 43 lines in generic layers mention a category by name; 42 are comments citing the measurement a rule was built from. Three are code: `study/bundle.py` merges the legacy basmati ledger behind `brief.category == 'basmati_rice'`; the spider's default query is `spaghetti hartweizen`; the analysis CLI's `--category` defaults to `dry_pasta` (documented, and the runbook says to name it on every command) |
+| Duplication | The `claims()` loop appears in all four categories (four copies of 12–20 lines, two variants: mounting paste adds a negation exclusion and a kit note, school backpack an affirmative scope); `stated()` appears twice; the two positional title classifiers share a rule shape and no code; three modules write `source='text'` where one imports the `TEXT` constant |
+| Unused capabilities | `Category.render_extra`: one consumer (basmati). `Axis.render`: two categories (pasta's raw-material axis, school backpack's height and warranty axes). Marketplace profiles `amazon.co.uk` and `amazon.it`: unvalidated, documented as such, `.it` referenced by no test. `settings_scrapeops`: opt-in, unvalidated, import isolation tested. `keep_search_pages`: used. Nothing is obsolete |
+| Replay compatibility | Six committed studies replay through their documented commands with the recorded decisions; a manifest v1/v2 bundle refuses with `unsupported_manifest_version` by the stage-10 decision; no pre-v3 bundle is tracked |
+| Test cost | The full gate: 50 s on this container against the 15 s recorded on the development machine, 797 tests in 28 modules. Of it the suite alone is 46 s, the six example replays 1 s and the documentation index under a second: the suite is the cost, and the replays are nearly free |
+| Unresolved debt | Two of four categories have no committed replayable study (mounting paste, school backpack): the gate pins their verdicts per record and replays no decision of theirs. Basmati has no committed acquired record set. A task-experiment category has delivered permitted current advice without a report-level provisional status ([INTAKE §15](INTAKE.md#15-what-stays-owned-elsewhere) places that contract under R11/R15). `cost_basis`, `unacceptable` and `limits` remain narrative. Weights in pounds stay text. The README's category table listed three of four categories |
+
+**Decisions.** Each is retain, simplify or retire, with its evidence, its
+owner (the repository maintainer throughout) and a next checkpoint. No code
+was refactored in this review; every simplification below is scheduled
+against a change that will touch the file anyway, so that it carries a
+semantic diff of its own rather than riding on this one.
+
+| Decision | Subject | Evidence and reasoning | Next checkpoint |
+|---|---|---|---|
+| **Retain** as maintained | `dry_pasta`, `tyre_mounting_paste`, `basmati_rice` | Cases with counterexamples, per-record tests, recorded reviews (R0–R8, T3), and for pasta and basmati committed audited studies. Mounting paste's second-buyer gap and basmati's missing record set are written into their declarations, not hidden | Review 2 |
+| **Retain** as experiment, nominated for reuse | `school_backpack` | One study, one buyer, 43 records; the two generic extraction changes it needed entered the maintained layer as within-version additions with zero effect on the 39 corpus pages (CONTRACT §4). Promotion needs a distinct subsequent use | The next backpack-class or school-bag study |
+| **Simplify later** | `read_jsonl` housed in `run.py` | A generic reader in the acquisition module, imported by three layers. Moving it carries no semantic diff and nothing a study needs today; doing it inside an unrelated change would hide it | The next change to `run.py` moves it to a neutral module in the same diff |
+| **Retain** | `study/bundle.py`'s basmati branch | The one category-named line of code in a generic layer. It exists because retained external evidence has one consumer, and INTAKE §4 records that a general eligibility path is net-new machinery. One consumer is not two | The second category to carry retained external evidence; generalise then |
+| **Retain** the copies | Four `claims()` loops, two `stated()` helpers | They differ in what they exclude and annotate; a shared loop would carry parameters for negations, kit notes and source labels to save roughly 40 lines. The argument that will change this is R15's, not size: a helper reduces what an agent-written category has to get right | R15's first agent-written category, or the fifth category |
+| **Retain**, documented as unvalidated | `amazon.co.uk` and `amazon.it` profiles, `settings_scrapeops` | Unproven is not obsolete; README states the limit and nothing depends on the profiles being right | R4, on a stated need |
+| **Retain** | Spider default query, CLI default category | Defaults, documented, and the runbook says to name the category on every command. Changing the spider default would silently change a documented command | None; revisit if a study is ever run on the default by mistake |
+| **Debt, recorded** | No committed replayable study for mounting paste or school backpack | Their cases exist, so a brief over them is cheap; it was not added here because a study example is a claim about a decision and deserves its own change and its own baseline row | The next change touching either category adds a committed brief and its baseline example |
+| **Debt, recorded** | Provisional-method report status | A task experiment has delivered current advice. Until R11/R15 add the report-level contract, the index is where its maturity is visible, and the runbook tells a report resting on an `experiment` to say so | R15 |
+| **Fixed here** | README category table | Listed three of four categories; the fourth row is added in this change | — |
+
+**Next review.** [R15](#r15--controlled-task-driven-capability-adaptation)'s
+first shipped adaptation, or the fifth extension-bearing study, whichever
+comes first; the count stands at one. Owner: the repository maintainer.
 
 ### Scope and promotion gates
 

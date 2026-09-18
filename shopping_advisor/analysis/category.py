@@ -24,11 +24,115 @@ product is. It declares four things and implements one:
     searched for. Everything it needs about trust it gets from
     :func:`shopping_advisor.validation.validate`; it must not re-derive any of
     it, and there is a test that asserts exactly that.
+
+Since R16 a category also declares a fifth thing, and cannot register without
+it:
+
+``lifecycle``
+    What the capability has *earned* -- a :class:`Lifecycle`: its maturity
+    state, the last keep/promote/reject/retire decision and who is responsible
+    for it, where it applies and what it declines, the committed evidence and
+    the roadmap entries behind it, and when it was last reviewed. This is data
+    beside the code that is the capability, so that the capability index
+    (``study capabilities``) cannot drift from the registry the way a separate
+    list would, and the maintenance gate pins the state: moving a category
+    from one state to another is a recorded decision, never a side effect.
+    Maturity is not trust. A value's status is decided by validation and says
+    nothing about how many studies the category has served; the lifecycle
+    says how much reuse the category has demonstrated and nothing about any
+    value.
 """
 
 from dataclasses import dataclass
 
 REGISTRY = {}
+
+# ---------------------------------------------------------------------------
+# Lifecycle: R16's record of what a capability has earned
+# ---------------------------------------------------------------------------
+
+#: A named gap, a bounded change and its tests, one study behind it. Usable
+#: within its validated scope; one success remains provisional. Retained for
+#: audit, withdrawn, or nominated for reuse at study close.
+EXPERIMENT = 'experiment'
+#: Demonstrated value in a distinct subsequent use, applicability and
+#: counterexamples on record, regression protection, a recorded review and a
+#: maintenance responsibility.
+MAINTAINED = 'maintained'
+#: Several real consumers demonstrably share the same semantics. Not a state
+#: a category reaches on its own; it is where a shared abstraction lands after
+#: local duplication was compared with the coupling and measured.
+FOUNDATION = 'foundation'
+#: Superseded or withdrawn, with the reason, the replacement and the replay
+#: implications recorded. Historical artifacts and method identity stay.
+RETIRED = 'retired'
+#: In the order a capability normally moves through them.
+STATES = (EXPERIMENT, MAINTAINED, FOUNDATION, RETIRED)
+
+#: The decision a capability last received. ``retained`` keeps its state,
+#: ``promoted`` moved it up, ``rejected`` withdrew an experiment and
+#: ``retired`` closed a maintained one.
+DECISIONS = ('retained', 'promoted', 'rejected', 'retired')
+
+
+@dataclass(frozen=True)
+class Decline:
+    """A product class the classifier files as ``other``, and the proof.
+
+    The ASINs are committed case records the category's own test asserts on;
+    an applicability claim with no record behind it is a hope, and the
+    capability test checks that every one of these still classifies as
+    ``other``.
+    """
+
+    label: str
+    asins: tuple = ()
+
+
+@dataclass(frozen=True)
+class Applicability:
+    """Where a capability was built and measured, and what it is not for."""
+
+    #: Marketplace hosts the classifier, claims and axes were built and
+    #: measured against, as the records name them: ``'www.amazon.de'``.
+    marketplaces: tuple
+    #: What the classifier accepts, in one sentence.
+    accepts: str
+    #: Product classes it files as ``other``, each proven by case records.
+    declines: tuple = ()
+    #: What no evidence in the repository establishes. Read before reusing
+    #: the capability for a question its studies never asked.
+    not_established: tuple = ()
+
+
+@dataclass(frozen=True)
+class Lifecycle:
+    """What a capability has earned, declared beside the code that is it."""
+
+    #: One of :data:`STATES`.
+    state: str
+    #: One of :data:`DECISIONS`: the last keep/promote/reject/retire decision.
+    decision: str
+    #: ISO date of that decision.
+    decided: str
+    #: The role responsible for maintaining it -- a role, never a person.
+    maintainer: str
+    applicability: Applicability
+    #: Repository-relative paths: the case feeds, the test module, committed
+    #: briefs and plans, dated investigations. Every one must exist.
+    evidence: tuple
+    #: ROADMAP.md heading anchors recording the capability's history.
+    milestones: tuple
+    #: ISO date of the last architectural review that looked at it.
+    reviewed: str
+    #: ROADMAP.md heading anchor of that review's record.
+    review: str
+    #: The category method's own version. It moves when a change moves a
+    #: decision on the category's committed cases -- a classifier boundary,
+    #: an axis direction, what a claim means -- and stays when a pattern
+    #: merely reaches more phrasings of the same statement. The bundle does
+    #: not record it yet; binding it into a study's manifest is R15's.
+    method_version: int = 1
 
 
 @dataclass(frozen=True)
@@ -95,6 +199,9 @@ class Category:
     #: text card and silently absent from the JSON one. A category that adds
     #: a key and does not list it here is not published.
     extras: tuple = ()
+    #: What this capability has earned (R16). :func:`register` refuses a
+    #: category that declares none; the gate checks what it declares.
+    lifecycle: object = None
 
     def axis(self, key):
         for axis in self.axes:
@@ -118,6 +225,11 @@ class Category:
 
 
 def register(category):
+    if not isinstance(category.lifecycle, Lifecycle):
+        raise TypeError(
+            f'{category.key}: a category registers with its Lifecycle -- the '
+            f'state it has earned, the decision behind it, where it applies '
+            f'and the evidence -- and this one declares none. See R16.')
     REGISTRY[category.key] = category
     return category
 

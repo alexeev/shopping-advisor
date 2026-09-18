@@ -462,6 +462,23 @@ buyer of that product belongs in a category.
 Two minutes of inspection changes which questions are worth asking, so do it
 first: is the category supported, what evidence is already on disk, what can
 the tools actually decide. Ask nothing that inspection would have answered.
+Start with the capability index, then the controls of the category that fits:
+
+```text
+uv run --offline --locked python -m shopping_advisor.study capabilities
+uv run --offline --locked python -m shopping_advisor.study capabilities --marketplace www.amazon.de
+uv run --offline --locked python -m shopping_advisor.study controls --category dry_pasta
+```
+
+The index says, for every registered capability, what it has earned (a task
+experiment, a maintained capability, a shared foundation or a retired one),
+the marketplaces it was measured on, what it accepts and what it declines with
+the case records that prove it, what nothing in the repository establishes,
+and which committed studies rest on it. A superficially similar request — a
+hiking pack against `school_backpack`, a `.com` shelf against any of them —
+declines reuse there, before anything is collected and without bending a rule
+to fit. The index is inspection: it does not decide that a category suits the
+question, and it says nothing about the trust of any value.
 
 #### Three kinds of missing information
 
@@ -501,7 +518,9 @@ chose, and make the report show what would change if that default were wrong.
 #### Say so when the category is not supported
 
 Four categories ship: `dry_pasta`, `tyre_mounting_paste`, `basmati_rice` and
-`school_backpack`. For
+`school_backpack`, and `study capabilities` says what each has earned:
+`school_backpack` is a task experiment with one study behind it, and a report
+that rests on it says so in its limits. For
 anything else — a vacuum cleaner, a display — the generic layer still works
 (price, pack quantity, contradictions between the vendor's own statements) but
 nothing in the repository knows what makes one *good*.
@@ -839,6 +858,7 @@ observation → reproducible case → proposed change → review → versioned a
 | A time-sensitive external product finding | Dated evidence with its source and applicability — never a permanent instruction |
 | A repeatable operator procedure | This runbook or `AGENTS.md`, with the commands verified against the committed example |
 | An architectural or collection-policy decision | A dated entry in `ROADMAP.md`, linked to the measurement that argues for it |
+| A capability's maturity, applicability and retention decision | Its `Lifecycle` declaration beside the category module, published by `study capabilities` and pinned by the gate; the decision that moved it is a dated `ROADMAP.md` entry under R16 |
 | An unproven improvement | A roadmap candidate with an experiment **and a stopping criterion** — R9 and R10 are the precedent |
 
 Promote to the narrowest home that holds. Every promoted rule needs its scope
@@ -884,10 +904,23 @@ to make a preferred product win.
 ### Inspect executable controls before mapping requirements
 
 ```text
+uv run --offline --locked python -m shopping_advisor.study capabilities
 uv run --offline --locked python -m shopping_advisor.study controls --category dry_pasta
 uv run --offline --locked python -m shopping_advisor.study controls --category tyre_mounting_paste
 uv run --offline --locked python -m shopping_advisor.study controls --category basmati_rice
+uv run --offline --locked python -m shopping_advisor.study controls --category school_backpack
 ```
+
+`capabilities` is the R16 index: one JSON row per registered capability, read
+from the live registry and each category's own `Lifecycle` declaration — state
+and last decision, marketplaces, what it accepts and declines with the proving
+case ASINs, evidence paths, the committed studies whose briefs name it, roadmap
+records and the last review. `--category KEY` narrows to one row and
+`--marketplace HOST` adds a host comparison with its reason. The Python
+interface is `shopping_advisor.study.capabilities.index()`. It enumerates
+categories, the one capability kind the registry can; sources, extraction
+techniques and comparison methods enter it with the first task-born one under
+R15. It reads no feeds and decides nothing about fit or trust.
 
 This read-only JSON catalogue resolves axes, directions, defaults and claim keys
 from the live category registry. It describes all five mechanisms that move the
@@ -926,6 +959,7 @@ recommendation when a decisive requirement resolves to no control at all.
 | A brief's `[[sources]]` are declarations | Use the external ledger and indexed claims for checked applicability | — (by design) |
 | Original full studies/reports and basmati source documents are not all tracked | Use the committed study examples for onboarding; request/rebuild missing evidence only when the task needs it; migrated citations remain unverified | — (historical access limits) |
 | A bundle replays only where the feeds its brief names are available; `data/studies/` is gitignored | Copy the bundle and its feeds together, or build the study over committed cases | — (retention policy) |
+| Two of four categories have no committed replayable study, and basmati has no committed acquired record set | Read `study capabilities`: the gate pins per-record verdicts for mounting paste and school backpack and replays no decision of theirs; a brief over their committed cases is the recorded next step | [R16 review 1](ROADMAP.md#architectural-review-1--2026-09-18) |
 | No two-provider acceptance trial, and no run on a second platform | Load the same canonical instructions; keep the work provider-neutral; do not claim proven provider handoff or cross-platform behaviour | [R17](ROADMAP.md#r17--portability-evidence) |
 | The maintenance gate establishes that the repository still does what it says, not that what it says is true of any marketplace | Use it to finish a change; it replaces no part of source review or freshness judgement | — (by design) |
 

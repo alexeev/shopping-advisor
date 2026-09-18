@@ -9,6 +9,12 @@ on every record in it.
 They are here because `data/` is gitignored, so the evidence every validation
 rule was written against would otherwise live on one machine.
 
+Each category's `Lifecycle` declaration names its file here as evidence and
+cites ASINs from the tables below as the product classes it declines;
+`../test_capabilities.py` re-classifies every cited record on each run, so an
+applicability claim in the capability index stays true of these records or
+fails loudly.
+
 ```
 pasta_v1.jsonl.gz           25 records · dry pasta
 mounting_paste_v1.jsonl.gz  34 records · tyre mounting paste
