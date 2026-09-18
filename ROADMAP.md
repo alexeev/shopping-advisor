@@ -23,9 +23,9 @@ measurements as history.
 | **R10** | Scoring as a shared facility | **DEFERRED** — one consumer is not two |
 | **R11** | Category synthesis as a default step | PLANNED (first R15 application) |
 | **R12** | Discovery that states its own coverage | PLANNED |
-| **R13** | The conversation as the entry point | **IN PROGRESS** (INTAKE §16 machinery shipped; three conversational trials recorded and the defaults they suggested decided on 2026-09-18; an independent intake review of the third trial's plan by another agent remains before closing) |
+| **R13** | The conversation as the entry point | **DONE (2026-09-18)** — INTAKE §16 machinery shipped; three conversational trials recorded, the third graded against a record written before its first message and carried through three independent intake reviews; the defaults the trials suggested decided the same day |
 | **R14** | A recommendation in a category nobody validated | PLANNED (R11–R13, R15, R16 gates) |
-| **R15** | Controlled task-driven capability adaptation | PLANNED (after R13; T4's local maintenance gate has shipped) |
+| **R15** | Controlled task-driven capability adaptation | PLANNED (R13 done 2026-09-18; T4's local maintenance gate and the first control case, `axis_bound`, have shipped) |
 | **R16** | Capability lifecycle and architectural review | **IN PROGRESS** (index, lifecycle records and the first review shipped 2026-09-18; the task-experiment entry waits for R15) |
 | **R17** | Portability evidence: a second platform and a second provider | **DEFERRED** — gates the portability claim only |
 
@@ -173,7 +173,7 @@ catalogue phase — see [decision principle 9](#decision-principles).
 
 | Order | Deliverable | Dependency and reason |
 |---|---|---|
-| 1 — in progress | R13 intake/evidence/gap planning | INTAKE §16's ten stages shipped on 2026-09-17 on top of T2/T3 and T4's gate; two conversational trials are recorded (2026-09-17 by the documentation's author, 2026-09-18 by a reader who had not read it); what remains is a trial graded against expectations written before its first message, which no fixture stands in for |
+| 1 — done (2026-09-18) | R13 intake/evidence/gap planning | INTAKE §16's ten stages shipped on 2026-09-17 on top of T2/T3 and T4's gate; three conversational trials are recorded (2026-09-17 by the documentation's author, 2026-09-18 by a reader who had not read it, 2026-09-18 on an unsupported category graded against a record written before its first message and carried through three independent intake reviews); the defaults the trials suggested were decided on 2026-09-18 |
 | 2 | R15 bounded adaptation, with R11 as the first category case | Needs R13's recorded gap. T4's executable baseline is in place. Prove isolation, validation, traceability and rollback before making adaptation routine |
 | 3 | R12 coverage and R16 minimum lifecycle/index | The index and the lifecycle records shipped on 2026-09-18 over the four registered categories, ahead of R15, because nothing in them depends on a patch artifact; what waits for R15 is the task-experiment entry and the promotion evidence that flows from it. R12 evidence planning can start with R13. Coverage and deliberate retention are necessary before claiming the full loop works |
 | 4 | R14 unseen-problem and reuse acceptance trials | Needs R11–R13, R15 and R16's minimum lifecycle, on top of the shipped maintenance gate. [R17](#r17--portability-evidence)'s trials — cross-platform paths, provider interchangeability and handoff — test these same artifacts afterwards, and gate only the portability claim |
@@ -1634,10 +1634,11 @@ expansion with depth using decision-relevant yield, not raw result count.
 
 ## R13 — The conversation as the entry point
 
-**Status: IN PROGRESS. Depends on shipped T2/T3; does not wait for R11.** The
-machinery of [INTAKE §16](INTAKE.md#16-implementation-sequence), stages 1–10,
-shipped on 2026-09-17. The conversational acceptance trial the Done-when asks
-for has not been run, and no fixture here stands in for it.
+**Status: DONE (2026-09-18). Depended on shipped T2/T3; did not wait for R11.**
+The machinery of [INTAKE §16](INTAKE.md#16-implementation-sequence), stages
+1–10, shipped on 2026-09-17; the conversational acceptance trials the Done-when
+asks for ran on 2026-09-17 and 2026-09-18 and are recorded below. No fixture
+here stands in for them.
 
 **2026-09-17 — INTAKE §16 stages 1–10 shipped.** Six dated entries recorded the
 stages as they landed; the same day they were consolidated into this one, keeping
@@ -1664,20 +1665,24 @@ the reviews deliberately — the one commit INTAKE §16 priced for exactly that 
 and no decision moved with them. No runtime lock, extraction or generic
 validation semantics changed in any stage.
 
-**What remains for R13.** Three trials are recorded below: the first
-(2026-09-17) by the user who wrote the documentation, the second (2026-09-18)
-by a reader who had not, and the third (2026-09-18) on an unsupported category
-by a buyer who recorded his intent, requirements, chosen product and acceptable
-outcomes privately **before** his first request and graded the result against
-that record afterwards, which is the grading INTAKE §12 and §14 ask for, once.
-The question close of the runbook was repeated on each, and the defaults the
-trials suggested were decided on 2026-09-18 (entry below). What remains is an
-independent intake review of the third trial's plan (revision 5) by an agent
-other than the one that operated it, against the buyer's messages and his
-private record rather than the plan's own output; the operating agent reviewed
-nothing of its own. A passing gate protects the tested machinery; it does not
-establish understanding of arbitrary purchase requests, and no fixture in this
-repository claims to.
+**Closed 2026-09-18, on the maintainer's review and decision.** Three trials are
+recorded below: the first (2026-09-17) by the user who wrote the documentation,
+the second (2026-09-18) by a reader who had not, and the third (2026-09-18) on
+an unsupported category by a buyer who recorded his intent, requirements, chosen
+product and acceptable outcomes privately **before** his first request and
+graded the result against that record afterwards — the grading INTAKE §12 and
+§14 ask for, once. The question close of the runbook was repeated on each, the
+defaults the trials suggested were decided the same day, and the third trial's
+plan went through three independent intake reviews: two fails and their
+repairs, then a review that passes faithfulness, adequacy, assumptions and stage
+effects and is `limited` on omissions by the plan's own missing-context
+declaration, which CONTRACT §13 never lets pass. Each Done-when bullet has a
+recorded trial behind it; the review chain is the measured effect INTAKE §11
+asked for. What R13 does **not** establish: understanding of arbitrary purchase
+requests, a second provider or platform ([R17](#r17--portability-evidence)),
+or any control for the smartwatch requirements — that category is a retained,
+unfunded proposal for [R15](#r15--controlled-task-driven-capability-adaptation).
+A passing gate protects the tested machinery and nothing more.
 
 
 **2026-09-17 — Observation from the first unsupported-category conversation
@@ -1866,6 +1871,70 @@ which the report's dual-ordering presentation happened to cover; (3) tooling:
 `sources[].id` must be a lowercase slug, `garmin.com` and `suunto.com` are
 refused by the built-in browser while Garmin's static manual pages read fine,
 and a PDF manual cannot be read on this machine without poppler.
+
+**2026-09-18 — The third trial's plan under independent intake review:
+fail.** A second agent (Codex, GPT-6), given AGENTS, the runbook's review
+section, CONTRACT §13, INTAKE §11/§12/§14, the buyer's five retained messages
+and his private pre-trial record, wrote its own intent oracle before opening
+the plan's requirements and then graded revision 5. Result, bound to the
+revision's digest by `plan-review`: adequacy **pass** (every `unsupported`
+disposition is a genuine absence of an executable method, no other category
+substituted, nothing falsely marked enforced); omissions **limited** (the
+plan's own missing-context limit forbids a pass); faithfulness, assumptions and
+stage effects **fail**. The failures share one shape, and it is INTAKE §4's
+case 7 in a softer form — an assessable proxy substituted for the condition the
+buyer stated: sensor *presence* (GPS, optical heart rate, barometer) recorded as
+the buyer's hard constraint while measurement *quality*, which he stated and
+his private record makes an exclusion condition, was filed as a non-decisive
+preference because nothing in the harness can assess it; a 40 m depth margin
+recorded as if stated when the buyer said 30 m; suit-wearability first recorded
+as a reading the buyer had "stated" after he did not object to that default,
+then in revision 5 turned into a filter that removed one candidate on case
+material the buyer never named; delivery in Germany recorded as confirmed when
+only Amazon.de was; the display criterion given no comparison-stage effect
+while the report excluded the MIP-display variant as if it were a condition;
+the payment effect dropping "usable in Germany". The report's heading
+"candidates that passed every hard condition" therefore overclaims, although
+its limits section says quality was not assessed and the comparison is a
+person's reading. The buyer's own grading (every candidate on his shortlist,
+his chosen model among them) had not surfaced any of this: outcome feedback
+graded the search, the review graded the reading. That is the separation
+INTAKE §11 asked for, observed once. The reviewer changed nothing; the review
+and its oracle are retained beside the plan revisions under `data/plans/`.
+
+**2026-09-18 — The repair and two more reviews.** Revision 6 answered the
+failed review's findings: measurement quality became the buyer's decisive hard
+constraint on an evidence path with nobody admitted as meeting it; sensor
+presence, the 40 m margin and the no-filter style reading were relabelled as
+the agent's hypotheses; the style pre-filter kept no per-candidate verdict;
+Germany became an assumption; payment gained "usable in Germany"; the report
+dropped its "passed every hard condition" heading and put the Solar and G2 rows
+back. The same reviewer, reusing its oracle, **failed revision 6 again** on
+three items that were all new in the repair: a "within about a fifth" runtime
+threshold under which the display could outweigh the battery, invented by the
+agent; candidates whose manufacturers state runtime on different scales given
+places in one order; Huawei carried under a "documented payment" heading on a
+blog's word. Revision 7 removed the threshold (display decides only equal
+runtime on one manufacturer's scale), listed other-scale candidates unranked
+with their mode named, and required manufacturer or payment-service
+documentation for payment, so both Huawei models moved to a "payment not
+resolved" block. The third review passed faithfulness, adequacy, assumptions
+and stage effects, confirmed that none of the nine earlier repairs had
+regressed, and recorded three editorial contradictions in the report, fixed
+afterwards without touching the plan; omissions stayed `limited` because the
+plan declares the maintainer's conversation with the buyer as missing context,
+and CONTRACT §13 refuses a pass over a declared limit. Measured across the
+chain: seven plan revisions, three reviews bound to three digests, nine
+findings answered, three new ones introduced by the first repair and answered
+by the second. The reviewer's closing characterisation is the one the report
+now carries: a bounded study with insufficient evidence, a permitted conditional
+outcome, not a finished purchase recommendation and not an audited approval.
+Two lessons for the operating agent, both about the repair rather than the
+intake: a repair is a new revision and gets the same review, because it can
+add misreadings as easily as remove them; and once a review or a ledger has
+bound a revision's digest, that revision is not edited again — supersession is
+recorded in the next revision, or the binding reads as superseded (hit once,
+reverted).
 
 **2026-09-18 — Defaults decided after three trials.** Four decisions, all
 about questions and stated defaults, none about code; the runbook's
