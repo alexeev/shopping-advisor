@@ -1,0 +1,138 @@
+{
+  "arguments": {
+    "asin": [
+      "B0CPF5C7XH",
+      "B0CPF2Q5PB",
+      "B0CNSCY41D",
+      "B0B45XTKRN",
+      "B0HFP18YKP",
+      "B0FPMK7KYX",
+      "B0GKPJLHNH"
+    ],
+    "domain": "www.amazon.de",
+    "keep_pages": true,
+    "keep_search_pages": false,
+    "keyword": [],
+    "max_pages": 2,
+    "max_products_per_query": 0
+  },
+  "code": {
+    "extraction_schema_version": 6,
+    "git_dirty": false,
+    "git_revision": "ee3eddf1aad9bb805b785cc452fb437ef6088b2c",
+    "lock_sha256": "e24bc67da2dba6c49538700bc8bce61658748c715e9103603f537c15694a32cd",
+    "python": "3.14.6",
+    "scrapy": "2.19.0",
+    "validated_contract_version": 2
+  },
+  "counts": {
+    "discovery_occurrences": 0,
+    "failure_samples_over_cap": 0,
+    "failure_samples_saved": 0,
+    "page_write_errors": 0,
+    "pages_quarantined": 0,
+    "pages_saved": 7,
+    "redaction_failures": 0,
+    "search_pages_saved": 0
+  },
+  "feeds": [
+    {
+      "format": "jsonl",
+      "overwrite": true,
+      "uri": "data/smartwatch/probe-3.jsonl"
+    }
+  ],
+  "finish_reason": "finished",
+  "finished_at": "2026-09-18T12:20:07+00:00",
+  "locale": {
+    "accept_language": "de-DE,de;q=0.9,en;q=0.8",
+    "expected_language": "de",
+    "language": "de",
+    "status": "matches"
+  },
+  "manifest_version": 2,
+  "marketplace": "www.amazon.de",
+  "pages_retained": true,
+  "run_id": "20260918T121902Z-www.amazon.de-47a60b36",
+  "search_pages_retained": false,
+  "settings": {
+    "ADDONS": [
+      "shopping_advisor.addons.BundledPublicSuffixList"
+    ],
+    "AUTOTHROTTLE_ENABLED": true,
+    "AUTOTHROTTLE_MAX_DELAY": 30,
+    "AUTOTHROTTLE_START_DELAY": 9,
+    "AUTOTHROTTLE_TARGET_CONCURRENCY": 0.3,
+    "BOT_NAME": "shopping_advisor",
+    "CLOSESPIDER_ITEMCOUNT": 0,
+    "CLOSESPIDER_PAGECOUNT": 0,
+    "CLOSESPIDER_TIMEOUT": "540",
+    "CONCURRENT_REQUESTS": 1,
+    "CONCURRENT_REQUESTS_PER_DOMAIN": 1,
+    "DEFAULT_REQUEST_HEADERS": {
+      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+      "Accept-Language": "de-DE,de;q=0.9,en;q=0.8",
+      "Upgrade-Insecure-Requests": "1"
+    },
+    "DEPTH_LIMIT": 0,
+    "DOWNLOADER_MIDDLEWARES": [
+      "scrapy.downloadermiddlewares.retry.RetryMiddleware"
+    ],
+    "DOWNLOAD_DELAY": 9.0,
+    "DOWNLOAD_DELAY_JITTER": 0.5,
+    "DOWNLOAD_TIMEOUT": 30,
+    "EXTENSIONS": [],
+    "HTTPCACHE_ENABLED": false,
+    "RANDOMIZE_DOWNLOAD_DELAY": true,
+    "RETRY_ENABLED": true,
+    "RETRY_TIMES": 2,
+    "ROBOTSTXT_OBEY": false,
+    "SETTINGS_PROFILE": "baseline",
+    "USER_AGENT": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+    "proxy_middleware": false
+  },
+  "spider": "amazon_product",
+  "started_at": "2026-09-18T12:19:02+00:00",
+  "state": "closed",
+  "stats": {
+    "amazon/field/aplus": 2,
+    "amazon/field/brand": 7,
+    "amazon/field/breadcrumbs": 7,
+    "amazon/field/country_of_origin": 1,
+    "amazon/field/description": 5,
+    "amazon/field/feature_bullets": 7,
+    "amazon/field/images": 7,
+    "amazon/field/price": 5,
+    "amazon/field/rating": 6,
+    "amazon/field/rating_count": 6,
+    "amazon/field/raw_tables": 7,
+    "amazon/field/review_histogram": 6,
+    "amazon/field/review_sample": 6,
+    "amazon/field/title": 7,
+    "amazon/field/total_quantity": 4,
+    "amazon/field/variation": 4,
+    "amazon/pdp_items": 7,
+    "downloader/request_bytes": 9770,
+    "downloader/request_count": 7,
+    "downloader/request_method_count/GET": 7,
+    "downloader/response_bytes": 2822933,
+    "downloader/response_count": 7,
+    "downloader/response_status_count/200": 7,
+    "elapsed_time_seconds": 64.63474587499513,
+    "feedexport/success_count/FileFeedStorage": 1,
+    "finish_reason": "finished",
+    "httpcompression/response_bytes": 14607243,
+    "httpcompression/response_count": 7,
+    "item_scraped_count": 7,
+    "items_per_minute": 6.5625,
+    "log_count/INFO": 4,
+    "memusage/max": 225492992,
+    "memusage/startup": 92995584,
+    "response_received_count": 7,
+    "responses_per_minute": 6.5625,
+    "scheduler/dequeued": 7,
+    "scheduler/dequeued/memory": 7,
+    "scheduler/enqueued": 7,
+    "scheduler/enqueued/memory": 7
+  }
+}
