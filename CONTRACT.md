@@ -1203,7 +1203,8 @@ portability beyond the machine it was measured on (R17). Where the profile
 cannot be demonstrated the default is to stop and record the blocker; the
 maintainer may record an exception, and then the checks are labelled
 `harness-only`, count toward none of R15's Done-when, and are never presented
-as the demonstrated boundary.
+as the demonstrated boundary: a study bound to such a record carries the label
+in its manifest binding and names it in its caveats wherever the bundle is read.
 
 **Limits.** A digest proves that bytes did not change, not that they are
 safe; the static inspection reads names, not intent, and a patch can reach the

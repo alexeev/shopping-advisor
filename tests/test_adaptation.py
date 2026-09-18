@@ -69,6 +69,16 @@ def accepted_record(identifier='fixture-1', session_id='pasta-adaptation-session
     return adaptation.seal(record)
 
 
+def harness_only_record(exception='maintainer message 2026-09-18: sandbox-exec exits 71 in this '
+                                  'container; run the checks bare and label them'):
+    """The same loop under the exception the maintainer recorded: no profile, a label."""
+    record = accepted_record()
+    record['checks'][0]['boundary'] = 'harness-only'
+    record['runner'].update(boundary='harness-only', profile_sha256='', exception=exception)
+    record['review']['checks_sha256'] = adaptation.checks_digest(record)
+    return adaptation.seal(record)
+
+
 class Contract(unittest.TestCase):
     def test_a_template_is_valid_and_names_the_gap_without_capturing_or_running(self):
         record = adaptation.template('smoke', 'category', 'hypothesis', 'session', 'engineer-1', 100, 2)
@@ -174,6 +184,15 @@ class Contract(unittest.TestCase):
         record['runner'].update(boundary='harness-only', exception='')
         with self.assertRaisesRegex(adaptation.AdaptationError, 'exception the maintainer recorded'):
             adaptation.check(record)
+
+    def test_a_harness_only_boundary_with_its_exception_passes_and_the_binding_carries_the_label(self):
+        record = harness_only_record()
+        adaptation.check(record)
+        self.assertEqual(adaptation.binding(record)['boundary'], 'harness-only')
+        # The label is not part of the method identity: the same patch run bare
+        # and run inside the profile is the same code, and a study bound to
+        # either derives the same id. What differs is the caveat, not the method.
+        self.assertEqual(record['descriptor_sha256'], accepted_record()['descriptor_sha256'])
 
     def test_the_binding_names_the_record_exactly(self):
         record = accepted_record()
@@ -452,6 +471,24 @@ class StudyBinding(unittest.TestCase):
         self.assertEqual(findings, [])
         self.assertTrue(any('adaptation fixture-1' in c for c in bundle.code_caveats(manifest)))
 
+    def test_a_study_on_a_harness_only_record_says_so_wherever_the_bundle_is_read(self):
+        path = self.directory / 'harness-only.json'
+        path.write_text(json.dumps(harness_only_record()), encoding='utf-8')
+        bound, manifest = self.run_study('harness', adaptation_record=path)
+        self.assertEqual(manifest['adaptation']['boundary'], 'harness-only')
+        caveats = bundle.code_caveats(manifest)
+        self.assertTrue(any('harness-only boundary' in c and 'none of R15' in c for c in caveats), caveats)
+        self.assertEqual(bundle.verify(bound)[1], [])
+        # And a kernel-bound study of the same patch says nothing of the kind.
+        _, kernel = self.run_study('kernel', adaptation_record=self.record_path)
+        self.assertFalse(any('harness-only' in c for c in bundle.code_caveats(kernel)))
+        # The label travels in the binding: upgrading it afterwards is a finding.
+        manifest_path = bound / 'manifest.json'
+        data = json.loads(manifest_path.read_text())
+        data['adaptation']['boundary'] = 'kernel'
+        manifest_path.write_text(json.dumps(data), encoding='utf-8')
+        self.assertEqual([f['code'] for f in bundle.verify(bound)[1]], ['adaptation_invalid'])
+
     def test_the_same_inputs_under_another_method_are_another_study(self):
         other = accepted_record(content=b'# another method\n')
         path = self.directory / 'other.json'
@@ -611,6 +648,39 @@ class CommandLine(unittest.TestCase):
                                self.worktree / 'data' / 'scratch')
         self.assertEqual(status, 2)
         self.assertIn('after `--`', out)
+
+    def test_a_recorded_exception_runs_the_check_bare_and_labels_it_harness_only(self):
+        """The path a container without sandbox-exec takes, and the only one it may take.
+
+        No skip: this is the case the kernel tests above skip on. The check runs
+        under the harness's isolation alone, the record says so in the check and
+        in the runner, no profile digest is recorded, and the label follows the
+        exception -- even on a machine where the profile is available.
+        """
+        self.cli('adaptation-template', 'cli-7', '--session', self.ledger, '--action', 'engineer-1',
+                 '--layer', 'method', '--hypothesis', 'h', '--seconds', '600', '--attempts', '2', '-o', self.record)
+        self.cli('adaptation-capture', self.record, '--base', self.base, '--worktree', self.worktree)
+        scratch = self.worktree / 'data' / 'scratch'
+        exception = 'maintainer message 2026-09-18: sandbox-exec exits 71 in this container'
+        status, out = self.cli('adaptation-run', self.record, '--worktree', self.worktree, '--scratch', scratch,
+                               '--venv', VENV, '--timeout', '60', '--exception', exception, '--',
+                               sys.executable, '-c', 'import pkg.new; print(pkg.new.NEW)')
+        self.assertEqual(status, 0, out)
+        self.assertIn('harness-only', out)
+        record = adaptation.load(self.record)
+        check = record['checks'][0]
+        self.assertEqual((record['attempts'], check['exit'], check['boundary']), (1, 0, 'harness-only'))
+        self.assertEqual((record['runner']['boundary'], record['runner']['profile_sha256'],
+                          record['runner']['exception']), ('harness-only', '', exception))
+        self.assertFalse((scratch / 'profile.sb').exists())
+        self.assertIn('2', pathlib.Path(check['output_path']).read_text())
+        # Review, adopt, check: the exception is what lets the record stand.
+        self.cli('adaptation-review', self.record, '--reviewer', 'r', '--verdict', 'pass', '--finding', 'ran bare')
+        self.cli('adaptation-adopt', self.record, '--decision', 'accepted', '--by', 'repository maintainer',
+                 '--reason', 'fixture')
+        status, out = self.cli('adaptation-check', self.record)
+        self.assertEqual(status, 0, out)
+        self.assertIn('harness-only', out)
 
     @unittest.skipUnless(SANDBOXED, 'sandbox-exec is not available here')
     def test_a_check_runs_inside_the_boundary_counts_an_attempt_and_exhaustion_refuses_the_next(self):

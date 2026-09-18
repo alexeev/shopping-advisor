@@ -235,7 +235,7 @@ def check_shape(record):
 
 
 def _bundle_inputs(directory):
-    from ..run import read_jsonl
+    from ..jsonl import read_jsonl
     from . import bundle
     directory = Path(directory)
     brief_data = json.loads((directory / bundle.BRIEF).read_text(encoding='utf-8'))

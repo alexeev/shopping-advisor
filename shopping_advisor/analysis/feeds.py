@@ -43,7 +43,7 @@ import hashlib
 import json
 
 from ..extraction.marketplaces import domain_key
-from ..run import read_jsonl
+from ..jsonl import read_jsonl
 
 # Older than any real crawl, so an undated record never wins a tie-break.
 BEGINNING = _dt.datetime.min.replace(tzinfo=_dt.timezone.utc)

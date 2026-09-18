@@ -569,7 +569,8 @@ and the semantic diff's evidence — or that the boundary holds anywhere but the
 machine it was measured on. `sandbox-exec` is present on macOS and deprecated
 by Apple; `git` does not run inside the profile, which is why the controlling
 commands run outside it; and a `harness-only` exception the maintainer records
-is labelled as such in every check and counts toward none of R15's Done-when.
+is labelled as such in every check, named in the bundle's caveats wherever the
+study is read, and counts toward none of R15's Done-when.
 
 ### Agree the brief
 
@@ -1162,7 +1163,7 @@ recommendation when a decisive requirement resolves to no control at all.
 | A brief's `[[sources]]` are declarations | Use the external ledger and indexed claims for checked applicability | — (by design) |
 | Original full studies/reports and basmati source documents are not all tracked | Use the committed study examples for onboarding; request/rebuild missing evidence only when the task needs it; migrated citations remain unverified | — (historical access limits) |
 | A bundle replays only where the feeds its brief names are available; `data/studies/` is gitignored | Copy the bundle and its feeds together, or build the study over committed cases | — (retention policy) |
-| Two of four categories have no committed replayable study, and basmati has no committed acquired record set | Read `study capabilities`: the gate pins per-record verdicts for mounting paste and school backpack and replays no decision of theirs; a brief over their committed cases is the recorded next step | [R16 review 1](ROADMAP.md#architectural-review-1--2026-09-18) |
+| Two of five categories have no committed replayable study, and basmati has no committed acquired record set | Read `study capabilities`: the gate pins per-record verdicts for mounting paste and school backpack and replays no decision of theirs; a brief over their committed cases is the recorded next step, due before R14's first trial | [R16 review 2](ROADMAP.md#architectural-review-2--2026-09-19) |
 | No two-provider acceptance trial, and no run on a second platform | Load the same canonical instructions; keep the work provider-neutral; do not claim proven provider handoff or cross-platform behaviour | [R17](ROADMAP.md#r17--portability-evidence) |
 | The maintenance gate establishes that the repository still does what it says, not that what it says is true of any marketplace | Use it to finish a change; it replaces no part of source review or freshness judgement | — (by design) |
 

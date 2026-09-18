@@ -43,7 +43,7 @@ from ..provenance import (code_identity, sha256_file, sha256_text,
                           write_json_atomically)
 from ..analysis import report as report_module
 from ..analysis.category import is_match
-from ..run import read_jsonl
+from ..jsonl import read_jsonl
 from . import (writeup, audit, intake, intake_review, gates, delivery,
                delivery_review, session, inventory, adaptation)
 from .inventory import (ARTIFACTS, BINDINGS, BRIEF, CANDIDATES, CARDS, CLAIM_INDEX,
@@ -464,6 +464,15 @@ def code_caveats(manifest_data):
                        f'{bound.get("adoption")}): the exact patch is the bundle\'s '
                        f'{adaptation.RECORD}, and the working tree it ran in was patched on '
                        f'purpose -- read the record, not the dirty flag.')
+        if bound.get('boundary') == 'harness-only':
+            # R15: the exception the maintainer recorded, never the demonstrated
+            # boundary. The checks ran bare under the harness's own isolation;
+            # nothing about this study counts toward R15's boundary Done-when.
+            caveats.append('its checks ran under a harness-only boundary: the maintainer '
+                           'recorded an exception (named in the record\'s runner.exception) '
+                           'and no kernel profile wrapped them. That is the harness\'s '
+                           'isolation alone, not the demonstrated boundary, and it counts '
+                           'toward none of R15\'s Done-when.')
         return caveats
     if code.get('git_dirty') is True:
         caveats.append(f'produced from a working tree with uncommitted changes: '

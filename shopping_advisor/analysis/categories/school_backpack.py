@@ -463,8 +463,8 @@ LIFECYCLE = cat.Lifecycle(
               'tests/test_school_backpack.py'),
     milestones=('r11--category-synthesis-as-a-default-step',
                 'r13--the-conversation-as-the-entry-point'),
-    reviewed='2026-09-18',
-    review='architectural-review-1--2026-09-18',
+    reviewed='2026-09-19',
+    review='architectural-review-2--2026-09-19',
     method_version=1,
 )
 

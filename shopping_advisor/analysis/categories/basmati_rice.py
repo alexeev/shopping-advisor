@@ -977,8 +977,8 @@ LIFECYCLE = cat.Lifecycle(
     milestones=('r5--reviews-as-an-evidence-source',
                 'r7--attributed-search-finding-a-claim-vs-crediting-it',
                 't3--done-2026-09-16-external-evidence-and-recommendation-audits'),
-    reviewed='2026-09-18',
-    review='architectural-review-1--2026-09-18',
+    reviewed='2026-09-19',
+    review='architectural-review-2--2026-09-19',
     method_version=1,
 )
 

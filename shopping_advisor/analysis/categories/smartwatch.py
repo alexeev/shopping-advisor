@@ -449,8 +449,8 @@ LIFECYCLE = cat.Lifecycle(
     milestones=('r15--controlled-task-driven-capability-adaptation',
                 'r11--category-synthesis-as-a-default-step',
                 'r13--the-conversation-as-the-entry-point'),
-    reviewed='2026-09-18',
-    review='architectural-review-1--2026-09-18',
+    reviewed='2026-09-19',
+    review='architectural-review-2--2026-09-19',
     # 2 since the second R15 adaptation (2026-09-18): the dive claim's meaning
     # moved on five committed records. 3 since the fourth (2026-09-18): the
     # payment claim stopped reading a bare "NFC", and moved on five.
