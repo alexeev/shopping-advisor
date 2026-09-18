@@ -51,6 +51,8 @@ SHORTLISTED = 'shortlisted'
 RANKED = 'ranked'
 VARIANT = 'variant'
 OVER_BUDGET = 'over_budget'
+#: Outside a floor or ceiling the brief set on a card axis, before grouping.
+OUT_OF_BOUNDS = 'out_of_bounds'
 EXCLUDED = 'excluded'
 FILTERED_OUT = 'filtered_out'
 NOT_CATEGORY = 'not_category'
@@ -121,7 +123,8 @@ def analyse(brief, plan=None):
     cards, provenance = collect(brief)
     ranked = report.ranking(cards, axis_key=brief.axis or None,
                             require=brief.require_claims,
-                            unit=brief.unit or None)
+                            unit=brief.unit or None,
+                            bounds=brief.axis_bounds)
 
     # A queue per listing rather than one card, because a record whose ASIN
     # never extracted is not identified by its ASIN: the merge keeps every
@@ -161,6 +164,10 @@ def analyse(brief, plan=None):
         'minimum_candidates': brief.minimum_candidates,
         'decisive_margin': brief.decisive_margin,
     }
+    if brief.axis_bounds:
+        # Present only when declared, so a legacy study's persisted
+        # constraints -- which a completed review is bound to -- do not move.
+        constraints['axis_bounds'] = [dict(b) for b in brief.axis_bounds]
 
     candidates, eligible, accounted = [], [], set()
 
@@ -190,7 +197,12 @@ def analyse(brief, plan=None):
     for group, decision in ((ranked['excluded'], EXCLUDED),
                             (ranked['filtered_out'], FILTERED_OUT)):
         for item in group:
-            add(card_of(item), decision, reason_code=item['reason_code'],
+            # A bound and a required claim both filter before grouping and
+            # both land in ``filtered_out``; the code tells them apart, and
+            # the candidate's fate names which one it was.
+            fate = (OUT_OF_BOUNDS if item['reason_code'] == report.OUTSIDE_BOUND
+                    else decision)
+            add(card_of(item), fate, reason_code=item['reason_code'],
                 reason=item['reason'])
     for card in cards:
         if id(card) in accounted:
@@ -384,6 +396,12 @@ def _claims(brief, ranked, eligible, classification, provenance):
                        'unit': 'records',
                        'statement': f'{ranked["counts"]["filtered_out"]} did '
                                     f'not state a required claim'})
+        if 'out_of_bounds' in ranked['counts']:
+            claims.append({'id': 'out_of_bounds',
+                           'value': ranked['counts']['out_of_bounds'],
+                           'unit': 'records',
+                           'statement': f'{ranked["counts"]["out_of_bounds"]} '
+                                        f'fell outside a bound the brief set'})
     for index, name in ((0, 'best'), (1, 'runner_up')):
         if len(eligible) > index:
             entry = eligible[index]

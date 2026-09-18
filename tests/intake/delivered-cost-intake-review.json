@@ -9,10 +9,10 @@
     "user_evidence_sha256": "4d10b596940f30e092af8803e830a334a8d4814ce3cd4161f3366f9eb8a57ed5",
     "requirements_sha256": "f4e2c12a990572dbab51e0a07882f439e9833c15277242b0a82cb97cb216d4a6",
     "readback_response": "no_response",
-    "catalogue_sha256": "80d477a1838736bc27b3c13a590714865c97da9e237947ef3132fa0dd9e87200"
+    "catalogue_sha256": "a514ca31f87ef9affb8823eb9ddca4efe96ee7d888e594a222bc06764c013507"
   },
   "review_limits": [],
-  "reviewer": "Claude Fable 5.1, separate R13 stage 9 fixture intake review, 2026-09-17",
+  "reviewer": "Claude Fable 5.1, separate R13 stage 9 fixture intake review, 2026-09-17; catalogue basis re-read and reissued 2026-09-18 when the axis_bound control entered the catalogue, findings otherwise unchanged",
   "checks": {
     "omissions": {
       "status": "pass",
@@ -28,7 +28,7 @@
     },
     "adequacy": {
       "status": "pass",
-      "findings": "bronze maps to require_claims[bronze_die], whose effect is a trusted vendor statement on the card: that is what the statement asks for, and its limit (presence, not proof) is what the statement disclaims. dry maps to classification, the existing classifier, which is the statement. packs maps to offer_grouping, which folds size variants and keeps unknown families apart, matching the statement's preservation clause. listed maps to value_usability on price_per_base in EUR/kg with explicit axis attribution: it orders on exactly the quantity it names. delivered is unsupported with gap kind evidence_and_method, and both halves hold against the live dry_pasta catalogue: none of its five controls reads a shipping quantity, so this is not the missing-evidence case INTAKE section 3 warns against misdiagnosing; collecting shipping data would still leave no control that orders on delivered cost. The next step names a bounded probe and scoped maintenance and withholds the recommendation until then, which is the honest route. No control is mapped to a requirement it does not answer; in particular nothing is routed onto the per-kilogram cap.",
+      "findings": "bronze maps to require_claims[bronze_die], whose effect is a trusted vendor statement on the card: that is what the statement asks for, and its limit (presence, not proof) is what the statement disclaims. dry maps to classification, the existing classifier, which is the statement. packs maps to offer_grouping, which folds size variants and keeps unknown families apart, matching the statement's preservation clause. listed maps to value_usability on price_per_base in EUR/kg with explicit axis attribution: it orders on exactly the quantity it names. delivered is unsupported with gap kind evidence_and_method, and both halves hold against the live dry_pasta catalogue: none of its six controls reads a shipping quantity -- the axis_bound added on 2026-09-18 bounds a value the category publishes on the card, and dry pasta publishes no delivered-cost axis to bound, so this is not the missing-evidence case INTAKE section 3 warns against misdiagnosing; collecting shipping data would still leave no control that orders on delivered cost. The next step names a bounded probe and scoped maintenance and withholds the recommendation until then, which is the honest route. No control is mapped to a requirement it does not answer; in particular nothing is routed onto the per-kilogram cap.",
       "requirement_ids": ["bronze", "dry", "packs", "listed", "delivered"],
       "message_ids": []
     },

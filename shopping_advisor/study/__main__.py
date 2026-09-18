@@ -61,6 +61,12 @@ def check_command(args):
     print('  limit         '
           + (f'{brief.max_axis_value:g} on the axis'
              if brief.max_axis_value is not None else '(none)'))
+    for bound in brief.axis_bounds:
+        span = ' '.join(part for part in (
+            f'min {bound["min"]:g}' if bound['min'] is not None else '',
+            f'max {bound["max"]:g}' if bound['max'] is not None else '') if part)
+        print(f'  bound         {bound["axis"]} {span}'
+              + (f' {bound["unit"]}' if bound['unit'] else '') + ' (before grouping)')
     print(f'  enough to     at least {brief.minimum_candidates} candidate(s)'
           + (f', {brief.decisive_margin:.1%} apart'
              if brief.decisive_margin is not None else ''))

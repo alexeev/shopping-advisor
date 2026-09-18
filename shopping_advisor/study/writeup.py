@@ -30,8 +30,9 @@ else.
 from ..analysis.category import get
 from . import gates as gates_module
 from .analysis import (EXCLUDED, FILTERED_OUT, INSUFFICIENT_EVIDENCE,
-                       NOT_CATEGORY, NO_DECISIVE_WINNER, OVER_BUDGET,
-                       RANKED, RECOMMENDATION, SHORTLISTED, VARIANT)
+                       NOT_CATEGORY, NO_DECISIVE_WINNER, OUT_OF_BOUNDS,
+                       OVER_BUDGET, RANKED, RECOMMENDATION, SHORTLISTED,
+                       VARIANT)
 
 HEADLINE = {
     RECOMMENDATION: 'Recommendation',
@@ -62,6 +63,7 @@ ATTRIBUTION = {
 #: The order exclusion groups are explained in, and what to call each.
 GROUPS = (
     (OVER_BUDGET, 'Above the limit this brief set'),
+    (OUT_OF_BOUNDS, 'Outside a bound this brief set'),
     (FILTERED_OUT, 'Did not state a claim the brief required'),
     (EXCLUDED, 'No value that may be ranked on'),
     (VARIANT, 'Another pack size of an offer already listed'),
@@ -74,6 +76,19 @@ def _row(entry):
     return (f'| {entry["rank"] or ""} | `{entry["asin"]}` | '
             f'{entry["brand"] or "?"} | {title} | '
             f'{entry["value"]:g} {entry["unit"]} |'.replace('\n', ' '))
+
+
+def _bound_label(bound):
+    return f'`{bound["axis"]}`' + (f' in {bound["unit"]}' if bound.get('unit') else '')
+
+
+def _bound_range(bound):
+    low, high = bound.get('min'), bound.get('max')
+    if low is not None and high is not None:
+        return f'{low:g} to {high:g}, inclusive'
+    if low is not None:
+        return f'at least {low:g}'
+    return f'at most {high:g}'
 
 
 def _source(constraint):
@@ -292,6 +307,10 @@ def render(result, study_id, inputs):
               + (f'{cap:g} {constraints["unit"]["value"]}' if cap is not None
                  else 'none')
               + f' | {stated if cap is not None else unstated} |',
+              ] + [
+              f'| Bound on {_bound_label(bound)} | {_bound_range(bound)} | {stated} |'
+              for bound in constraints.get('axis_bounds') or ()
+              ] + [
               f'| Enough to choose from | at least '
               f'{constraints["minimum_candidates"]} candidate(s) | {before} |',
               '| Decisive margin | '

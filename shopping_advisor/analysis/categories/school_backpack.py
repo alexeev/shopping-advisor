@@ -31,6 +31,13 @@ page states in a structured row:
 4. **Whether it fits one particular child** is a question about that child,
    so the body-height range a vendor states is shown on the card and ranked
    on by nobody.
+5. **What buyers said, as a threshold the buyer sets.** The second buyer of
+   this category (2026-09-18) asked for at least four stars from at least
+   fifty ratings. The average and the count are the validation layer's
+   values, taken as they are; they exist here as axes so that a stated
+   threshold can be executed through an `axis_bound`, and they rank nothing
+   by default -- a rating measures satisfaction among the buyers who chose
+   to rate, not durability.
 
 Durability is not on the page. A warranty statement is the nearest thing to
 a vendor commitment about it, and a review sample is a sample; no rule here
@@ -228,6 +235,15 @@ AXES = (
     cat.Axis('warranty_years', 'Warranty stated', better='higher',
              comparative='longer', tolerance=0.5, render=_show_years,
              why='the vendor\'s own commitment, read from its warranty row'),
+    cat.Axis('review_rating', 'Average rating', better='higher',
+             comparative='better rated', tolerance=0.1,
+             caveat='Amazon\'s published average, trusted only where the '
+                    'histogram agrees and at least twenty buyers rated; it '
+                    'measures satisfaction among those who chose to rate, '
+                    'not durability'),
+    cat.Axis('review_count', 'Number of ratings',
+             caveat='shown and boundable, not ranked: a count says how many '
+                    'rated, not how good the bag is'),
 )
 
 # Weight statements in prose, read only when no structured row states one.
@@ -393,7 +409,9 @@ def evaluate(record):
             'price': validated.price,
             'volume': volume(validated),
             'body_height': body_height(validated),
-            'warranty_years': warranty_years(found)}
+            'warranty_years': warranty_years(found),
+            'review_rating': validated.review_rating,
+            'review_count': validated.review_count}
     return cat.card(record, validated, CATEGORY, classification, axes, found)
 
 
@@ -437,6 +455,9 @@ LIFECYCLE = cat.Lifecycle(
             'durability, or fit for a given child: the body-height range a '
             'vendor states is shown and ranked on by nobody',
             'weights stated in pounds, which the extractor keeps as text',
+            'that a rating threshold separates good bags from bad: the two '
+            'review axes exist so a buyer\'s stated threshold can be executed, '
+            'and they rank nothing by default',
         )),
     evidence=('tests/cases/school_backpack_v1.jsonl.gz',
               'tests/test_school_backpack.py'),

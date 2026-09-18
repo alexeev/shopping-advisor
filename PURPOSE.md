@@ -79,9 +79,11 @@ five ways.
    one unit, under the hard requirements the brief states. Several soft
    preferences at once are the buyer's call over the shortlist, not the
    agent's weighting.
-4. **It has no purchase budget yet.** The brief can cap the ranked unit price;
-   it cannot enforce a total spend. Prices are shown and the gap is said out
-   loud. [INTAKE.md](INTAKE.md#4-current-capability-boundaries) records the
+4. **It has no delivered-cost budget yet.** The brief can cap the ranked
+   unit price and, since 2026-09-18, bound the listed price or any other
+   number a category publishes on the card; it cannot enforce a total spend
+   that includes delivery, because delivery is on no card. Prices are shown
+   and the gap is said out loud. [INTAKE.md](INTAKE.md#4-current-capability-boundaries) records the
    boundary and the work on it.
 5. **It sees one shop at a time.** Amazon.de is the validated marketplace; a
    study covers one marketplace, and the report says which.

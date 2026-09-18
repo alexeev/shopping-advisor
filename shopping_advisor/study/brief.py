@@ -58,8 +58,12 @@ REQUIRED = ('brief_version', 'id', 'question', 'category', 'marketplace',
             'inputs')
 
 CONSTRAINT_KEYS = {'axis', 'unit', 'require_claims', 'max_axis_value',
-                   'shortlist', 'minimum_candidates', 'decisive_margin',
-                   'cost_basis'}
+                   'axis_bounds', 'shortlist', 'minimum_candidates',
+                   'decisive_margin', 'cost_basis'}
+#: One entry of ``constraints.axis_bounds``: a floor and/or ceiling on a
+#: category axis, checked per card before grouping. The axis need not be the
+#: ordering axis -- that is the point: "under 100 EUR, then lightest".
+BOUND_KEYS = {'axis', 'unit', 'min', 'max'}
 FRESHNESS_KEYS = {'as_of', 'price_max_age_days', 'note', 'scope'}
 #: What a study may claim to be. Absent means historical: nobody claimed it
 #: was current, and the conservative reading of silence is that it is not.
@@ -158,6 +162,9 @@ class Brief:
     cost_basis: str = ''
     require_claims: tuple = ()
     max_axis_value: float = None
+    #: Tuple of ``{'axis', 'unit', 'min', 'max'}`` dicts; empty for none.
+    #: Absent from serialisation when empty, like ``intake``.
+    axis_bounds: tuple = ()
     shortlist: int = 3
     minimum_candidates: int = 1
     decisive_margin: float = None
@@ -229,6 +236,9 @@ class Brief:
             # Only when declared, so a legacy brief's persisted bytes -- which
             # a completed review is bound to -- do not move.
             result['freshness']['scope'] = self.scope
+        if self.axis_bounds:
+            # Same rule: present only when declared.
+            result['constraints']['axis_bounds'] = [dict(b) for b in self.axis_bounds]
         if self.intake is not None:
             import copy
             result['intake'] = copy.deepcopy(self.intake)
@@ -316,6 +326,35 @@ def parse(text, source='', fmt='toml', directory='.'):
             _fail(source, f'constraints.require_claims names {key!r}, which '
                           f'is not a claim of {category.label}. Known: '
                           f'{", ".join(category.claim_keys)}')
+    bounds = constraints.get('axis_bounds') or []
+    if not isinstance(bounds, list):
+        _fail(source, 'constraints.axis_bounds must be a list of tables')
+    parsed_bounds = []
+    for position, item in enumerate(bounds, start=1):
+        where = f'constraints.axis_bounds[{position}]'
+        if not isinstance(item, dict):
+            _fail(source, f'{where} must be a table')
+        unknown = sorted(set(item) - BOUND_KEYS)
+        if unknown:
+            _fail(source, f'{where} has no key {", ".join(unknown)}. '
+                          f'Known: {", ".join(sorted(BOUND_KEYS))}')
+        key = item.get('axis')
+        if not isinstance(key, str) or category.axis(key) is None:
+            _fail(source, f'{where}.axis {key!r} is not an axis of '
+                          f'{category.label}. Known: '
+                          f'{", ".join(category.axis_keys)}')
+        bound_unit = item.get('unit') or ''
+        if not isinstance(bound_unit, str):
+            _fail(source, f'{where}.unit must be text')
+        low = _number(source, where, 'min', item.get('min'))
+        high = _number(source, where, 'max', item.get('max'))
+        if low is None and high is None:
+            _fail(source, f'{where} names neither min nor max')
+        if low is not None and high is not None and low > high:
+            _fail(source, f'{where}: min {low} exceeds max {high}; an empty '
+                          f'bound admits nobody')
+        parsed_bounds.append({'axis': key, 'unit': bound_unit,
+                              'min': low, 'max': high})
 
     freshness = _table(source, data, 'freshness', FRESHNESS_KEYS)
     as_of = freshness.get('as_of') or ''
@@ -360,6 +399,7 @@ def parse(text, source='', fmt='toml', directory='.'):
         require_claims=tuple(require),
         max_axis_value=_number(source, 'constraints', 'max_axis_value',
                                constraints.get('max_axis_value'), minimum=0),
+        axis_bounds=tuple(parsed_bounds),
         shortlist=_number(source, 'constraints', 'shortlist',
                           constraints.get('shortlist', 3), minimum=1,
                           integer=True),
@@ -433,6 +473,7 @@ def rehydrate(data, resolved_inputs):
         cost_basis=constraints.get('cost_basis') or '',
         require_claims=tuple(constraints.get('require_claims') or ()),
         max_axis_value=constraints.get('max_axis_value'),
+        axis_bounds=tuple(dict(b) for b in constraints.get('axis_bounds') or ()),
         shortlist=constraints.get('shortlist', 3),
         minimum_candidates=constraints.get('minimum_candidates', 1),
         decisive_margin=constraints.get('decisive_margin'),

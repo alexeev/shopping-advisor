@@ -152,6 +152,7 @@ validated.as_dict()              # JSON-serialisable, snapshot-tested
 | `nutrition` | `{key: Value}` | per 100 g; `{}` for anything that is not food |
 | `review_rating` | `Value` | average stars; `trusted` only when the histogram corroborates it and the rating count is not trivially small |
 | `review_negative_share` | `Value` | share of all ratings at 1–2★, from the complete histogram — the only review figure entitled to be read as a rate |
+| `review_count` | `Value` | how many ratings the average rests on, in `ratings`; `trusted` when the rating block's histogram accounts for every rating, `unverified` on Amazon's word alone. Added 2026-09-18 for a buyer's rating threshold; available to categories as an axis and **not yet in `as_dict()`**, because adding a key moves every committed card digest the two T3 reviews bind — it enters the serialised view with the next contract migration |
 | `review_sample` | `Value` | the rendered cards; **never better than `unverified`**, carrying every caveat that limits reading them |
 | `record` | dict | the raw record used for category text search; not included by `as_dict()` |
 
@@ -631,8 +632,8 @@ than passing a plan-backed study it cannot gate.
 At the transition, every requirement's
 meaning, role, settlement, provenance, assessment and effects must match exactly,
 including withdrawals. Scope fields must also match. The executable brief must
-implement all active mapped claim filters, selected axis, unit and cap, and cannot
-introduce an unrecorded claim filter or cap. Explicit axis selection cannot
+implement all active mapped claim filters, selected axis, unit, cap and axis
+bounds, and cannot introduce an unrecorded claim filter, cap or bound. Explicit axis selection cannot
 silently become category-default attribution.
 
 `analyse(brief, plan=...)`, `run(..., plan=...)` and `study check --plan` consume

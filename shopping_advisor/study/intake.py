@@ -411,12 +411,24 @@ def check_transition(plan, brief):
         _fail('require_claims', 'brief adds a filter with no active requirement/provenance in the plan')
     if brief.max_axis_value is not None and not any(m['control'] == 'max_axis_value' for m in applied):
         _fail('max_axis_value', 'brief adds a cap with no active requirement/provenance in the plan')
+    from collections import Counter
+    mapped_bounds = Counter(_bound_key(m['parameters']) for m in applied if m['control'] == 'axis_bound')
+    if Counter(_bound_key(b) for b in brief.axis_bounds) != mapped_bounds:
+        _fail('axis_bounds', 'brief adds or drops a bound with no active requirement/provenance in the plan')
     if (brief.axis or brief.unit) and not any(m['control'] in ('value_usability', 'max_axis_value') for m in applied):
         _fail('axis', 'explicit ordering needs a resolved mapping in the plan')
 
 
+def _bound_key(bound):
+    """One bound as a comparable identity: axis, unit, floor, ceiling."""
+    return (bound['axis'], bound.get('unit') or '', bound.get('min'), bound.get('max'))
+
+
 def _check_control(name, mapping, brief):
     control, parameters = mapping['control'], mapping['parameters']
+    if control == 'axis_bound':
+        if _bound_key(parameters) not in {_bound_key(b) for b in brief.axis_bounds}:
+            _fail(name, 'axis bound did not reach constraints.axis_bounds with the same axis, unit, min and max')
     if control == 'require_claims':
         if not set(parameters['claims']).issubset(brief.require_claims):
             _fail(name, 'required claims did not reach constraints.require_claims')

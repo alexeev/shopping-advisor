@@ -17,7 +17,7 @@ class ControlError(ValueError):
 
 
 def catalogue(category_key):
-    """Return JSON-ready metadata for all five candidate-set mechanisms."""
+    """Return JSON-ready metadata for all six candidate-set mechanisms."""
     try:
         category = get(category_key)
     except KeyError as exc:
@@ -45,6 +45,15 @@ def catalogue(category_key):
                 'implementation': 'shopping_advisor.study.analysis.analyse',
                 'effect': 'Excludes grouped ranking rows whose selected-axis value exceeds the bound, irrespective of better direction.',
                 'limits': 'Same axis and unit as ordering; not an independent purchase budget. Folded variants are not reselected after the cap.'},
+            'axis_bound': {
+                'parameters': {'axis': 'category axis, named explicitly; the ordering axis or another',
+                               'unit': 'optional exact measured unit; no conversion',
+                               'min': 'optional finite inclusive lower bound',
+                               'max': 'optional finite inclusive upper bound'},
+                'stage': 'candidate_filter', 'optional': True,
+                'implementation': 'shopping_advisor.analysis.report.ranking',
+                'effect': 'Excludes cards whose trusted value on the named axis, in the named unit, lies below min or above max, before grouping; a card with no trusted value in that unit is excluded as unassessable, never admitted.',
+                'limits': 'Bounds a value the category publishes on the card, not delivered cost or anything off the page; at least one of min and max; the axis need not be the ordering axis and need not have a direction; a filter, never an ordering.'},
             'classification': {
                 'parameters': {}, 'stage': 'candidate_filter', 'optional': False,
                 'implementation': 'shopping_advisor.analysis.category.is_match',
@@ -110,6 +119,27 @@ def resolve(category_key, control, **parameters):
         resolved['parameters'].update(axis=key, unit=unit)
         resolved['axis'] = axis
         resolved['axis_source'] = 'explicit' if 'axis' in parameters else 'category_default'
+    if control == 'axis_bound':
+        key = parameters.get('axis')
+        if not isinstance(key, str) or not key:
+            raise ControlError('axis must name a category axis explicitly; a '
+                               'bound on an unstated axis is ambiguous')
+        axis = next((a for a in data['axes'] if a['key'] == key), None)
+        if axis is None:
+            raise ControlError(f'{key}: unknown axis for {category_key}')
+        unit = parameters.get('unit', '')
+        if not isinstance(unit, str):
+            raise ControlError('unit must be text; availability is checked at candidate assessment')
+        low, high = parameters.get('min'), parameters.get('max')
+        for name, bound in (('min', low), ('max', high)):
+            if bound is not None and (type(bound) not in (int, float) or not math.isfinite(bound)):
+                raise ControlError(f'{name} must be a finite number or absent')
+        if low is None and high is None:
+            raise ControlError('a bound names min, max or both')
+        if low is not None and high is not None and low > high:
+            raise ControlError('min exceeds max: an empty bound admits nobody')
+        resolved['parameters'].update(axis=key, unit=unit, min=low, max=high)
+        resolved['axis'] = axis
     if control == 'max_axis_value':
         value = parameters.get('value')
         if type(value) not in (int, float) or value < 0 or not math.isfinite(value):

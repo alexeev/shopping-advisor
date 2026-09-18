@@ -136,6 +136,46 @@ def rating(record):
     return value
 
 
+def count(record):
+    """How many ratings the average rests on, as Amazon publishes it.
+
+    The count is one number in the rating block, with no second statement of
+    its own anywhere on the page. What can be checked is the block it belongs
+    to: a complete histogram -- every rating accounted for -- is the same
+    independent structure that corroborates the average, and a count read
+    from a block that is whole is trusted. Without a histogram, or with one
+    that does not add up, the count stands as Amazon's word alone and stays
+    unverified. It is never promoted for being large and never demoted for
+    being small: a thin count is information, and the average carries the
+    thin-evidence caveat.
+    """
+    block = record.get('rating') or {}
+    number = block.get('count')
+    if number is None:
+        return Value.unknown('the listing publishes no rating count'
+                             if block.get('value') is None else
+                             'the listing publishes an average but no rating count')
+    value = Value(number, UNVERIFIED, unit='ratings', source=PUBLISHED,
+                  evidence=[Evidence('rating.text', block.get('text') or '')])
+    histogram = ((record.get('reviews') or {}).get('histogram_percent')) or {}
+    implied, total = _reconstruct(histogram)
+    if implied is None:
+        value.notes.append('no ratings histogram on the page, so the rating '
+                           'block this count belongs to is uncorroborated')
+        return value
+    if total < 98 or total > 102:
+        value.notes.append(f'the histogram covers {total}% of ratings, not '
+                           f'100%, so the block this count belongs to is '
+                           f'incomplete')
+        return value
+    value.status = TRUSTED
+    value.evidence.append(Evidence('reviews.histogram_percent',
+                                   _render(histogram)))
+    value.notes.append('read from a rating block whose histogram accounts '
+                       'for every rating')
+    return value
+
+
 def _render(histogram):
     return ' · '.join(f'{stars}★ {histogram[key]}%'
                       for key, stars in (('five_star', 5), ('four_star', 4),
@@ -224,6 +264,7 @@ def sample(record):
 def summary(record):
     """Every review Value for one record, as a dict."""
     return {'rating': rating(record),
+            'count': count(record),
             'negative_share': negative_share(record),
             'sample': sample(record)}
 

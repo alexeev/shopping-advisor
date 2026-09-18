@@ -115,6 +115,11 @@ class Validated:
     review_rating: Value
     #: Share of all ratings at one or two stars, from the complete histogram.
     review_negative_share: Value
+    #: How many ratings the average rests on, ``trusted`` when the rating
+    #: block's histogram accounts for every rating. Available to a category
+    #: as an axis; **not yet serialised** by :meth:`as_dict` -- see the note
+    #: there.
+    review_count: Value
     #: The rendered review cards, never better than unverified. See
     #: :mod:`shopping_advisor.validation.reviews` for why a sample of Amazon's
     #: choosing cannot support a frequency claim.
@@ -162,6 +167,12 @@ class Validated:
                           for key, value in sorted(self.nutrition.items())},
             'review_rating': self.review_rating.as_dict(),
             'review_negative_share': self.review_negative_share.as_dict(),
+            # ``review_count`` is deliberately absent. Adding a key here moves
+            # the bytes of every committed validated snapshot and card file,
+            # and the two committed T3 semantic reviews bind those digests;
+            # INTAKE §16 prices exactly that migration. The value is computed,
+            # a category may publish it as an axis, and it enters this view
+            # with the next contract migration (CONTRACT §3).
             # The cards themselves are not serialised -- they are the
             # record's own text, already on it, and copying them here would
             # double the size of every validated line for no new fact. What
@@ -224,6 +235,7 @@ def validate(record, profile=NEUTRAL):
         nutrition=values,
         review_rating=review['rating'],
         review_negative_share=review['negative_share'],
+        review_count=review['count'],
         review_sample=review['sample'],
         record=record,
     )

@@ -287,6 +287,73 @@ class PurchaseBudget(GateCase):
         self.assertIn('a control that runs correctly can answer the wrong question', self.report(result))
 
 
+class IndependentConstraint(GateCase):
+    """Case 7's acceptable outcome, first branch: a supported independent
+    constraint. The ceiling sits on one axis and the ordering on another, and
+    the harness enforces both without changing either's units or meaning.
+    Added on 2026-09-18 after the second school-backpack trial met the case on
+    a category that publishes the bounded axis."""
+
+    def setUp(self):
+        super().setUp()
+        self.plan = intake.load(SUPPORTED)
+        self.brief = brief_module.load(BRONZE)
+        self.plan['user_evidence']['messages'][0]['text'] += ' Nothing above a kilogram per pack.'
+        self.mapping = controls.resolve('dry_pasta', 'axis_bound', axis='quantity', unit='g', max=1000)
+        self.add_requirement(
+            self.plan, 0, id='pack_ceiling', statement='Exclude packs above 1000 g.',
+            provenance=dict(wording='Nothing above a kilogram per pack'),
+            assessment=dict(path='control', controls=[self.mapping]),
+            effects=[dict(stage='candidate_assessment', consequence='Exclude packs above 1000 g.')])
+        self.refreshed(self.plan)
+        self.bounds = (self.mapping['parameters'],)
+
+    def test_the_bound_is_enforced_at_candidate_assessment_and_the_ordering_stands(self):
+        result, _ = analyse(self.bound(self.brief, self.plan, axis_bounds=self.bounds), plan=self.plan)
+        row = next(r for r in result['gates']['intake']['requirements'] if r['id'] == 'pack_ceiling')
+        self.assertEqual((row['disposition'], row['controls']), (gates.ENFORCED, ['axis_bound']))
+        self.assertEqual([s['status'] for s in row['stages']], [gates.ENFORCED])
+        self.assertEqual(result['stop'], '')
+        self.assertEqual(result['gates']['intake']['readiness'], gates.FULL_REQUEST)
+        plain = analyse(self.brief)[0]
+        outside = [e for e in result['candidates'] if e['decision'] == 'out_of_bounds']
+        heavy = {e['asin'] for e in outside if 'above the 1000 g' in e['reason']}
+        self.assertTrue(heavy, 'the committed cases include packs above a kilogram')
+        # A pack whose size the generic layer could not trust is not admitted
+        # on the strength of being inside the range: it is excluded as
+        # unassessable, and says so.
+        self.assertTrue(all('above the 1000 g' in e['reason'] or 'no trusted pack size' in e['reason']
+                            for e in outside), [e['reason'] for e in outside])
+        heavy = {e['asin'] for e in outside}
+        self.assertEqual(ranked_order(result),
+                         [(a, v) for a, v in ranked_order(plain) if a not in heavy],
+                         'the ordering axis is untouched; the bound only removes')
+        self.assertEqual(result['constraints']['axis_bounds'], [self.mapping['parameters']])
+        text = self.report(result)
+        self.assertIn('| Bound on `quantity` in g | at most 1000 | stated in the brief |', text)
+        self.assertIn('### Outside a bound this brief set', text)
+
+    def test_a_bound_the_plan_never_recorded_is_refused(self):
+        plan = intake.load(SUPPORTED)
+        with self.assertRaisesRegex(intake.PlanError, 'axis_bounds: brief adds or drops a bound'):
+            analyse(self.bound(self.brief, plan, axis_bounds=self.bounds), plan=plan)
+
+    def test_a_recorded_bound_that_did_not_reach_the_brief_is_refused(self):
+        with self.assertRaisesRegex(intake.PlanError, 'did not reach constraints.axis_bounds'):
+            analyse(self.bound(self.brief, self.plan), plan=self.plan)
+        loosened = ({**self.mapping['parameters'], 'max': 2000},)
+        with self.assertRaisesRegex(intake.PlanError, 'did not reach constraints.axis_bounds'):
+            analyse(self.bound(self.brief, self.plan, axis_bounds=loosened), plan=self.plan)
+
+    def test_without_bounds_every_persisted_shape_is_unchanged(self):
+        result, _ = analyse(self.brief)
+        self.assertNotIn('axis_bounds', result['constraints'])
+        self.assertNotIn('axis_bounds', result['brief']['constraints'])
+        self.assertNotIn('bounds', result['ranking'])
+        self.assertNotIn('out_of_bounds', result['ranking']['counts'])
+        self.assertNotIn('Bound on', self.report(result))
+
+
 class ExternalEvidenceCondition(GateCase):
     """Cases 8 and 19, and the unassessed route of INTAKE §3."""
 

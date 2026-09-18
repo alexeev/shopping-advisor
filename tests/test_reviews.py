@@ -206,6 +206,38 @@ class Rating(unittest.TestCase):
         self.assertEqual(value.status, UNKNOWN)
 
 
+class Count(unittest.TestCase):
+    """The number the average rests on, and what may vouch for it."""
+
+    def test_a_complete_histogram_vouches_for_the_count(self):
+        value = reviews.count(record(rating=4.3, count=714))
+        self.assertEqual((value.value, value.status, value.unit), (714, TRUSTED, 'ratings'))
+        self.assertTrue(any(e.field == 'reviews.histogram_percent' for e in value.evidence))
+
+    def test_a_thin_count_is_still_a_trusted_count(self):
+        """Three is information about the evidence, not a defect in the number."""
+        value = reviews.count(record(rating=5.0, count=3, html=histogram(100, 0, 0, 0, 0)))
+        self.assertEqual((value.value, value.status), (3, TRUSTED))
+
+    def test_no_histogram_leaves_the_count_unverified(self):
+        value = reviews.count(record(html=card()))
+        self.assertEqual((value.value, value.status), (714, UNVERIFIED))
+        self.assertTrue(any('uncorroborated' in n for n in value.notes))
+
+    def test_an_incomplete_histogram_leaves_the_count_unverified_not_disputed(self):
+        value = reviews.count(record(html=histogram(five=40, four=10, three=5, two=4, one=7)))
+        self.assertEqual(value.status, UNVERIFIED)
+
+    def test_no_count_is_unknown(self):
+        self.assertEqual(reviews.count(record(rating=None, count=None)).status, UNKNOWN)
+        self.assertEqual(reviews.count(record(rating=4.0, count=None)).status, UNKNOWN)
+
+    def test_the_validated_record_carries_it_without_serialising_it_yet(self):
+        validated = validate(record())
+        self.assertEqual(validated.review_count.value, 714)
+        self.assertNotIn('review_count', validated.as_dict())
+
+
 class NegativeShare(unittest.TestCase):
     """The one review rate that may be computed, and where it comes from."""
 

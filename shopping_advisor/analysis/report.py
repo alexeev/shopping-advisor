@@ -349,6 +349,7 @@ NO_VALUE = 'no_value'
 NOT_USABLE = 'not_usable'
 UNIT_MISMATCH = 'unit_mismatch'
 REQUIREMENT_NOT_MET = 'requirement_not_met'
+OUTSIDE_BOUND = 'outside_bound'
 
 #: Why there is no ranking at all. Each one is a refusal rather than an
 #: ordering nobody asked for; see :func:`rank_text` for what each replaced.
@@ -364,7 +365,37 @@ def _identity(card):
             'brand': card['brand'] or '', 'title': card['title'] or ''}
 
 
-def ranking(cards, axis_key=None, require=(), unit=None):
+def _bound_breach(card, bound, category):
+    """Why this card fails one bound, or ``None`` when it does not.
+
+    A bound is an eligibility assertion, so it is made only on a value the
+    generic layer trusts: an unverified or disputed number is not admitted on
+    the strength of being inside the range, and a card with no such value is
+    excluded as unassessable rather than let through.
+    """
+    axis = category.axis(bound['axis'])
+    label = axis.label.lower() if axis else bound['axis']
+    value = card['axes'].get(bound['axis'])
+    if value is None or not value.usable:
+        why = (value.notes[0] if value is not None and value.notes
+               else (value.status if value is not None else 'no value'))
+        return f'no trusted {label} to check against the bound ({why})'
+    wanted = bound.get('unit') or ''
+    if wanted and (value.unit or '') != wanted:
+        return (f'{label} is measured in {value.unit or "no unit"}, not the '
+                f'{wanted} the bound names')
+    if not isinstance(value.value, (int, float)) or isinstance(value.value, bool):
+        return f'{label} is not a number this bound can check'
+    unit = value.unit or ''
+    shown = f'{value.value:g}{" " + unit if unit else ""}'
+    if bound.get('min') is not None and value.value < bound['min']:
+        return f'{label} {shown} is below the {bound["min"]:g}{" " + unit if unit else ""} the brief set as its floor'
+    if bound.get('max') is not None and value.value > bound['max']:
+        return f'{label} {shown} is above the {bound["max"]:g}{" " + unit if unit else ""} the brief set as its ceiling'
+    return None
+
+
+def ranking(cards, axis_key=None, require=(), unit=None, bounds=()):
     """The ranking as data: the rows, every exclusion, and the reason for each.
 
     :func:`rank_text` renders this and nothing else, and so does the study
@@ -440,6 +471,24 @@ def ranking(cards, axis_key=None, require=(), unit=None):
 
     out['counts'].update(matched=len(matched), filtered=len(wanted),
                          filtered_out=len(filtered_out))
+    if bounds:
+        # Bounds run after the claim filter and before grouping: each card is
+        # checked on its own value, so a folded variant never rides in on a
+        # sibling's. ``filtered_out`` carries both kinds, told apart by code.
+        out['bounds'] = [dict(bound) for bound in bounds]
+        admitted, outside = [], []
+        for card in wanted:
+            breaches = [(bound, _bound_breach(card, bound, category)) for bound in bounds]
+            breaches = [(bound, why) for bound, why in breaches if why]
+            if breaches:
+                bound, why = breaches[0]
+                outside.append(dict(_identity(card), reason_code=OUTSIDE_BOUND,
+                                    bound=dict(bound), reason=why))
+            else:
+                admitted.append(card)
+        wanted = admitted
+        filtered_out = filtered_out + outside
+        out['counts'].update(filtered=len(wanted), out_of_bounds=len(outside))
     out['filtered_out'] = filtered_out
 
     units = axis_units(wanted, axis)

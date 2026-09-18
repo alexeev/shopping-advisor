@@ -1798,6 +1798,53 @@ hard requirement must remain missing regardless of any score.
 shipped and is the baseline R15 validates against; the provider and platform
 trials deferred from T4 are not a dependency.**
 
+**2026-09-18 — The first control case, built as reviewed maintenance ahead
+of the gates: `axis_bound`.** The second school-backpack trial recorded under
+[R13](#r13--the-conversation-as-the-entry-point) met INTAKE §4's case 7 on a
+category that publishes the bounded axis: a buyer's budget on the price and a
+threshold on the rating had no control because the one cap binds the ordering
+axis, and the study was bounded on both. The maintainer asked for the gap to be
+closed at once; this is the change, and the R15 procedure it did *not* pass
+through is the reason it is recorded here.
+
+What shipped: `axis_bound`, a sixth mechanism in the controls catalogue — a
+floor and/or ceiling on any category axis, named explicitly with an optional
+exact unit, applied per card at candidate assessment before grouping, on
+trusted values only, with a card that has no trusted value in that unit
+excluded as unassessable rather than admitted; `constraints.axis_bounds` in
+brief v1, present in the persisted brief only when declared; the plan-to-brief
+transition refusing a bound no requirement maps to and a mapped bound that did
+not reach the brief with the same axis, unit, floor and ceiling; the
+`out_of_bounds` candidate fate with its own heading in the report; and, so a
+rating threshold has axes to bind, `review_count` in the validation layer
+(trusted when the rating block's histogram accounts for every rating) with
+`review_rating` and `review_count` published by `school_backpack` as axes that
+rank nothing by default. No contract version moved: the new brief key and the
+new validated field are additive within their versions, and the validated
+field is deliberately kept out of `as_dict()` because that one key would move
+every committed card digest the two T3 semantic reviews bind — INTAKE §16's
+priced migration, deferred to the next one and said so in CONTRACT §3.
+
+**Measured:** every committed example's decision artifacts and report bytes
+unchanged, because every new key is absent when undeclared; the `dry_pasta`
+control catalogue digest moved once and the delivered-cost intake review
+fixture was reissued against it with its findings re-read (six controls, none
+of which reads a shipping quantity); the pack-size ceiling over the bronze-die
+brief is a new gate example in `tests/test_gates.py`: the ordering is untouched
+and the packs above a kilogram leave with the reason; on the second trial's
+retained shelf, the budget of 100 EUR on `price` and the threshold of 4 stars
+from 50 ratings on `review_rating` and `review_count` become enforced and the
+23 ranked rows fall to the eight a person had counted by hand, with the
+recommendation still withheld on `reliability` and `fit` — measured in the
+trial's third bundle, whose numbers are in the R13 entry. Tests 797 → 814,
+the floor re-recorded in the same change and nothing else in the baseline
+moved. **Not established:** that a
+bound answers the requirement it is mapped to — a semantic-review judgement, as
+for every control; isolation, rollback and patch-binding of a mid-study change,
+which are this milestone's gates and were not exercised: the change went
+through the ordinary maintenance workflow on the maintainer's instruction, and
+that is the honest label for it.
+
 ### Scope
 
 Make a bounded engineering operation part of a study. Cover category modules,

@@ -637,9 +637,12 @@ lifts nor causes a withheld recommendation.
 `max_axis_value` **is** enforced, and caps the axis being ranked rather than
 anything else. On a `EUR/kg` axis, a limit of 100 is a hundred euros per
 kilogram — which excludes nothing from a shelf priced in single figures — and an
-exclusion it does produce names `EUR/kg` in its reason. There is no control for
-a purchase budget; [INTAKE.md](INTAKE.md#4-current-capability-boundaries) is
-where that gap is being worked.
+exclusion it does produce names `EUR/kg` in its reason. A purchase budget
+belongs in `axis_bounds` on a price axis the category publishes, where one
+does (`{axis = "price", unit = "EUR", max = 100}`); it is the listed price,
+never the delivered one, and a category without a price axis still has no
+budget control — [INTAKE.md](INTAKE.md#4-current-capability-boundaries)
+records the boundary.
 
 Check it before running anything: `python -m shopping_advisor.study check BRIEF`
 prints every default it will fall back to. Unknown keys are refused rather
@@ -952,11 +955,24 @@ techniques and comparison methods enter it with the first task-born one under
 R15. It reads no feeds and decides nothing about fit or trust.
 
 This read-only JSON catalogue resolves axes, directions, defaults and claim keys
-from the live category registry. It describes all five mechanisms that move the
-candidate set: required trusted claims, the selected-axis cap, classification,
-value usability and offer grouping, including their parameters, stages and limits.
-It reads no feeds and does not establish that evidence exists or that a mechanism
-adequately represents the user's requirement.
+from the live category registry. It describes all six mechanisms that move the
+candidate set: required trusted claims, the selected-axis cap, a bound on any
+axis, classification, value usability and offer grouping, including their
+parameters, stages and limits. It reads no feeds and does not establish that
+evidence exists or that a mechanism adequately represents the user's requirement.
+
+`axis_bound` (2026-09-18) is the one that lets eligibility sit on a different
+dimension from the ordering: *under 100 EUR, then lightest*. It names an axis
+explicitly, an optional exact unit, and a floor and/or a ceiling, and it runs
+per card at candidate assessment, before grouping, on **trusted** values only —
+a card with no trusted value in that unit is excluded as unassessable, never
+admitted. In a brief it is `constraints.axis_bounds`, a list of
+`{axis, unit, min, max}` tables; the plan-to-brief transition refuses a bound
+no requirement maps to and a mapped bound that did not reach the brief with the
+same axis, unit, floor and ceiling. It bounds what the category publishes on
+the card and nothing else: delivered cost is still on no card, and a rating
+threshold needs a category that publishes the rating and its count as axes, as
+`school_backpack` now does.
 
 The Python interface is `shopping_advisor.study.controls.catalogue(category_key)`
 and `resolve(category_key, control, **parameters)`. For example,
