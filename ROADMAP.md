@@ -2062,15 +2062,82 @@ hard requirement must remain missing regardless of any score.
 ## R15 — Controlled task-driven capability adaptation
 
 **Status: IN PROGRESS. Phase 0 — the procedure — Phase 1 — the first
-category written through it, `smartwatch` — and Phase 2 — the first study
-resting on it, committed as the gate's eighth example — shipped on 2026-09-18
-and are recorded below. T4's local maintenance gate is the baseline R15
-validates against; the provider and platform trials deferred from T4 are not a
-dependency. Next: the second adaptation the study revision found necessary
-(the dive claim's pattern, method version 2, with the faulty-patch case run
-for real), a plan revision 8 with a fresh intake review if the maintainer
-wants the category's controls mapped, and the extraction case decided by
-inspection (Phase 3).**
+category written through it, `smartwatch` — Phase 2 — the first study resting
+on it, committed as the gate's eighth example — and Phase 3 — the second
+adaptation, the dive claim repaired as method version 2 with the first record
+as its predecessor — shipped on 2026-09-18 and are recorded below. T4's local
+maintenance gate is the baseline R15 validates against; the provider and
+platform trials deferred from T4 are not a dependency. Still open: the
+extraction case decided by inspection, a plan revision 8 with a fresh intake
+review if the maintainer wants the category's controls mapped, the
+source-embedded-instruction and `harness-only` cases, and a faulty patch
+withdrawn on a real regression.**
+
+**2026-09-18 — Phase 3: the second adaptation, the dive claim repaired
+through the procedure.** The gap is Phase 2's finding: the category's
+`scuba_dive_mode` pattern read "tauchfähig bis 40m" (a water-resistance
+sentence, which plan revision 7's `dive_computer` says never satisfies it),
+"Tauchgänge", "Freitauchen" and "Apnoe" as a stated dive function, and
+credited a 178 EUR KOSPET Tank T4 with one. Funded as `engineer-2` (3 600 s
+against the same engineering limit, authorised through `session-authorise`)
+and opened as record `smartwatch-dive-claim` — origin plan revision 7 and
+that action, **predecessor the first record** (`kind: adaptation`, its
+canonical digest), the first use of that link. The patch, captured whole from a
+worktree at base `f45879d`: the pattern narrowed to a stated scuba function (a
+dive mode, function or technology, a dive computer, scuba, nitrox, a
+decompression model), its `why` rewritten, `method_version` 2 with the reason
+beside it, one new unit test and the pinned dive claims restated in the
+category tests, and the cases README rows — three files, digest
+`d2eaafa9c8cd`, method descriptor `7f39fb9959f9`. Static inspection flagged
+the module-level declarations and one pre-existing write; the evaluator set
+was byte-identical to the base; the boundary probe demonstrated all six
+refusals and the scratch write.
+
+**Two attempts, both on the record.** The first check exited 71 in 0.019 s
+without importing anything: the CLI's default `--venv .venv` was resolved
+against the worktree, which holds no virtual environment, and `sandbox-exec`
+could not exec the interpreter. It counted as an attempt, as the record's
+rule says a finished check does, and the boundary was then re-probed with the
+locked environment named by absolute path. The second check — the full gate
+inside the kernel boundary, 25.1 s — failed on exactly the declared move and
+nothing else: `capability_lifecycle_changed` for `method_version` 2 against
+the baseline's 1, and the five baseline-pinning tests in `test_maintenance`;
+889 tests in 30 modules, 5 failed, 0 errored, 8 of 8 examples replaying with
+their recorded decisions under the patched tree, the smartwatch study
+included. The review read that output and passed; adoption was recorded by
+the maintainer's role on the maintainer's instruction; the rollback was
+demonstrated **before** the ledger accounted for the attempt, in the order the
+runbook now prescribes, and `engineer-2` completed at 25.1 s from the record.
+The CLI defect went through ordinary maintenance in the same change, outside
+the trial: `adaptation-probe` and `adaptation-run` resolve the environment
+and the interpreter where the command was typed, with a regression test.
+
+**Measured.** On the 55 committed records the claim moves on five and on no
+other: the fenix 8 in three sizes, the fenix 8 Pro and the KOSPET lose it,
+fifteen keep it — the Suunto Ocean in three colours, the Descent G1, G2, Mk3
+and Mk3i, the Huawei Watch Ultimate (on "Bühlmann ZHL-16C
+Dekompressionsalgorithmus") and Ultimate 2 (on "Tauchtechnologie"). The
+fenix 8's A+ image alt text does say "Tauchfunktion", and the search does
+not read image alt text: Garmin's manual documents the dive apps, and a manual
+is not the page. The study of Phase 2, re-derived under the new method as
+`analyse-4`, is `smartwatch-dive-nfc-8f62da3c1256` where the same brief over
+the same bytes under method version 1 was `smartwatch-dive-nfc-2d5b51c7d0d9`:
+39 of 55 classified, 35 priced offers, 3 unpriced, 1 folded, the
+recommendation withheld and the price order kept — every decision unchanged
+and the id moved, because the method did. The eighth gate example now binds
+the second record and the first stays committed as its predecessor, named by
+digest. Baseline diff: `smartwatch` `method_version` 1 → 2, the example's
+adaptation and id, and the test floor 888 → 890 (one test in the category,
+one for the CLI); nothing else moved, and the seven earlier ids are unchanged.
+
+**Not established, and not claimed.** That the fifteen positives *are* scuba
+computers: the claim is the vendor's sentence, and whether the watch may
+replace a dive computer on a real dive is on no page. The faulty-patch
+Done-when case is still not covered by a withdrawal: the first attempt here
+was a runner defect, not a regression, and the second passed; a patch
+withdrawn on a real regression remains to be recorded. The two adaptations
+have consumed 47.9 s of the 14 400 s engineering allowance. The extraction case (Phase 3 of
+the plan as written) is still undecided by inspection and is not this entry.
 
 **2026-09-18 — Phase 2: the study revision over the trial's plan, and what
 the category's table says next to the hand-read one.** The third trial's plan

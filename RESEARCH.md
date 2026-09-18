@@ -477,7 +477,11 @@ uv run --offline --locked python -m shopping_advisor.study adaptation-capture da
 uv run --offline --locked python -m shopping_advisor.study adaptation-probe --worktree ../<id>-trial --scratch ../<id>-trial/data/r15-scratch --outside /private/tmp/<id>-outside
 ```
 
-`adaptation-capture` archives every added, modified and deleted file with its
+Name `--venv` where it is not the repository's own `.venv`; the CLI resolves
+it and the interpreter to absolute paths before the check changes into the
+worktree, which holds no virtual environment (the second adaptation's first
+attempt exec'd a relative path there and exited 71 before any import, and it
+counted as an attempt). `adaptation-capture` archives every added, modified and deleted file with its
 content, digests both trees and the lock, reads the changed Python for
 import-time work, network, subprocess and file writes, and **refuses** (exit 1)
 a patch that touches the evaluator set — the maintenance gate, its test module,

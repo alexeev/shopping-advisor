@@ -654,5 +654,21 @@ class CommandLine(unittest.TestCase):
         self.assertIn('read_home', out)
 
 
+class RunnerPaths(unittest.TestCase):
+    """The second adaptation's first attempt exec'd a relative `.venv/bin/python`
+    from the worktree, where none exists, and sandbox-exec exited 71 before any
+    import. The CLI resolves both paths where the command was typed."""
+
+    def test_a_relative_venv_is_resolved_before_the_working_directory_changes(self):
+        from shopping_advisor.study.__main__ import _runner_paths
+        with tempfile.TemporaryDirectory() as here:
+            venv, interpreter = _runner_paths(os.path.join(here, '.venv'), '')
+            self.assertTrue(os.path.isabs(venv) and os.path.isabs(interpreter))
+            self.assertEqual(interpreter, os.path.join(venv, 'bin', 'python'))
+            venv, interpreter = _runner_paths('.venv', 'python3')
+            self.assertTrue(os.path.isabs(venv) and os.path.isabs(interpreter))
+            self.assertTrue(interpreter.endswith('python3'))
+
+
 if __name__ == '__main__':
     unittest.main()

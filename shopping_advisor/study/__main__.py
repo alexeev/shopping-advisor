@@ -707,10 +707,24 @@ def adaptation_capture_command(args):
     return 1 if blocked else 0
 
 
+def _runner_paths(venv, interpreter):
+    """The locked environment and its interpreter as absolute paths.
+
+    The check runs with the worktree as its working directory, and a worktree
+    holds no ``.venv``: the second adaptation's first attempt exec'd a relative
+    ``.venv/bin/python`` there and ``sandbox-exec`` exited 71 before any import,
+    which counted as an attempt. Resolve both here, against the directory the
+    command was typed in, before anything changes directory.
+    """
+    venv = str(Path(venv).resolve())
+    interpreter = str(Path(interpreter).resolve()) if interpreter else str(Path(venv) / 'bin' / 'python')
+    return venv, interpreter
+
+
 def adaptation_probe_command(args):
     """``adaptation-probe`` -- demonstrate the boundary with failure cases."""
-    interpreter = args.interpreter or str(Path(args.venv) / 'bin' / 'python')
-    result = trial.probe(args.worktree, args.scratch, interpreter, args.venv, args.outside)
+    venv, interpreter = _runner_paths(args.venv, args.interpreter)
+    result = trial.probe(args.worktree, args.scratch, interpreter, venv, args.outside)
     print(f'boundary probe  [{"demonstrated" if result["demonstrated"] else "NOT demonstrated"}]')
     for name, expected in result['expected'].items():
         observed = result['results'].get(name, 'no answer')
@@ -744,7 +758,7 @@ def adaptation_run_command(args):
         write_json_atomically(args.record, record)
         raise trial.TrialError('the evaluator set in the worktree is not the base revision\'s: a gate '
                                'the patch may have rewritten judges nothing. Refused, and recorded')
-    interpreter = args.interpreter or str(Path(args.venv) / 'bin' / 'python')
+    venv, interpreter = _runner_paths(args.venv, args.interpreter)
     boundary = 'harness-only' if args.exception else 'kernel'
     profile_path = None
     if boundary == 'kernel':
@@ -755,7 +769,7 @@ def adaptation_run_command(args):
                                    'labels the check harness-only and counts toward no Done-when')
         scratch.mkdir(parents=True, exist_ok=True)
         profile_path = scratch / 'profile.sb'
-        profile_path.write_text(trial.profile(worktree, scratch, interpreter, args.venv), encoding='utf-8')
+        profile_path.write_text(trial.profile(worktree, scratch, interpreter, venv), encoding='utf-8')
     timeout = args.timeout or min(record['budget']['seconds'] - spent, 3600)
     check = trial.execute(args.command, worktree, scratch, timeout, profile_path, interpreter, boundary)
     record['checks'].append(check)
