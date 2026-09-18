@@ -494,7 +494,13 @@ allowed. Where it does not, stop and record the blocker; do not run the patch
 in a weaker mode and call it the boundary.
 
 Run the checks inside the boundary, each one recorded with its exit, its
-seconds and its output digest, and each one an attempt against the budget:
+seconds and its output digest, and each one an attempt against the budget.
+A patch that changes what the extractor publishes also has to regenerate the
+corpus snapshots, and that is an execution of the patch: run it inside the
+boundary with `tests/test_corpus.py --update --output data/r15-scratch/corpus`,
+read the diff against the tree's snapshots, copy them in and capture again
+(the third adaptation did exactly this; a check that writes to the tree is
+refused by the profile, as it should be):
 
 ```text
 uv run --offline --locked python -m shopping_advisor.study adaptation-run data/adaptations/<id>.json --worktree ../<id>-trial --scratch ../<id>-trial/data/r15-scratch -- python -m unittest discover -s tests

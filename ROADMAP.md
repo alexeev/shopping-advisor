@@ -2073,6 +2073,100 @@ review if the maintainer wants the category's controls mapped, the
 source-embedded-instruction and `harness-only` cases, and a faulty patch
 withdrawn on a real regression.**
 
+**2026-09-18 — Phase 4: the extraction case, decided by inspection and
+run through the procedure.** The plan's second Done-when case had to change
+extraction or evidence acquisition, and the plan said it would be built only
+if a bounded inspection of the retained pages found a defect the category
+could not fix by itself. The inspection was funded as `engineer-3` (2 700 s
+declared, no marketplace request) and read the three run stores behind the
+57 committed records. What it found was not the hypothesis it started from.
+The runtime sentences are retained and searchable — the category already
+reads "bis zu 10 Tage im Smartwatch-Modus" from a description — but **16 of
+the 55 product pages carry an A+ comparison table** (`premium-module-5`), one
+product per column, and the extractor flattened every cell into
+`content.aplus.text`, which the vendor-text search reads as this product's
+statement. The page's own product is not always a column and not the first
+when it is: the first column carries `active`, which is the scroller's state,
+and only the ASIN a header links identifies a column (10 of 16 tables link the
+page's own). On the Instinct 3 50 mm AMOLED page the table compares five
+*other* Instincts, and the card showed a 40 h GPS runtime that belongs to the
+45 mm. On the fenix 9 page the `nfc_payment` claim rested on the row label
+"Garmin Pay" in the flattened text, not on the fenix 9's own cell. That is a
+property of the page any category faces, lost by the current path, and it
+changes what a card can say: the layer test answered *extraction*.
+
+Funded as `engineer-4` (3 600 s, 4 attempts) and opened as record
+`aplus-comparison`, layer `extraction`, origin plan revision 7. The patch,
+captured whole from a worktree at base `3e8dc56`: `content.aplus.prose`, the
+A+ copy without table cells, and `content.aplus.comparison`, each comparison
+table as columns with the ASIN their headers link, its rows, and
+`self_column` — the own column by exact ASIN or `null`, never by position,
+because Amazon's variation families put different models in one family and a
+sibling's column is another product's. The vendor-text search reads `prose`
+where a record has it and the own column's rows as labelled statements
+("Akkulaufzeit GPS-Modus: Bis zu 47 Stunden"), skipping a cell that is a
+cross or a dash; a record without the keys reads exactly as before. `text`
+and `tables` are unchanged, so the change is additive within schema v6. The
+corpus updater gained `--output DIR` so that snapshots can be regenerated
+inside a boundary whose one writable directory is never the tree. Ten files,
+patch digest `7f7ca546f535`, method descriptor `e498a14eb525`; the evaluator
+set byte-identical to the base; the boundary probe demonstrated all six
+refusals.
+
+**Three attempts, all on the record.** Check 0 regenerated the corpus
+snapshots inside the kernel boundary (2.3 s, exit 0): the 38 + 1 expected
+records gained `prose` and, on the six pages with A+ tables, `comparison`, and
+no key changed or disappeared; the validated snapshots came back byte-for-byte
+the base's and were left out of the patch. Check 1, the full gate, failed on
+one test: the new fixture named eleven-character ASINs and the extractor,
+correctly, read ten — a fixture defect, corrected without touching the code,
+and the first check the procedure has withdrawn for a genuine test failure
+rather than a declared move or a runner fault. Check 2 was the full gate at
+exit 0 inside the boundary in 25.6 s: 900 tests in 30 modules against the
+floor of 890, 8 of 8 examples with their recorded decisions, every contract
+version unchanged. Review, adoption on the maintainer's decision of the same
+day (the second case is the runtime bound to its mode as a stated value, once
+the page inspection confirms the layer; one to three redacted pages may enter
+the corpus), the rollback demonstrated, then the ledger accounted 53.1 s.
+
+**Measured.** The three runs were re-extracted offline from their retained
+pages under the adopted code — the same bytes, no request — into the `-v2`
+evidence feeds: 56 records, because one page of the named run
+(`B0H8P8FT5Q`, a strap) no longer matches the digest its run recorded and
+the replay refused it. On the 39 cards, ten values moved and no decision: the
+Instinct 3 50 mm's GPS runtime (40 h) and the Instinct 2X Solar Tactical's
+four A+-sourced values (145 h, 21 days, 10 ATM, "E-ink") became `unknown`,
+because neither page's table links the page's own ASIN — the Tactical's links
+the plain Instinct 2X Solar, a different product; the fenix 8 in three sizes
+and the Instinct 3 Solar keep 47, 84, 28 and 40 h, now read from their own
+column with the mode in the field name; the fenix 9's `nfc_payment`, the
+fenix 8 43 mm's and the Instinct 3 Solar's rest on their own "Garmin Pay ✔"
+cell, and two more claims gained an own-column source beside the one they
+had. The study over the v2 feeds, `analyse-5`, is the gate's **ninth
+example**, `smartwatch-dive-nfc-reextracted-92117d8f7fef`: 39 of 54
+classified, 35 priced offers, 3 unpriced, 1 folded, the recommendation
+withheld on the same six conditions and the price order unchanged. Two of the
+retained pages entered the corpus under its rules — the Instinct 3 50 mm,
+whose table does not contain it, and the fenix 9, whose own column is the
+third — bringing it to 40 Amazon.de pages; the 38 earlier records are
+unchanged to the byte. Baseline diff: the example row and the test floor 890
+→ 900; nothing else moved, and the eight earlier ids are unchanged.
+
+**Not established, and not claimed.** That a runtime read from the own
+column is comparable to another vendor's: the field carries the vendor's
+mode label and ranks nothing, as before. Image alt text is still not read:
+the fenix 8's "Tauchfunktion" stays where Phase 3 left it, and reading A+
+captions is a separate hypothesis, because the same `images` list holds the
+brand carousel's other products. A comparison table whose header links a
+sibling ASIN is not read, by design, and the Tactical's four lost values are
+the price of that. The re-extraction's one refused page is a finding about
+the page store, not about the page. With this, both cases of the first
+Done-when bullet have completed the loop; the faulty-patch case is covered by
+a test-fixture withdrawal, not yet by a regression in product behaviour; the
+`harness-only` path and the source-embedded-instruction case remain open. The
+three adaptations have consumed 101 s of runner time and 2 700 s of declared
+inspection against the 14 400 s engineering allowance.
+
 **2026-09-18 — Phase 3: the second adaptation, the dive claim repaired
 through the procedure.** The gap is Phase 2's finding: the category's
 `scuba_dive_mode` pattern read "tauchfähig bis 40m" (a water-resistance

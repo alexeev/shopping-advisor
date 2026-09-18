@@ -10,7 +10,7 @@ present, so the caller can tell "Amazon did not publish this" apart from
 import json
 import re
 
-from .text import clean, node_lines, node_text
+from .text import PROSE_XPATH, clean, node_lines, node_text
 
 # ---------------------------------------------------------------------------
 # Key/value structures
@@ -231,19 +231,66 @@ def dynamic_image_urls(root):
     return urls
 
 
-def aplus_content(root):
+#: A product link inside a comparison-table header names the product that
+#: column is about. Only an exact match with the page's own ASIN identifies
+#: the own column: Amazon's variation families put different models in one
+#: family, so a sibling's column is another product's.
+_DP_ASIN_RE = re.compile(r'/dp/([A-Z0-9]{10})')
+#: The header class of the premium A+ comparison module's product columns.
+_COMPARISON_COLUMN = 'aplus-data-column'
+
+
+def _comparison_table(table, rows, asin):
+    """An A+ comparison table as structure, or ``None`` for any other table.
+
+    The module (``premium-module-5-comparison-table``) puts one product per
+    column and one feature per row, and the page's own product is not always
+    a column -- the Instinct 3 50 mm page compares five *other* Instincts --
+    nor the first one when it is. ``self_column`` is the index of the column
+    whose header links this page's ASIN, or ``None``; nothing is inferred from
+    column order, the first column merely being the one the scroller shows.
+    """
+    header = table.css('tr')
+    if not header:
+        return None
+    cells = header[0].xpath('./th | ./td')
+    columns = []
+    for cell in cells:
+        if _COMPARISON_COLUMN not in (cell.attrib.get('class') or '').split():
+            continue
+        match = _DP_ASIN_RE.search(' '.join(cell.xpath('.//a/@href').getall()))
+        columns.append({'label': clean(node_text(cell)),
+                        'asin': match.group(1) if match else ''})
+    if not columns:
+        return None
+    body = [row for row in rows[1:] if len(row) == len(columns) + 1]
+    own = [index for index, column in enumerate(columns)
+           if asin and column['asin'] == asin]
+    return {'columns': columns, 'rows': body,
+            'self_column': own[0] if own else None}
+
+
+def aplus_content(root, asin=None):
     """A+ / Enhanced Brand Content, if the page has any.
 
     A+ modules embed their own ``<style>`` and ``<script>``; ``node_text``
     drops those, which is the difference between ~1 kB of product copy and
     ~38 kB of stylesheet.
+
+    ``text`` is every visible line, tables included, as it has been since
+    schema v1. ``prose`` is the same without table cells, and ``comparison``
+    is each A+ comparison table as structure: the cells of a table that
+    compares this product with others are not statements about this product,
+    and a reader that wants the own column gets it by ASIN, never by position
+    (R15's third adaptation; the flattened text had lent an Instinct 3 45 mm's
+    GPS runtime to the 50 mm page).
     """
     modules = root.css('#aplus, #aplus_feature_div, #aplusBrandStory_feature_div,'
                        '#aplus3p_feature_div')
     if not modules:
         return None
 
-    module_types, headings, images, tables = [], [], [], []
+    module_types, headings, images, tables, comparison = [], [], [], [], []
     seen_images, seen_headings = set(), set()
 
     for node in modules.css('.aplus-module, .apm-brand-story-card'):
@@ -274,6 +321,9 @@ def aplus_content(root):
                 rows.append(cells)
         if len(rows) > 1:
             tables.append(rows)
+            compared = _comparison_table(table, rows, asin)
+            if compared:
+                comparison.append(compared)
 
     text = clean(' '.join(node_lines(modules)))
     return {
@@ -281,8 +331,10 @@ def aplus_content(root):
         'headings': headings,
         'text': text,
         'text_length': len(text),
+        'prose': clean(' '.join(node_lines(modules, PROSE_XPATH))),
         'images': images,
         'tables': tables,
+        'comparison': comparison,
     }
 
 # ---------------------------------------------------------------------------

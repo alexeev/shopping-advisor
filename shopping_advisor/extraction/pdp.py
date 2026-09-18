@@ -105,7 +105,8 @@ class PdpExtractor:
         description = log.run(
             'description',
             lambda: clean(node_text(sel.css('#productDescription'))), '')
-        aplus = log.run('aplus', lambda: blocks.aplus_content(sel))
+        aplus = log.run('aplus', lambda: blocks.aplus_content(
+            sel, asin=(lineage or {}).get('asin')))
 
         ingredients = log.run(
             'ingredients',

@@ -30,6 +30,7 @@ part of that trial whose value outlives the roadmap text.
 | `probe-amazon-de-smartwatch-2026-09-18-named.manifest.json` | That crawl's manifest: 35 responses, 5 search pages retained, 184 discovery occurrences. |
 | `probe-amazon-de-smartwatch-2026-09-18-asin.jsonl.gz` | 7 product records fetched by ASIN: the models the named-model search pages sighted but did not open (Descent Mk3 43 mm in steel and bronze titanium, Descent Mk3i 51 mm, Descent G1, fenix 9, fenix 8 Pro, Huawei Watch Ultimate 2). Two of them list without a price. |
 | `probe-amazon-de-smartwatch-2026-09-18-asin.manifest.json` | That crawl's manifest: 7 responses, `arguments.asin` populated, no search. |
+| `probe-amazon-de-smartwatch-2026-09-18-{class,named,asin}-v2.jsonl.gz` | The same three runs **re-extracted offline from their retained pages** on 2026-09-18 under R15's third adaptation (`content.aplus.prose` and `content.aplus.comparison`): the same bytes read by newer code, no second request. 20 + 29 + 7 = 56 records — one page of the named run (`B0H8P8FT5Q`, a strap) no longer matched the digest its run recorded and the replay refused it, which is the check working. The as-crawled feeds above stay as they are; the gate's ninth example, `smartwatch-dive-nfc-reextracted`, reads these. |
 
 ## Reading them
 

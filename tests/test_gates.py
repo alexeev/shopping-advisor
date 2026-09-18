@@ -650,7 +650,8 @@ class Contract(unittest.TestCase):
     def test_the_plan_backed_examples_replay_through_the_documented_commands(self):
         examples = [e for e in maintenance.load_baseline()['examples'] if e.get('plan')]
         self.assertEqual(sorted(e['name'] for e in examples),
-                         ['pasta-delivered-cost', 'pasta-purchase-budget', 'smartwatch-dive-nfc'])
+                         ['pasta-delivered-cost', 'pasta-purchase-budget', 'smartwatch-dive-nfc',
+                          'smartwatch-dive-nfc-reextracted'])
         for example in examples:
             self.assertEqual(example['expect']['stop'], gates.REQUIREMENT_UNSUPPORTED)
             self.assertEqual(example['expect']['shortlisted'], 0)

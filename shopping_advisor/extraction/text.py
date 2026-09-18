@@ -33,6 +33,10 @@ _TEXT_XPATH = (
     '[not(ancestor-or-self::style)]'
     '[not(ancestor-or-self::noscript)]'
 )
+#: The same visible text without table cells. A table in vendor copy compares
+#: this product with others (an A+ comparison table), or tabulates a spec; its
+#: cells are structure, and the callers that want them read them as rows.
+PROSE_XPATH = _TEXT_XPATH + '[not(ancestor::table)]'
 
 
 def clean(value):
@@ -62,14 +66,17 @@ def node_text(node, separator=' '):
     return clean(separator.join(node.xpath(_TEXT_XPATH).getall()))
 
 
-def node_lines(node):
-    """Visible text of a node split into non-empty logical lines."""
+def node_lines(node, xpath=_TEXT_XPATH):
+    """Visible text of a node split into non-empty logical lines.
+
+    ``xpath`` selects the text nodes; :data:`PROSE_XPATH` leaves table cells out.
+    """
     if node is None:
         return []
     nodes = node if isinstance(node, SelectorList) else [node]
     lines, seen = [], set()
     for item in nodes:
-        for raw in item.xpath(_TEXT_XPATH).getall():
+        for raw in item.xpath(xpath).getall():
             line = clean(raw)
             if line and line not in seen:
                 seen.add(line)

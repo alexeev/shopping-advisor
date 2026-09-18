@@ -321,6 +321,98 @@
       "run_manifest": null,
       "started_at": "2026-09-18T19:12:56+00:00",
       "state": "completed"
+    },
+    {
+      "allocation": {
+        "seconds": 2700
+      },
+      "authorisation": "unchecked",
+      "consumption": {
+        "seconds": 2700
+      },
+      "consumption_source": "declared",
+      "depends_on": [
+        "engineer-2",
+        "analyse-4"
+      ],
+      "finished_at": "2026-09-18T20:03:00+00:00",
+      "id": "engineer-3",
+      "kind": "engineering",
+      "limit_ids": [
+        "engineering-seconds"
+      ],
+      "promotion": null,
+      "purpose": "R15 phase 4, the extraction case's bounded inspection (plan revision 7, ordering and dive_computer): read the three retained run stores and the 57 committed records for the layer the battery-runtime and dive statements live in. Found: 16 of 55 product pages carry an A+ comparison table (premium-module-5) whose cells for OTHER products are flattened into content.aplus.text and read by the vendor-text search as this product's statement; on B0DSC8GLRX the table does not contain the product at all and its card shows a 40 h GPS runtime that belongs to the Instinct 3 45 mm; the own column is identifiable by the ASIN its header links in 10 of 16 tables and carries mode-labelled runtimes ('Akkulaufzeit GPS-Modus: Bis zu 47 Stunden'). Layer: extraction (blocks.aplus_content) and evidence (validation.evidence.text_fields). No marketplace request.",
+      "question": "Is the runtime-with-mode gap a property of the page any category needs, lost or misassigned by the current path, or an interpretation the category can make over text it already receives?",
+      "replay_of": "",
+      "result": null,
+      "resumes": "",
+      "run_id": "",
+      "run_manifest": null,
+      "started_at": "2026-09-18T19:20:00+00:00",
+      "state": "completed"
+    },
+    {
+      "allocation": {
+        "seconds": 3600
+      },
+      "authorisation": "checked",
+      "consumption": {
+        "seconds": 53.05
+      },
+      "consumption_source": "adaptation_record",
+      "depends_on": [
+        "engineer-3"
+      ],
+      "finished_at": "2026-09-18T20:11:09+00:00",
+      "id": "engineer-4",
+      "kind": "engineering",
+      "limit_ids": [
+        "engineering-seconds"
+      ],
+      "promotion": null,
+      "purpose": "Third adaptation through R15, extraction layer: publish the A+ comparison table as structure -- content.aplus.prose (A+ text without table cells) and content.aplus.comparison (columns with the ASIN each header links, rows, and the index of this product's own column when its ASIN is linked) -- and let the vendor-text search read prose instead of the flattened text and the own column's rows as labelled statements. Schema v6 keys added, none changed; old records without the new keys read as before. Reproduction: B0DSC8GLRX loses the 40 h GPS runtime that belongs to another model; the fenix 8 sizes keep theirs from their own column with the mode in the label. No marketplace request.",
+      "question": "Once comparison-table cells about other products stop counting as this product's text, which runtime and claim values move on the 55 records, and does any committed decision move beyond them?",
+      "replay_of": "",
+      "result": null,
+      "resumes": "",
+      "run_id": "aplus-comparison",
+      "run_manifest": {
+        "path": "tests/intake/aplus-comparison.json",
+        "sha256": "ca26d1e03c859504b3dd32c01bdd645121e0efb03f1664ac1cd8a22350c6f4df"
+      },
+      "started_at": "2026-09-18T20:09:09+00:00",
+      "state": "completed"
+    },
+    {
+      "allocation": {
+        "seconds": 600
+      },
+      "authorisation": "checked",
+      "consumption": {
+        "seconds": 240
+      },
+      "consumption_source": "declared",
+      "depends_on": [
+        "engineer-4",
+        "analyse-4"
+      ],
+      "finished_at": "2026-09-18T20:20:00+00:00",
+      "id": "analyse-5",
+      "kind": "analysis",
+      "limit_ids": [
+        "research-seconds"
+      ],
+      "promotion": null,
+      "purpose": "Re-derive the study over the three probe feeds re-extracted offline from their retained pages under the third adaptation (engineer-4): the same brief and plan revision 7, bound to the aplus-comparison record, so the cards read A+ prose and the own comparison column instead of the flattened table. No new marketplace request.",
+      "question": "Which runtime and claim values move once another product's comparison cells stop counting as this product's text, and does any candidate, price or outcome decision move?",
+      "replay_of": "",
+      "result": null,
+      "resumes": "",
+      "run_id": "",
+      "run_manifest": null,
+      "started_at": "2026-09-18T20:16:00+00:00",
+      "state": "completed"
     }
   ],
   "id": "peter-smartwatch-session",

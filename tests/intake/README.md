@@ -200,6 +200,34 @@ uv run --offline --locked python -m shopping_advisor.study adaptation-check test
 uv run --offline --locked python -m shopping_advisor.study run tests/intake/smartwatch-brief.json --plan tests/intake/smartwatch-plan.json --session tests/intake/smartwatch-session.json --adaptation tests/intake/smartwatch-dive-claim.json -o data/smartwatch-v2-example-study
 ```
 
+**R15 phase 4 coverage (2026-09-18).** `aplus-comparison.json` is the **third
+adaptation record** and the first outside the category layer: the A+
+comparison table published as structure (`content.aplus.prose` without table
+cells, `content.aplus.comparison` with the ASIN each column links and the own
+column by exact ASIN or none) and the vendor-text search reading prose and
+the own column's rows, so that another product's cell is no longer this
+product's statement. Ten files captured whole from base `3e8dc56`, three
+checks inside the kernel boundary — the corpus snapshots regenerated to the
+scratch directory, a gate failed on one test-fixture defect and withdrawn, a
+gate at exit 0 — the review, the adoption and the rollback before the ledger
+accounted for it. The committed copy differs from the private original only
+in the runner's two paths. `smartwatch-brief-v2.json` is the same plan-bound
+brief over the three `-v2` evidence feeds, re-extracted offline from the
+retained pages under the adopted code (56 records: one page of the named run
+no longer matches its recorded digest and the replay refused it), and the
+gate's ninth example binds it: `smartwatch-dive-nfc-reextracted-92117d8f7fef`,
+39 of 54 classified, the same 35 offers and the same withheld recommendation,
+with ten card values moved and no decision — the Instinct 3 50 mm's 40 h GPS
+runtime, read from a table that does not contain it, is `unknown` now.
+`smartwatch-session.json` carries `engineer-3` (the bounded inspection,
+declared), `engineer-4` (completed from the third record) and `analyse-5`.
+
+```text
+uv run --offline --locked python -m shopping_advisor.study adaptation-check tests/intake/aplus-comparison.json
+uv run --offline --locked python -m shopping_advisor.study run tests/intake/smartwatch-brief-v2.json --plan tests/intake/smartwatch-plan.json --session tests/intake/smartwatch-session.json --adaptation tests/intake/aplus-comparison.json -o data/smartwatch-v3-example-study
+uv run --offline --locked python -m shopping_advisor.study verify data/smartwatch-v3-example-study
+```
+
 The [runbook](../../RESEARCH.md#retain-an-intake-plan-before-the-executable-brief)
 contains the full bind/run/verify sequence. The test suite exercises those CLIs,
 checks the expected original decisions, and replays after deleting the originating

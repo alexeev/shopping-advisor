@@ -396,7 +396,7 @@ taken at close; see the [runbook limitations](RESEARCH.md#current-limitations).
 
 Use [AGENTS.md](AGENTS.md#maintenance-workflow) for the change and verification
 sequence; `maintenance check` is its verification step. The regression suite
-includes 39 saved PDPs (38 `.de`, one `.com`), a search page, and category
+includes 41 saved PDPs (40 `.de`, one `.com`), a search page, and category
 cases. Read [corpus instructions](tests/corpus/README.md) before promoting a
 capture or regenerating snapshots. A snapshot update is a reviewed behavior
 change, not a routine way to fix a failing test.
