@@ -569,7 +569,8 @@ and the semantic diff's evidence — or that the boundary holds anywhere but the
 machine it was measured on. `sandbox-exec` is present on macOS and deprecated
 by Apple; `git` does not run inside the profile, which is why the controlling
 commands run outside it; and a `harness-only` exception the maintainer records
-is labelled as such in every check and counts toward none of R15's Done-when.
+is labelled as such in every check, named in the bundle's caveats wherever the
+study is read, and counts toward none of R15's Done-when.
 
 ### Agree the brief
 
