@@ -23,7 +23,7 @@ measurements as history.
 | **R10** | Scoring as a shared facility | **DEFERRED** — one consumer is not two |
 | **R11** | Category synthesis as a default step | PLANNED (first R15 application) |
 | **R12** | Discovery that states its own coverage | PLANNED |
-| **R13** | The conversation as the entry point | **IN PROGRESS** (INTAKE §16 machinery shipped; conversational trials pending) |
+| **R13** | The conversation as the entry point | **IN PROGRESS** (INTAKE §16 machinery shipped; two conversational trials recorded, 2026-09-17 and 2026-09-18; a trial graded against expectations written before it remains) |
 | **R14** | A recommendation in a category nobody validated | PLANNED (R11–R13, R15, R16 gates) |
 | **R15** | Controlled task-driven capability adaptation | PLANNED (after R13; T4's local maintenance gate has shipped) |
 | **R16** | Capability lifecycle and architectural review | **IN PROGRESS** (index, lifecycle records and the first review shipped 2026-09-18; the task-experiment entry waits for R15) |
@@ -173,7 +173,7 @@ catalogue phase — see [decision principle 9](#decision-principles).
 
 | Order | Deliverable | Dependency and reason |
 |---|---|---|
-| 1 — in progress | R13 intake/evidence/gap planning | INTAKE §16's ten stages shipped on 2026-09-17 on top of T2/T3 and T4's gate; what remains is the conversational acceptance trial, which no fixture stands in for |
+| 1 — in progress | R13 intake/evidence/gap planning | INTAKE §16's ten stages shipped on 2026-09-17 on top of T2/T3 and T4's gate; two conversational trials are recorded (2026-09-17 by the documentation's author, 2026-09-18 by a reader who had not read it); what remains is a trial graded against expectations written before its first message, which no fixture stands in for |
 | 2 | R15 bounded adaptation, with R11 as the first category case | Needs R13's recorded gap. T4's executable baseline is in place. Prove isolation, validation, traceability and rollback before making adaptation routine |
 | 3 | R12 coverage and R16 minimum lifecycle/index | The index and the lifecycle records shipped on 2026-09-18 over the four registered categories, ahead of R15, because nothing in them depends on a patch artifact; what waits for R15 is the task-experiment entry and the promotion evidence that flows from it. R12 evidence planning can start with R13. Coverage and deliberate retention are necessary before claiming the full loop works |
 | 4 | R14 unseen-problem and reuse acceptance trials | Needs R11–R13, R15 and R16's minimum lifecycle, on top of the shipped maintenance gate. [R17](#r17--portability-evidence)'s trials — cross-platform paths, provider interchangeability and handoff — test these same artifacts afterwards, and gate only the portability claim |
@@ -1664,13 +1664,17 @@ the reviews deliberately — the one commit INTAKE §16 priced for exactly that 
 and no decision moved with them. No runtime lock, extraction or generic
 validation semantics changed in any stage.
 
-**What remains for R13.** The Done-when's first bullet — a user who has read no
-documentation initiating a supported study in the conversation and receiving a
-saved, auditable outcome — and the repeated conversational trials INTAKE §12 and
-§14 call for, graded against independently stated expectations within one
-provider. A passing gate protects the tested machinery; it does not establish
-understanding of arbitrary purchase requests, and no fixture in this repository
-claims to.
+**What remains for R13.** Two trials are recorded below: the first
+(2026-09-17) by the user who wrote the documentation, the second (2026-09-18)
+by a reader who had not, which meets the Done-when's first bullet once. What
+remains is the grading INTAKE §12 and §14 ask for: a third trial whose expected
+intent and acceptable outcomes are written down, by someone other than the
+operating agent, **before** the buyer's first message, and graded against that
+record rather than against the generic case boundaries after the fact; the
+question close of the runbook repeated on it; and a decision on the two
+school-backpack defaults the trials suggest. A passing gate protects the tested
+machinery; it does not establish understanding of arbitrary purchase requests,
+and no fixture in this repository claims to.
 
 
 **2026-09-17 — Observation from the first unsupported-category conversation
@@ -1707,6 +1711,84 @@ were fixed with regression tests: a plan-check column overflow, and a stale
 delivery review blocking its own replacement. The first Done-when bullet is
 met once, by a user who wrote the documentation. Not established: a reader
 who had not; an independent reviewer; a second provider.
+
+**2026-09-18 — Second conversational trial (school backpack, a reader who had
+not read the documentation).** A buyer referred by the maintainer, using the
+maintainer's account, opened with one sentence naming the product class and
+the marketplace and nothing else; the operating agent had read AGENTS, the
+runbook and the capability index, and the buyer had read none of it. Measured:
+three user messages; three plan revisions, each read back — revision 1
+corrected by the buyer's answers, revision 2 **confirmed** (the first confirmed
+read-back on record), revision 3 recording the answers with no response; one
+batched round of four questions, then one of three; zero marketplace requests,
+because the shelf retained on 2026-09-17 was reused (192 listings, 94 in
+class) and the buyer accepted day-old prices; two bundles under a session
+ledger with a zero engineering allowance, both **bounded**: the recommendation
+withheld on four decisive requirements without a control — a budget on the
+delivered price, a rating-and-count threshold, reliability as an objective, fit
+for 130 cm — and the weight ranking delivered as a bounded finding with each
+condition read by a person and attributed as such (23 rows ranked, 13 above the
+budget, two under the rating threshold, eight surviving both, three of those
+stating a height range that includes 130 cm). Intake review, semantic review
+and delivery review pass; `validate-report` is invalid on `current_advice_blocked`
+alone; `verify` is clean; `resume` reads the state from the files. The decision
+artifacts of the two bundles are byte-identical except the plan digest inside
+`ranking.json`. The written result is in the buyer's language under
+`reports/`, gitignored like the bundles.
+
+The questions, reviewed at close against the uncertainty and expected effect
+recorded when they were asked, as
+[the runbook requires](RESEARCH.md#improve-the-questions-not-only-the-code):
+
+| Question | What depended on the answer | Verdict |
+|---|---|---|
+| Amazon.de with delivery in Germany? | Nothing changed: the default was accepted, and it is the only default that leads anywhere | Asked because the blocking list says so; two trials, two German-context confirmations; not enough to remove it |
+| Grade and height? | Load-bearing: settled the product class (fifth grade → secondary-school backpack) and supplied the number every fit reading used | Keep |
+| What orders the shelf, and is there a budget? | Load-bearing: the no-cap default became a hard budget, and the buyer volunteered the rating threshold nobody asked for — the requirement behind the software gap below | Keep; the ordering half went unanswered and the agent's axis stayed an assumption |
+| Must the listing state reflective elements? | Confirmed as a must; enforced; filtered 49 of 94 in-class listings | Second buyer to confirm the test-derived candidate criterion; keep |
+| Round two: proxies, fit settlement, design | All three defaults accepted; one round trip, no decision moved | Across both trials a stated warranty as a reading rather than a filter (u5 of the first, u3 of the second) and the design as the child's choice (both) were accepted every time: candidates for stated defaults in a school-backpack brief. Fit was settled by the first buyer and left open by the second: stays a question |
+
+Graded against [INTAKE §14](INTAKE.md#14-worked-cases-and-acceptance-gates)
+after the fact: cases 2, 3, 5, 7, 8 and 12 were exercised and the behaviour
+stayed inside the acceptable boundaries — the budget was never routed onto the
+weight cap, the agent's axis is recorded as its own and non-decisive, the
+threshold without a control withheld selection and removed nobody by hand. No
+expectation for this buyer was written before the conversation, so this is a
+grading against the generic boundaries, not the independently stated
+expectation §12 asks for; that is what the third trial is for.
+
+**The third bundle, the same day, after the control landed** (the R15 entry
+has the change): plan revision 4 maps the budget to a bound on `price` (EUR,
+at most 100) and the rating threshold to bounds on `review_rating` (at least
+4 stars) and `review_count` (at least 50), nothing else moving. Of the 45
+in-class listings stating reflectors, 24 fall outside a bound — 18 list above
+100 EUR, one averages 3.9 stars, five have no trusted average to check (two
+Satch Pack colours under 100 EUR whose histogram disputes the published 4.4,
+two listings rated by 19 and 6 buyers, one unrated); the count floor removed
+nobody on its own. 13 of the remaining 21 keep no usable weight and **8 rank:
+the same eight a person had read by hand in the first two bundles, in the same
+order**, the three Baagl rows on top. The recommendation stays withheld on
+`reliability` and `fit`, as the buyer accepted; intake, semantic and delivery
+reviews pass, `verify` is clean. Stricter than asked, and said so: a bound
+admits only trusted values, so a listing whose average the histogram disputes
+leaves as unassessable rather than passing on the published number.
+
+Observations for the tooling, logged and not adopted (the improvement cycle's
+first step): (1) the report's attribution sentence reads the *current*
+revision's response status, so a confirmed read-back followed by a revision
+that only records the answers renders as "no response" — as it did at revision
+7 of the first trial; the confirmation survives in the retained message and
+the question answers, not in the sentence. (2) `session-record --result`
+takes JSON and fails a prose result with a bare JSON error. (3) **The software
+gap**: a purchase budget or a rating threshold has no control because the one
+cap binds the ordering axis, which is [INTAKE §4](INTAKE.md#4-current-capability-boundaries)'s
+case 7 met by a second buyer on a category that *does* publish a price axis;
+the proposal retained in the ledger as `engineer-1` is a bound on any rankable
+axis at candidate assessment plus rating and rating-count axes on
+`school_backpack`. The maintainer asked for it to be built next, ahead of R15's general gates,
+as reviewed maintenance; it landed the same day and is recorded under
+[R15](#r15--controlled-task-driven-capability-adaptation) as its first
+control case.
 ### Scope
 
 Make the existing coding-agent conversation the tested product entry point.
