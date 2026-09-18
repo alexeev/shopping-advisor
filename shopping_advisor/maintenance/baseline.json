@@ -18,7 +18,7 @@
     },
     "smartwatch": {
       "decision": "retained",
-      "method_version": 2,
+      "method_version": 3,
       "state": "experiment"
     },
     "tyre_mounting_paste": {
@@ -231,7 +231,7 @@
       "why": "R15 phase 2: the third R13 trial's plan revision 7, committed as it is, bound to a brief over the three retained probe feeds and run on the smartwatch category through its second adaptation record (the dive claim repaired, method version 2, naming the first record as its predecessor) and the v2 ledger that funded both. Every decisive condition stays unsupported, the recommendation is withheld, and the price order of the 35 priced smartwatches is the bounded finding -- the category's default axis, which the plan says ranks nobody. The first study resting on a capability that entered through the procedure."
     },
     {
-      "adaptation": "tests/intake/aplus-comparison.json",
+      "adaptation": "tests/intake/nfc-payment-claim.json",
       "brief": "tests/intake/smartwatch-brief-v2.json",
       "deliver_at": "2026-09-18T21:00:00+00:00",
       "expect": {
@@ -243,23 +243,23 @@
         "resumable": "yes",
         "shortlisted": 0,
         "stop": "requirement_unsupported",
-        "study_id": "smartwatch-dive-nfc-reextracted-92117d8f7fef"
+        "study_id": "smartwatch-dive-nfc-reextracted-d83a15c291ca"
       },
       "name": "smartwatch-dive-nfc-reextracted",
       "plan": "tests/intake/smartwatch-plan.json",
       "session": "tests/intake/smartwatch-session.json",
-      "why": "R15 phase 4: the same plan revision 7 and brief over the three probe feeds re-extracted offline from their retained pages under the third adaptation (the A+ comparison table as structure), bound to that record and the ledger that funded it. Ten card values move and no decision: the Instinct 3 50 mm's GPS runtime read from a table that does not contain it is unknown now, the fenix 8 sizes keep theirs from their own column. The first study resting on an adaptation outside the category layer."
+      "why": "R15 phase 4: the same plan revision 7 and brief over the three probe feeds re-extracted offline from their retained pages under the third adaptation (the A+ comparison table as structure), bound -- since the fourth adaptation, the payment claim narrowed to a payment statement (method version 3) -- to that record, whose predecessor is the third, and to the ledger that funded them. Ten card values move and no decision: the Instinct 3 50 mm's GPS runtime read from a table that does not contain it is unknown now, the fenix 8 sizes keep theirs from their own column. The first study resting on an adaptation outside the category layer."
     }
   ],
   "note": "What the maintenance gate is entitled to find. Tracked on purpose: a task-local change that lowers a floor, drops a check, promotes or retires a capability or moves an example's decision has to say so here, in a reviewable diff. Re-record with `maintenance baseline --update` from a tree that passes; a capability's lifecycle moves only after ROADMAP records the decision.",
-  "recorded_at": "2026-09-18T20:22:24+00:00",
+  "recorded_at": "2026-09-18T20:58:45+00:00",
   "runtime": {
     "lock_sha256": "e24bc67da2dba6c49538700bc8bce61658748c715e9103603f537c15694a32cd",
     "python": "3.14",
     "scrapy": "2.19"
   },
   "tests": {
-    "minimum": 900,
+    "minimum": 902,
     "modules": [
       "test_adaptation",
       "test_analysis",

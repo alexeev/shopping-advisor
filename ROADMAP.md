@@ -2073,6 +2073,92 @@ review if the maintainer wants the category's controls mapped, the
 source-embedded-instruction and `harness-only` cases, and a faulty patch
 withdrawn on a real regression.**
 
+**2026-09-18 — Plan revisions 8 to 10 under independent review: the plan
+that maps the category to the trial's request.** After the category entered
+through the procedure, the trial's plan had to say what its controls answer.
+Three revisions, each read afresh by the independent reviewer against the
+five retained messages, the private expectations record and the live
+catalogue; the plans and reviews stay private under `data/plans/` and are
+identified here by digest, as the revision 5–7 chain is under R13.
+
+| Revision | What it did | Review |
+|---|---|---|
+| 8 (`db0ec28ca0af`) | `watch_class` mapped to `classification`; three agent-authored, assumed hard constraints mapped to `require_claims` on the dive, payment and Android claims as "necessary, not sufficient" conditions; the buyer's decisive conditions kept unsupported. Measured: 6 priced offers of 39 | **fail** (`3d40859c18f9`): faithfulness, adequacy, assumptions. A function being necessary does not make its mention in this listing necessary; the filters excluded silence before manufacturer evidence could inform selection (Descent Mk3 and Mk3i to the Android filter, fenix 8 to an unread alt text). The `nfc_payment` pattern credited a connectivity row's bare "NFC" as payment — the finding that became the fourth adaptation |
+| 9 (`7981c98fdd65`) | The maintainer's decision: all three filters dropped, the classifier kept; the parents' gaps rewritten so that a silent listing is unassessed, not excluded. Measured: 35 priced offers, as under revision 7 | **fail** (`cf7f0098160a`): faithfulness, stage effects. The parents' `effects` still ordered the exclusions the gaps forbade ("a listing stating only a water-resistance rating is excluded"; "every surviving candidate must state Android compatibility"), and the readback reproduced both |
+| 10 (`4c1d42260b8c`) | The three parents' effects rewritten to match: "not assessed" for a silent listing, exclusion only on a stated incompatibility, payment split into documented, third-party and silent; `nfc_payments` described under method version 3 | **limited** (`0f230cd9a163`): faithfulness, adequacy, assumptions and stage effects pass; omissions `limited` on the `missing_context` the plan has carried since revision 1, which CONTRACT §13 never lets pass. The reviewer records the price table as not answering the buyer's ordering criterion and the `price_shown` tension as a remaining limit |
+
+**What the chain established.** The plan that survives review maps one
+control — the classifier — and no claim filter: the 35-row price table is the
+honest bounded finding, and its length is a presentation defect, not grounds
+for a constraint the buyer did not state (the maintainer's ruling on revision
+9). A reviewer's first-quote reading of a card is not the page: the count of
+six bare-NFC listings was the operating agent's and was five. The procedure's
+binding held where it should: a record that originated in revision 7 refused
+to bind to revision 8, which changed candidate admission, and the reviewer
+judged that refusal correct. **Not done:** the committed examples still bind
+revision 7, because the four adaptation records originate there; a study
+under revision 10 carrying its limited review as an attached intake review
+would be a further example, and whether to commit it is the maintainer's call.
+
+**2026-09-18 — Phase 5: the fourth adaptation, the payment claim repaired
+on the independent reviewer's finding.** Plan revision 8 — the classifier
+mapped to `classification` and three agent-authored listing filters on the
+dive, payment and Android claims — went to the independent intake reviewer
+and **failed** on faithfulness, adequacy and assumptions: a function being
+necessary does not make its mention in this Amazon listing necessary, and the
+filters excluded silence before manufacturer evidence could inform selection
+(the Descent Mk3 and Mk3i fell to the Android filter, the fenix 8 to an alt
+text the search does not read). The maintainer decided: revision 9 drops all
+three filters and keeps the classifier — a longer table is a presentation
+defect, not grounds to declare a further constraint necessary — and the one
+finding that named a category defect goes through the procedure. That
+finding (A8.1): the `nfc_payment` pattern was a disjunction that included a
+bare "NFC" and a bare "Wallet", so a connectivity row "Bluetooth, GPS, NFC"
+was credited as a payment statement, against the claim's own `why`.
+
+Funded as `engineer-5` (3 600 s, 3 attempts) and opened as record
+`nfc-payment-claim`, layer `category`, origin plan revision 7, predecessor
+the third record. The patch, three files from base `703be57`: the pattern
+reads a payment service or a contactless-payment phrase (Garmin, Huawei,
+Apple, Samsung Pay, Google Pay or Wallet, a vendor's wallet, "kontaktlos
+bezahlen", "NFC-Zahlung"), `method_version` 3 with the reason beside it, two
+tests and the cases README rows. **Three attempts, all spent, all on the
+record.** Each was the full gate inside the kernel boundary. The first two
+failed on the declared move and on the new real-card test: the hypothesis,
+the operating agent's reading of the revision-8 study's first quote per card
+(the review itself had named only the Huawei listings), filed the Amazfit
+Active Max under the bare word, but its bullet says "Mit Zepp Pay und NFC
+bezahlst du" and the narrowed pattern rightly keeps it — five listings rest
+on NFC alone, not six, all Huawei. The pins were corrected between checks
+and nothing in the code moved. The third check failed on exactly the declared
+move and nothing else: `capability_lifecycle_changed` for `method_version` 3
+and the five baseline-pinning tests; 902 tests in 30 modules, 9 of 9 examples
+with their recorded decisions. Review, adoption on the maintainer's decision,
+rollback demonstrated, the ledger accounted 85.3 s. The budget of three
+attempts was exhausted by the third; had it failed, the record would have
+closed as `interrupted` with the patch on file.
+
+**Measured.** On the 39 cards of the re-extracted study, `nfc_payment` moves
+on five and on no other: both Huawei Watch Ultimate 2 listings, both GT 7
+Pro and the Watch D3 lose it, fifteen keep it — among them the Amazfit on its
+payment sentence, the Descent G2, Mk3 and Mk3i, the fenix 8 sizes and the
+Instinct 3 on "Garmin Pay", the fenix 9 on its own comparison-table cell. No
+other claim, no axis, no ranking row and no outcome moved. The ninth gate
+example rebinds to the fourth record: `smartwatch-dive-nfc-reextracted-d83a15c291ca`
+where the same brief under method version 2 was `…-92117d8f7fef`; the third
+record stays committed as its predecessor. Baseline diff: `method_version`
+2 → 3, the example's adaptation and id, the floor 900 → 902. Revision 9 of
+the plan, over the as-crawled feeds with the classifier alone, gives 39 of 55
+and the same 35 priced offers as revision 7; it waits for its own independent
+review against the live catalogue, which this adaptation moved.
+
+**Not established, and not claimed.** That a payment service named on the
+page works with the buyer's card in Germany — the claim is the vendor's
+sentence, as before. That the five Huawei listings lack payment: Huawei's
+own documentation is not the page, and `not_claimed` says so. The `harness-only`
+path and the source-embedded-instruction case remain open; the count of
+extension-bearing studies stands at two.
+
 **2026-09-18 — Phase 4: the extraction case, decided by inspection and
 run through the procedure.** The plan's second Done-when case had to change
 extraction or evidence acquisition, and the plan said it would be built only

@@ -205,11 +205,20 @@ CLAIMS = (
             'a dive computer on a real dive is not on the page'),
     cat.Claim(
         'nfc_payment', 'NFC payment',
-        # 11 of 55: "NFC", "bezahlen Sie kontaktlos mit Garmin Pay", "Wallet".
-        r'\bnfc\b|kontaktlos\w*\s+(?:bezahl|zahl)\w*|garmin\s+pay|huawei\s+pay'
-        r'|apple\s+pay|google\s+(?:pay|wallet)|\bwallet\b',
-        why='NFC and a payment service on the page; whether they work with '
-            'the buyer\'s card in Germany is not there'),
+        # Method version 3 (R15's fourth adaptation, 2026-09-18): a payment
+        # service or a contactless-payment phrase, not the word NFC. Version 2
+        # also matched a bare "NFC" and a bare "Wallet", so a connectivity row
+        # "Bluetooth, GPS, NFC" was credited as a payment statement: of the 20
+        # positives on the 39 committed cards, 5 rested on that word alone
+        # (both Huawei Watch Ultimate 2 listings, two GT 7 Pro, the Watch D3).
+        # An NFC chip is not a payment function; the independent review of
+        # plan revision 8 found the mismatch (A8.1).
+        r'kontaktlos\w*\s+(?:bezahl|zahl)\w*|nfc[\s-]*(?:zahl|bezahl|payment)\w*'
+        r'|garmin\s+pay|huawei\s+pay|apple\s+pay|samsung\s+pay|google\s+(?:pay|wallet)'
+        r'|(?:huawei|garmin|google|samsung)\s+wallet',
+        why='the vendor names a payment service or contactless payment on the '
+            'page; a bare "NFC" is connectivity, not payment, and whether the '
+            'service works with the buyer\'s card in Germany is not there'),
     cat.Claim(
         'android_compatible', 'Android compatibility stated',
         # 16 of 55 name Android; Apple's pages name the iPhone and no Android,
@@ -443,8 +452,9 @@ LIFECYCLE = cat.Lifecycle(
     reviewed='2026-09-18',
     review='architectural-review-1--2026-09-18',
     # 2 since the second R15 adaptation (2026-09-18): the dive claim's meaning
-    # moved on five committed records.
-    method_version=2,
+    # moved on five committed records. 3 since the fourth (2026-09-18): the
+    # payment claim stopped reading a bare "NFC", and moved on five.
+    method_version=3,
 )
 
 

@@ -413,6 +413,69 @@
       "run_manifest": null,
       "started_at": "2026-09-18T20:16:00+00:00",
       "state": "completed"
+    },
+    {
+      "allocation": {
+        "seconds": 3600
+      },
+      "authorisation": "checked",
+      "consumption": {
+        "seconds": 85.28
+      },
+      "consumption_source": "adaptation_record",
+      "depends_on": [
+        "engineer-2",
+        "analyse-5"
+      ],
+      "finished_at": "2026-09-18T20:55:41+00:00",
+      "id": "engineer-5",
+      "kind": "engineering",
+      "limit_ids": [
+        "engineering-seconds"
+      ],
+      "promotion": null,
+      "purpose": "Fourth adaptation through R15, category layer: repair the smartwatch category's nfc_payment claim, whose pattern credits a bare 'NFC' in a connectivity row as a payment statement -- six of the twenty positives on the retained records (both Huawei Watch Ultimate 2 listings, two GT 7 Pro, the Watch D3, the Amazfit Active Max) rest on that word alone, against the claim's own 'why' (NFC and a payment service on the page). Found by the independent intake review of plan revision 8 (adequacy A8.1). Method version 3; the pattern requires a payment service or contactless-payment phrase; NFC alone stays not_claimed with the reason. No marketplace request.",
+      "question": "Once the payment claim needs a payment-service statement, which of the twenty listings that carried it keep it, and does any committed decision move beyond the claim itself?",
+      "replay_of": "",
+      "result": null,
+      "resumes": "",
+      "run_id": "nfc-payment-claim",
+      "run_manifest": {
+        "path": "tests/intake/nfc-payment-claim.json",
+        "sha256": "308ecfa61e59778486e38d81ae7c2e8776ad13928686b5e0e0bea173ce26d99f"
+      },
+      "started_at": "2026-09-18T20:51:46+00:00",
+      "state": "completed"
+    },
+    {
+      "allocation": {
+        "seconds": 300
+      },
+      "authorisation": "checked",
+      "consumption": {
+        "seconds": 120
+      },
+      "consumption_source": "declared",
+      "depends_on": [
+        "engineer-5",
+        "analyse-5"
+      ],
+      "finished_at": "2026-09-18T21:00:00+00:00",
+      "id": "analyse-6",
+      "kind": "analysis",
+      "limit_ids": [
+        "research-seconds"
+      ],
+      "promotion": null,
+      "purpose": "Re-derive the study of analyse-5 under the category's method version 3 (engineer-5): the same brief over the re-extracted feeds and plan revision 7, bound to the nfc-payment-claim record, so the study id carries the new method and the payment claim's change is read from the cards. No new marketplace request.",
+      "question": "Under the repaired payment claim, which rows lose nfc_payment, and does any candidate, price or outcome decision move?",
+      "replay_of": "",
+      "result": null,
+      "resumes": "",
+      "run_id": "",
+      "run_manifest": null,
+      "started_at": "2026-09-18T20:58:00+00:00",
+      "state": "completed"
     }
   ],
   "id": "peter-smartwatch-session",

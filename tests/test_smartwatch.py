@@ -152,8 +152,20 @@ class Claims(unittest.TestCase):
     def test_nfc_and_a_payment_service_are_one_claim_and_payment_in_germany_is_none(self):
         found = self.claims('bezahlen Sie kontaktlos mit Garmin Pay')['nfc_payment']
         self.assertEqual((found.value, found.status), (True, TRUSTED))
-        self.assertIn('NFC', found.evidence[0].quote.upper() + 'NFC')
         self.assertNotIn('payment_usable_in_germany', CATEGORY.claim_keys)
+
+    def test_a_bare_nfc_is_connectivity_and_not_a_payment_statement(self):
+        # Method version 3 (R15's fourth adaptation): version 2 credited the
+        # connectivity row "Bluetooth, GPS, NFC" as a payment statement on six
+        # committed cards. A chip is not a payment function.
+        for text in ('Konnektivitätstechnologie: Bluetooth, GPS, NFC',
+                     'NFC, Bluetooth 5.2, WLAN', 'Wallet für Bordkarten'):
+            with self.subTest(text=text):
+                self.assertEqual(self.claims(text)['nfc_payment'].status, NOT_CLAIMED)
+        for text in ('Kontaktlos bezahlen mit Huawei Wallet', 'NFC-Zahlungen mit Garmin Pay',
+                     'Google Wallet und kontaktloses Zahlen', 'Bezahlen mit Samsung Pay'):
+            with self.subTest(text=text):
+                self.assertEqual(self.claims(text)['nfc_payment'].value, True)
 
     def test_android_named_is_a_statement_and_iphone_only_is_not_claimed(self):
         self.assertEqual(self.claims('Kompatibel mit iOS- und Android-Geräten')['android_compatible'].value, True)
@@ -350,6 +362,29 @@ class RealCases(unittest.TestCase):
         stated = [asin for asin, card in self.cards.items()
                   if card['category'].value == KEY and card['claims']['scuba_dive_mode'].value]
         self.assertEqual(sorted(stated), sorted(self.STATE_A_DIVE_FUNCTION))
+
+    # Method version 2 also credited these five Huawei listings on a
+    # connectivity row's "NFC" (both Watch Ultimate 2, two GT 7 Pro, the Watch
+    # D3); version 3 reads a payment service or a contactless-payment phrase,
+    # and fifteen keep the claim on one -- the Amazfit Active Max among them,
+    # on "Mit Zepp Pay und NFC bezahlst du", which the operating agent's
+    # first-quote reading of the revision-8 study's cards had filed under the
+    # bare word; the review itself named the Huawei listings only.
+    STATE_A_PAYMENT_SERVICE = ('B0BXM1RQR5', 'B0CNSF5DK2', 'B0CNSG78ZQ', 'B0CP819M6S', 'B0CPF2Q5PB',
+                               'B0CPF5C7XH', 'B0DC6ZD31R', 'B0DC6ZD321', 'B0DC71V3ZD', 'B0DSC8GLRX',
+                               'B0DSG9VCRH', 'B0DX1T7JQ3', 'B0DX21FHWP', 'B0G1ZGK7MV', 'B0HFP18YKP')
+    NFC_ONLY = ('B0FL1YW13Z', 'B0FL2JXW3B', 'B0H7HZNYRC', 'B0H7J5FZ99', 'B0HFSHKPJL')
+
+    def test_the_payment_claim_needs_a_payment_service_not_a_chip(self):
+        for asin in self.STATE_A_PAYMENT_SERVICE:
+            with self.subTest(asin=asin):
+                self.assertEqual(self.cards[asin]['claims']['nfc_payment'].value, True)
+        for asin in self.NFC_ONLY:
+            with self.subTest(asin=asin):
+                self.assertEqual(self.cards[asin]['claims']['nfc_payment'].status, NOT_CLAIMED)
+        stated = [asin for asin, card in self.cards.items()
+                  if card['category'].value == KEY and card['claims']['nfc_payment'].value]
+        self.assertEqual(sorted(stated), sorted(self.STATE_A_PAYMENT_SERVICE))
 
     def test_the_three_unpriced_listings_have_no_price_value(self):
         for asin in ('B0DC6ZD321', 'B0CPF5C7XH', 'B0B45XTKRN'):
