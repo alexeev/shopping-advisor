@@ -382,7 +382,7 @@ prove it — the evidence paths and roadmap anchors behind it, the last review,
 and a **method version**. The declaration changes no value, no status and no
 decision; `study capabilities` publishes it and the maintenance gate pins the
 state, decision and method version in its baseline, so a change to any of
-them is a reviewed diff whose reason is a dated ROADMAP entry. The method
+them is a reviewed diff whose reason is a dated `HISTORY.md` entry under R16. The method
 version follows the spirit of §6: it moves when a change moves a decision on
 the category's committed cases — a classifier boundary, an axis direction,
 what a claim means — and stays when a pattern merely reaches more phrasings
@@ -597,7 +597,7 @@ score credit. The health component starts neutral (0.5), without unsupported
 milling/origin/vendor-safety bonuses; existing adverse review adjustments remain
 category heuristics. Missing verified external evidence remains a reported score
 gap. This is a conservative trust correction and versioned category method,
-not a change to generic status meanings. See the measured T3 result in ROADMAP.
+not a change to generic status meanings. See the measured T3 result in [HISTORY.md](HISTORY.md#t3--done-2026-09-16-external-evidence-and-recommendation-audits).
 
 ## 9. Intake plan and brief preservation (R13 stage 5)
 

@@ -33,7 +33,8 @@ maintainer at CONTRACT and the roadmap's decision principles.
 | Operate or maintain the repository as an agent | [AGENTS.md](AGENTS.md) — canonical, provider-neutral instructions |
 | Research a product or try the offline example | [RESEARCH.md](RESEARCH.md) — current runbook and commands |
 | Understand fields and trust semantics | [CONTRACT.md](CONTRACT.md) — extraction schema **6**, validation contract **2** |
-| Understand priorities and previous decisions | [ROADMAP.md](ROADMAP.md) — the one plan of record |
+| Understand priorities and what each milestone has established | [ROADMAP.md](ROADMAP.md) — the one plan of record |
+| Read how a decision was earned: the dated records and measurements | [HISTORY.md](HISTORY.md) — the milestones' history, under the same headings |
 | Design the conversational entry point | [INTAKE.md](INTAKE.md) — what intake must preserve, assessed before R13 |
 | Run or replay a saved study | [RESEARCH.md](RESEARCH.md#a-saved-study-end-to-end) — worked examples under [tests/studies](tests/studies/README.md) |
 | Verify the repository before finishing a change | [AGENTS.md](AGENTS.md#environment-and-checks) — one local gate, `maintenance check` |

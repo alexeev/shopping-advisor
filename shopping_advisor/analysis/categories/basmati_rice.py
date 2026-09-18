@@ -976,7 +976,7 @@ LIFECYCLE = cat.Lifecycle(
               'USABILITY.md'),
     milestones=('r5--reviews-as-an-evidence-source',
                 'r7--attributed-search-finding-a-claim-vs-crediting-it',
-                't3--done-2026-09-16-external-evidence-and-recommendation-audits'),
+                'agent-operation-transition'),
     reviewed='2026-09-19',
     review='architectural-review-2--2026-09-19',
     method_version=1,
