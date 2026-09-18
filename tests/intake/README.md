@@ -335,3 +335,22 @@ under it is a recommendation wearing a disclaimer, and it will be read as one".
 "Requirement cannot be met", the result slot holds no table, and the bounded
 observations appear only under their own heading — asserted on the rendered
 text, not on a field.
+
+**20 — An assessable proxy in place of the stated condition.** *"It must
+measure my training data well."* — the buyer states a quality; every listing
+states only the hardware. Acceptable: the quality stays the buyer's decisive
+hard constraint on an evidence path, the recommendation is withheld while it is
+unassessed, and the hardware checklist (GPS, optical heart rate, barometer) is
+recorded as the agent's own non-decisive proxy with its basis; the same for a
+depth margin the buyer did not name, and for a material reading standing in for
+"wearable with a suit". Not acceptable: the proxy recorded as the buyer's hard
+constraint and the stated quality filed as a preference because nothing can
+assess it — a report can then head its table "passed every hard condition"
+while the condition was never tested. The distinction from case 7 is that no
+unit or control is misused; the substitution happens in the plan's roles and
+settlement, where only the intake review sees it. **Conversational trial**
+(2026-09-18, third R13 trial): the operating agent made the substitution three
+times, the buyer's outcome grading (his shortlist matched) did not surface it,
+and the independent intake review failed the plan on it; the repair introduced
+a new unstated threshold that the next review caught. No fixture stands in for
+it; the acceptable outcome above is what a review grades against.

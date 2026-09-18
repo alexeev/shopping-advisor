@@ -1,0 +1,139 @@
+{
+  "arguments": {
+    "asin": [],
+    "domain": "www.amazon.de",
+    "keep_pages": true,
+    "keep_search_pages": true,
+    "keyword": [
+      "Smartwatch Tauchcomputer",
+      "Tauchcomputer Uhr GPS NFC"
+    ],
+    "max_pages": 1,
+    "max_products_per_query": 10
+  },
+  "code": {
+    "extraction_schema_version": 6,
+    "git_dirty": false,
+    "git_revision": "ee3eddf1aad9bb805b785cc452fb437ef6088b2c",
+    "lock_sha256": "e24bc67da2dba6c49538700bc8bce61658748c715e9103603f537c15694a32cd",
+    "python": "3.14.6",
+    "scrapy": "2.19.0",
+    "validated_contract_version": 2
+  },
+  "counts": {
+    "discovery_occurrences": 42,
+    "failure_samples_over_cap": 0,
+    "failure_samples_saved": 0,
+    "page_write_errors": 0,
+    "pages_quarantined": 0,
+    "pages_saved": 20,
+    "redaction_failures": 0,
+    "search_pages_saved": 2
+  },
+  "feeds": [
+    {
+      "format": "jsonl",
+      "overwrite": true,
+      "uri": "data/smartwatch/probe-1.jsonl"
+    }
+  ],
+  "finish_reason": "finished",
+  "finished_at": "2026-09-18T12:09:36+00:00",
+  "locale": {
+    "accept_language": "de-DE,de;q=0.9,en;q=0.8",
+    "expected_language": "de",
+    "language": "de",
+    "status": "matches"
+  },
+  "manifest_version": 2,
+  "marketplace": "www.amazon.de",
+  "pages_retained": true,
+  "run_id": "20260918T120542Z-www.amazon.de-13fe3a7e",
+  "search_pages_retained": true,
+  "settings": {
+    "ADDONS": [
+      "shopping_advisor.addons.BundledPublicSuffixList"
+    ],
+    "AUTOTHROTTLE_ENABLED": true,
+    "AUTOTHROTTLE_MAX_DELAY": 30,
+    "AUTOTHROTTLE_START_DELAY": 9,
+    "AUTOTHROTTLE_TARGET_CONCURRENCY": 0.3,
+    "BOT_NAME": "shopping_advisor",
+    "CLOSESPIDER_ITEMCOUNT": 0,
+    "CLOSESPIDER_PAGECOUNT": 0,
+    "CLOSESPIDER_TIMEOUT": "840",
+    "CONCURRENT_REQUESTS": 1,
+    "CONCURRENT_REQUESTS_PER_DOMAIN": 1,
+    "DEFAULT_REQUEST_HEADERS": {
+      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+      "Accept-Language": "de-DE,de;q=0.9,en;q=0.8",
+      "Upgrade-Insecure-Requests": "1"
+    },
+    "DEPTH_LIMIT": 0,
+    "DOWNLOADER_MIDDLEWARES": [
+      "scrapy.downloadermiddlewares.retry.RetryMiddleware"
+    ],
+    "DOWNLOAD_DELAY": 9.0,
+    "DOWNLOAD_DELAY_JITTER": 0.5,
+    "DOWNLOAD_TIMEOUT": 30,
+    "EXTENSIONS": [],
+    "HTTPCACHE_ENABLED": false,
+    "RANDOMIZE_DOWNLOAD_DELAY": true,
+    "RETRY_ENABLED": true,
+    "RETRY_TIMES": 2,
+    "ROBOTSTXT_OBEY": false,
+    "SETTINGS_PROFILE": "baseline",
+    "USER_AGENT": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+    "proxy_middleware": false
+  },
+  "spider": "amazon_product",
+  "started_at": "2026-09-18T12:05:42+00:00",
+  "state": "closed",
+  "stats": {
+    "amazon/discovery/occurrences": 42,
+    "amazon/discovery/repeat_sighting": 2,
+    "amazon/discovery/sponsored": 10,
+    "amazon/field/aplus": 19,
+    "amazon/field/brand": 20,
+    "amazon/field/breadcrumbs": 20,
+    "amazon/field/country_of_origin": 14,
+    "amazon/field/description": 4,
+    "amazon/field/feature_bullets": 20,
+    "amazon/field/images": 20,
+    "amazon/field/price": 20,
+    "amazon/field/rating": 20,
+    "amazon/field/rating_count": 20,
+    "amazon/field/raw_tables": 20,
+    "amazon/field/review_histogram": 20,
+    "amazon/field/review_sample": 19,
+    "amazon/field/title": 20,
+    "amazon/field/total_quantity": 4,
+    "amazon/field/variation": 16,
+    "amazon/pdp_items": 20,
+    "amazon/product_urls_discovered": 42,
+    "amazon/search_pages_parsed": 2,
+    "downloader/request_bytes": 23517,
+    "downloader/request_count": 22,
+    "downloader/request_method_count/GET": 22,
+    "downloader/response_bytes": 10473618,
+    "downloader/response_count": 22,
+    "downloader/response_status_count/200": 22,
+    "elapsed_time_seconds": 234.65388037500088,
+    "feedexport/success_count/FileFeedStorage": 1,
+    "finish_reason": "finished",
+    "httpcompression/response_bytes": 56902085,
+    "httpcompression/response_count": 22,
+    "item_scraped_count": 20,
+    "items_per_minute": 5.128205128205129,
+    "log_count/INFO": 8,
+    "memusage/max": 338214912,
+    "memusage/startup": 93339648,
+    "request_depth_max": 2,
+    "response_received_count": 22,
+    "responses_per_minute": 5.641025641025641,
+    "scheduler/dequeued": 22,
+    "scheduler/dequeued/memory": 22,
+    "scheduler/enqueued": 22,
+    "scheduler/enqueued/memory": 22
+  }
+}

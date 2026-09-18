@@ -1,0 +1,143 @@
+{
+  "arguments": {
+    "asin": [],
+    "domain": "www.amazon.de",
+    "keep_pages": true,
+    "keep_search_pages": true,
+    "keyword": [
+      "Garmin Descent Mk3",
+      "Garmin Descent G1",
+      "Garmin fenix 8",
+      "Garmin tactix 8",
+      "Huawei Watch Ultimate"
+    ],
+    "max_pages": 1,
+    "max_products_per_query": 6
+  },
+  "code": {
+    "extraction_schema_version": 6,
+    "git_dirty": false,
+    "git_revision": "ee3eddf1aad9bb805b785cc452fb437ef6088b2c",
+    "lock_sha256": "e24bc67da2dba6c49538700bc8bce61658748c715e9103603f537c15694a32cd",
+    "python": "3.14.6",
+    "scrapy": "2.19.0",
+    "validated_contract_version": 2
+  },
+  "counts": {
+    "discovery_occurrences": 184,
+    "failure_samples_over_cap": 0,
+    "failure_samples_saved": 0,
+    "page_write_errors": 0,
+    "pages_quarantined": 0,
+    "pages_saved": 30,
+    "redaction_failures": 0,
+    "search_pages_saved": 5
+  },
+  "feeds": [
+    {
+      "format": "jsonl",
+      "overwrite": true,
+      "uri": "data/smartwatch/probe-2.jsonl"
+    }
+  ],
+  "finish_reason": "finished",
+  "finished_at": "2026-09-18T12:17:12+00:00",
+  "locale": {
+    "accept_language": "de-DE,de;q=0.9,en;q=0.8",
+    "expected_language": "de",
+    "language": "de",
+    "status": "matches"
+  },
+  "manifest_version": 2,
+  "marketplace": "www.amazon.de",
+  "pages_retained": true,
+  "run_id": "20260918T121109Z-www.amazon.de-ed25ac38",
+  "search_pages_retained": true,
+  "settings": {
+    "ADDONS": [
+      "shopping_advisor.addons.BundledPublicSuffixList"
+    ],
+    "AUTOTHROTTLE_ENABLED": true,
+    "AUTOTHROTTLE_MAX_DELAY": 30,
+    "AUTOTHROTTLE_START_DELAY": 9,
+    "AUTOTHROTTLE_TARGET_CONCURRENCY": 0.3,
+    "BOT_NAME": "shopping_advisor",
+    "CLOSESPIDER_ITEMCOUNT": 0,
+    "CLOSESPIDER_PAGECOUNT": 0,
+    "CLOSESPIDER_TIMEOUT": "840",
+    "CONCURRENT_REQUESTS": 1,
+    "CONCURRENT_REQUESTS_PER_DOMAIN": 1,
+    "DEFAULT_REQUEST_HEADERS": {
+      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+      "Accept-Language": "de-DE,de;q=0.9,en;q=0.8",
+      "Upgrade-Insecure-Requests": "1"
+    },
+    "DEPTH_LIMIT": 0,
+    "DOWNLOADER_MIDDLEWARES": [
+      "scrapy.downloadermiddlewares.retry.RetryMiddleware"
+    ],
+    "DOWNLOAD_DELAY": 9.0,
+    "DOWNLOAD_DELAY_JITTER": 0.5,
+    "DOWNLOAD_TIMEOUT": 30,
+    "EXTENSIONS": [],
+    "HTTPCACHE_ENABLED": false,
+    "RANDOMIZE_DOWNLOAD_DELAY": true,
+    "RETRY_ENABLED": true,
+    "RETRY_TIMES": 2,
+    "ROBOTSTXT_OBEY": false,
+    "SETTINGS_PROFILE": "baseline",
+    "USER_AGENT": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+    "proxy_middleware": false
+  },
+  "spider": "amazon_product",
+  "started_at": "2026-09-18T12:11:09+00:00",
+  "state": "closed",
+  "stats": {
+    "amazon/discovery/occurrences": 184,
+    "amazon/discovery/repeat_sighting": 21,
+    "amazon/discovery/sponsored": 72,
+    "amazon/field/aplus": 22,
+    "amazon/field/brand": 30,
+    "amazon/field/breadcrumbs": 28,
+    "amazon/field/country_of_origin": 20,
+    "amazon/field/description": 8,
+    "amazon/field/feature_bullets": 29,
+    "amazon/field/images": 30,
+    "amazon/field/price": 29,
+    "amazon/field/rating": 29,
+    "amazon/field/rating_count": 29,
+    "amazon/field/raw_tables": 30,
+    "amazon/field/review_histogram": 29,
+    "amazon/field/review_sample": 29,
+    "amazon/field/title": 30,
+    "amazon/field/total_quantity": 16,
+    "amazon/field/unit_price": 2,
+    "amazon/field/variation": 29,
+    "amazon/pdp_items": 30,
+    "amazon/product_urls_discovered": 184,
+    "amazon/search_pages_parsed": 5,
+    "downloader/request_bytes": 37725,
+    "downloader/request_count": 35,
+    "downloader/request_method_count/GET": 35,
+    "downloader/response_bytes": 15720895,
+    "downloader/response_count": 35,
+    "downloader/response_status_count/200": 35,
+    "elapsed_time_seconds": 363.4638678749907,
+    "feedexport/success_count/FileFeedStorage": 1,
+    "finish_reason": "finished",
+    "httpcompression/response_bytes": 88083782,
+    "httpcompression/response_count": 35,
+    "item_scraped_count": 30,
+    "items_per_minute": 4.958677685950414,
+    "log_count/INFO": 14,
+    "memusage/max": 435355648,
+    "memusage/startup": 92962816,
+    "request_depth_max": 5,
+    "response_received_count": 35,
+    "responses_per_minute": 5.785123966942149,
+    "scheduler/dequeued": 35,
+    "scheduler/dequeued/memory": 35,
+    "scheduler/enqueued": 35,
+    "scheduler/enqueued/memory": 35
+  }
+}

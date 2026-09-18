@@ -4,7 +4,10 @@ Crawl output that a roadmap decision rests on, committed so the numbers in
 [`../../ROADMAP.md`](../../ROADMAP.md) can be re-derived rather than taken on
 trust. Everything else under `data/` is working output and stays out of git —
 a run retains roughly 390 KB gzipped per product page, which does not belong
-in a history.
+in a history. The same rule kept the third R13 trial's plan revisions,
+intake reviews and buyer report out: their digest is the R13 entries in the
+roadmap, and the six `probe-amazon-de-smartwatch-*` files below are the only
+part of that trial whose value outlives the roadmap text.
 
 | File | What it is |
 |---|---|
@@ -21,6 +24,12 @@ in a history.
 | `validation-amazon-de-mounting-paste-2026-09-15-v6.manifest.json` | That crawl's manifest. |
 | `validation-amazon-de-mounting-paste-2026-09-15-v7.jsonl.gz` | 54 records: a deeper brand crawl (3 queries, 2 pages) plus the first two products fetched by ASIN rather than found by search. It contains `B086BX8M3C`, which **thirteen queries across five crawls never surfaced** — including the three that name the brand. |
 | `validation-amazon-de-mounting-paste-2026-09-15-v7.manifest.json` | The manifest of the ASIN fetch, kept in preference to the search run's because it is the first run in this repository whose `arguments.asin` is populated. |
+| `probe-amazon-de-smartwatch-2026-09-18-class.jsonl.gz` | 20 product records from two class queries (`Smartwatch Tauchcomputer`, `Tauchcomputer Uhr GPS NFC`), first page each, on Amazon.de: the shelf-discovered baseline of the third R13 conversational trial. It holds the three dive-capable smartwatches the class queries surfaced (Suunto Ocean, Suunto Nautic S, Garmin Descent G2), five pure dive computers and cheap 5 ATM watches that a `smartwatch` classifier would have to decline. No category reads it yet; it is the record set an R15 task-experiment category for smartwatches would be built and tested against. |
+| `probe-amazon-de-smartwatch-2026-09-18-class.manifest.json` | That crawl's manifest: 22 responses, 2 search pages retained, no challenges. |
+| `probe-amazon-de-smartwatch-2026-09-18-named.jsonl.gz` | 30 product records from five named-model queries (Garmin Descent Mk3, Descent G1, fenix 8, tactix 8, Huawei Watch Ultimate). The candidates here were supplied by the operating agent from manufacturer documentation and confirmed on the shelf, not discovered — the session ledger of the trial records that as selection bias. It contains the counterexamples a smartwatch category needs: accessories and straps returned for watch queries, the fenix E (no dive features), Apple Watch Ultra 3 (iPhone only) and Garmin Instinct models (10 ATM, no scuba mode). |
+| `probe-amazon-de-smartwatch-2026-09-18-named.manifest.json` | That crawl's manifest: 35 responses, 5 search pages retained, 184 discovery occurrences. |
+| `probe-amazon-de-smartwatch-2026-09-18-asin.jsonl.gz` | 7 product records fetched by ASIN: the models the named-model search pages sighted but did not open (Descent Mk3 43 mm in steel and bronze titanium, Descent Mk3i 51 mm, Descent G1, fenix 9, fenix 8 Pro, Huawei Watch Ultimate 2). Two of them list without a price. |
+| `probe-amazon-de-smartwatch-2026-09-18-asin.manifest.json` | That crawl's manifest: 7 responses, `arguments.asin` populated, no search. |
 
 ## Reading them
 
