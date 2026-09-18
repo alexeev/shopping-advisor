@@ -99,7 +99,7 @@ class SessionCase(unittest.TestCase):
 
 class Contract(SessionCase):
     def test_closed_fields_and_vocabularies(self):
-        for change in (lambda l: l.update(session_version=2),
+        for change in (lambda l: l.update(session_version=3),
                        lambda l: l.update(scheduler='cron'),
                        lambda l: l.update(revision=2),
                        lambda l: l['limits'][0].update(unit='megabytes'),
@@ -214,7 +214,7 @@ class Contract(SessionCase):
 
     def test_the_contract_is_discovered_and_pinned(self):
         self.assertEqual(maintenance._contract_versions()['session_ledger'], session.SESSION_VERSION)
-        with patch.object(session, 'SESSION_VERSION', 2):
+        with patch.object(session, 'SESSION_VERSION', session.SESSION_VERSION + 1):
             findings = maintenance.check_contracts(maintenance.load_baseline()).findings
             self.assertTrue(any(f.code == 'contract_version' and 'session_ledger' in f.message for f in findings))
 

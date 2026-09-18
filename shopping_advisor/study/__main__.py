@@ -26,10 +26,11 @@ import argparse
 import json
 from pathlib import Path
 from . import audit, delivery, delivery_review, gates, intake, intake_review, session
-from . import capabilities
+from . import adaptation, capabilities, trial
 from .controls import catalogue
 from ..provenance import write_json_atomically
 from .bundle import artifact_digests, code_caveats
+from ..provenance import sha256_file
 import datetime as _dt
 import sys
 import os
@@ -85,7 +86,8 @@ def run_command(args):
                                     root=args.root, force=args.force,
                                     started_at=started, finished_at=_now(), evidence=args.evidence,
                                     plan=args.plan, session_ledger=args.session,
-                                    plan_review=args.intake_review)
+                                    plan_review=args.intake_review,
+                                    adaptation_record=args.adaptation, trial=args.trial)
     counts = manifest['counts']
     label = manifest['outcome']
     if manifest.get('stop'):
@@ -113,6 +115,12 @@ def run_command(args):
         print(f'  intake review {manifest["intake_review"]["status"]}'
               + ('; pending is not approval' if manifest['intake_review']['status']
                  != intake_review.PASS else ''))
+    if manifest.get('adaptation'):
+        bound = manifest['adaptation']
+        print(f'  adaptation    {bound["id"]} ({bound["layer"]}; method '
+              f'{bound["descriptor_sha256"][:12]}; adoption {bound["adoption"]}'
+              + ('; a trial measures a patch, it delivers nothing' if bound['adoption'] != 'accepted' else '')
+              + ')')
     return 0
 
 
@@ -351,7 +359,8 @@ def session_record_command(args):
                    consumption=consumption, assume_allocation=args.assume_allocation,
                    started_at=args.started_at or '', finished_at=args.finished_at or '',
                    result=json.loads(args.result) if args.result else None,
-                   promotion=json.loads(args.promotion) if args.promotion else None)
+                   promotion=json.loads(args.promotion) if args.promotion else None,
+                   adaptation_record=args.adaptation)
     write_json_atomically(args.ledger, ledger)
     action = next(a for a in ledger['actions'] if a['id'] == args.action)
     print(f'{args.action}: {action["state"]}; consumption from {action["consumption_source"]}'
@@ -613,7 +622,224 @@ def plan_bind_command(args):
     return 0
 
 
+
+
+# ---------------------------------------------------------------------------
+# R15: adaptation inside a study
+# ---------------------------------------------------------------------------
+
+def _print_record(record):
+    patch, checks = record['patch'], record['checks']
+    print(f'{record["id"]}  [{record["layer"]}; adoption {record["adoption"]["decision"]}; '
+          f'review {record["review"]["verdict"]}]')
+    print(f'  origin        {record["origin"]["session_id"]}/{record["origin"]["action_id"]}'
+          + (f'; plan {record["origin"]["plan_id"]} r{record["origin"]["plan_revision"]}'
+             if record['origin']['plan_id'] else ''))
+    print(f'  budget        {record["budget"]["seconds"]} s, {record["budget"]["attempts"]} attempt(s); '
+          f'used {record["consumption"]["seconds"] if record["consumption"]["seconds"] is not None else "unknown"} s, '
+          f'{record["attempts"]} attempt(s)')
+    print(f'  base          {record["base"]["git_revision"][:12] or "(no git revision)"} '
+          f'tree {record["base"]["tree_sha256"][:12] or "(not captured)"}')
+    print(f'  patch         {len(patch["files"])} file(s) {patch["sha256"][:12] or ""}; '
+          f'result tree {record["result_tree_sha256"][:12] or "(not captured)"}; '
+          f'method {record["descriptor_sha256"][:12]}')
+    print(f'  evaluator     {"frozen" if record["evaluator"]["frozen"] else "NOT proven frozen" if record["evaluator"]["frozen"] is False else "not checked"}'
+          f' ({len(record["evaluator"]["files"])} file(s))')
+    if record['inspection']:
+        flagged = {k: v for k, v in record['inspection']['flags'].items() if v}
+        print(f'  inspection    ' + (', '.join(f'{k} ×{len(v)}' for k, v in flagged.items()) or 'nothing flagged'))
+        for finding in record['inspection']['findings']:
+            print(f'    finding     {finding}')
+    for index, check in enumerate(checks):
+        print(f'  check {index:<7} {" ".join(check["command"])[:70]} → {check["summary"]} '
+              f'({check["seconds"]:g} s, {check["boundary"]})')
+    if record['runner']['boundary']:
+        print(f'  runner        {record["runner"]["boundary"]}; profile {record["runner"]["profile_sha256"][:12]}; '
+              f'timeout {record["runner"]["timeout_seconds"]} s'
+              + (f'; exception: {record["runner"]["exception"]}' if record['runner']['exception'] else ''))
+    if record['rollback']['demonstrated']:
+        print(f'  rollback      demonstrated at {record["rollback"]["demonstrated_at"]}')
+
+
+def adaptation_template_command(args):
+    """``adaptation-template`` -- name the gap; capture and run nothing yet."""
+    ledger = session.load(args.session)
+    if not session.executes(ledger):
+        raise adaptation.AdaptationError(f'{args.session} is a v{ledger["session_version"]} ledger; '
+                                         f'engineering executes only under session ledger v2')
+    action = next((a for a in ledger['actions'] if a['id'] == args.action), None)
+    if action is None or action['kind'] != 'engineering':
+        raise adaptation.AdaptationError(f'{args.action} is not an engineering action of {ledger["id"]}')
+    plan = intake.load(args.plan) if args.plan else None
+    record = adaptation.template(args.id, args.layer, args.hypothesis, ledger['id'], args.action,
+                                 args.seconds, args.attempts, plan=plan)
+    write_json_atomically(args.output, record)
+    _print_record(record)
+    print(f'  written       {args.output}; next: patch in a worktree, then adaptation-capture')
+    return 0
+
+
+def adaptation_capture_command(args):
+    """``adaptation-capture`` -- the patch as an archive, inspected before any import."""
+    record = adaptation.load(args.record)
+    captured = trial.capture(args.base, args.worktree)
+    record['base'] = captured['base']
+    record['patch']['files'] = captured['files']
+    record['result_tree_sha256'] = captured['result_tree_sha256']
+    record['lock_sha256'] = captured['lock_sha256']
+    record['evaluator'] = captured['evaluator']
+    record['inspection'] = trial.inspect(captured['files'], args.base)
+    if args.method_versions:
+        record['method_versions'] = json.loads(args.method_versions)
+    if not captured['files']:
+        raise trial.TrialError(f'{args.worktree} does not differ from {args.base}: nothing to capture')
+    adaptation.seal(record)
+    write_json_atomically(args.record, record)
+    _print_record(record)
+    blocked = record['inspection']['flags']['evaluator'] or not record['evaluator']['frozen']
+    if blocked:
+        print('  refused       the patch touches the evaluator set, or the set is not byte-identical to '
+              'the base revision: this change goes through ordinary maintenance, not an adaptation')
+    return 1 if blocked else 0
+
+
+def adaptation_probe_command(args):
+    """``adaptation-probe`` -- demonstrate the boundary with failure cases."""
+    interpreter = args.interpreter or str(Path(args.venv) / 'bin' / 'python')
+    result = trial.probe(args.worktree, args.scratch, interpreter, args.venv, args.outside)
+    print(f'boundary probe  [{"demonstrated" if result["demonstrated"] else "NOT demonstrated"}]')
+    for name, expected in result['expected'].items():
+        observed = result['results'].get(name, 'no answer')
+        print(f'  {name:<14}{observed:<24}{"" if observed == expected else f"expected {expected}"}')
+    print(f'  leaked        {"yes" if result["leaked"] else "no file appeared outside the scratch directory"}')
+    print(f'  profile       {result["profile_sha256"][:12]}; exit {result["check"]["exit"]}; '
+          f'{result["check"]["seconds"]:g} s; log {result["check"]["output_path"]}')
+    return 0 if result['demonstrated'] else 1
+
+
+def adaptation_run_command(args):
+    """``adaptation-run RECORD -- COMMAND`` -- one check inside the boundary, recorded."""
+    if not args.command:
+        raise trial.TrialError('name the command after `--`, e.g. `-- python -m unittest discover -s tests`')
+    record = adaptation.load(args.record)
+    if record['inspection'] is None or not record['patch']['files']:
+        raise trial.TrialError('capture and inspect the patch before running anything from it')
+    if record['inspection']['flags']['evaluator']:
+        raise trial.TrialError('the patch touches the evaluator set; it is not run as an adaptation')
+    if record['attempts'] >= record['budget']['attempts']:
+        raise trial.TrialError(f'{record["attempts"]} of {record["budget"]["attempts"]} attempts used: '
+                               f'exhaustion stops new work. The record keeps what was done')
+    spent = record['consumption']['seconds'] or 0
+    if spent >= record['budget']['seconds']:
+        raise trial.TrialError(f'{spent:g} of {record["budget"]["seconds"]} seconds used: exhaustion '
+                               f'stops new work. The record keeps what was done')
+    worktree, scratch = Path(args.worktree), Path(args.scratch)
+    if trial.evaluator_digest(worktree) != record['evaluator']['base_sha256']:
+        record['evaluator']['frozen'] = False
+        adaptation.seal(record)
+        write_json_atomically(args.record, record)
+        raise trial.TrialError('the evaluator set in the worktree is not the base revision\'s: a gate '
+                               'the patch may have rewritten judges nothing. Refused, and recorded')
+    interpreter = args.interpreter or str(Path(args.venv) / 'bin' / 'python')
+    boundary = 'harness-only' if args.exception else 'kernel'
+    profile_path = None
+    if boundary == 'kernel':
+        if not trial.available():
+            raise trial.TrialError('no kernel boundary can be demonstrated here (sandbox-exec is absent '
+                                   'or refused). The default is to stop: record the blocker. The '
+                                   'maintainer may record an exception and pass --exception, which '
+                                   'labels the check harness-only and counts toward no Done-when')
+        scratch.mkdir(parents=True, exist_ok=True)
+        profile_path = scratch / 'profile.sb'
+        profile_path.write_text(trial.profile(worktree, scratch, interpreter, args.venv), encoding='utf-8')
+    timeout = args.timeout or min(record['budget']['seconds'] - spent, 3600)
+    check = trial.execute(args.command, worktree, scratch, timeout, profile_path, interpreter, boundary)
+    record['checks'].append(check)
+    record['attempts'] += 1
+    record['consumption']['seconds'] = round(spent + check['seconds'], 3)
+    record['runner'] = {'boundary': boundary,
+                        'profile_sha256': sha256_file(profile_path) if profile_path else '',
+                        'interpreter': interpreter, 'tmpdir': str(scratch / 'tmp'),
+                        'timeout_seconds': int(timeout), 'exception': args.exception or ''}
+    if check['timed_out'] and record['adoption']['decision'] == 'pending':
+        pass  # the record says interrupted through the check; adoption stays the maintainer's
+    adaptation.seal(record)
+    write_json_atomically(args.record, record)
+    _print_record(record)
+    return 0 if check['exit'] == 0 else 1
+
+
+def adaptation_review_command(args):
+    """``adaptation-review`` -- a reviewer's verdict, bound to the patch and checks it read."""
+    record = adaptation.load(args.record)
+    record['review'] = {'reviewer': args.reviewer, 'verdict': args.verdict,
+                        'findings': list(args.finding or []),
+                        'patch_sha256': record['patch']['sha256'],
+                        'checks_sha256': adaptation.checks_digest(record)}
+    adaptation.seal(record)
+    write_json_atomically(args.record, record)
+    _print_record(record)
+    return 0
+
+
+def adaptation_adopt_command(args):
+    """``adaptation-adopt`` -- the decision, by a role, once."""
+    record = adaptation.load(args.record)
+    if record['adoption']['decision'] != 'pending':
+        raise adaptation.AdaptationError(f'{record["id"]} is already {record["adoption"]["decision"]}; '
+                                         f'a decision is recorded once')
+    record['adoption'] = {'decision': args.decision, 'decided': _now(), 'by': args.by,
+                          'reason': args.reason}
+    adaptation.seal(record)
+    write_json_atomically(args.record, record)
+    _print_record(record)
+    return 0
+
+
+def adaptation_rollback_command(args):
+    """``adaptation-rollback`` -- prove the base still stands: tree, evaluator, gate."""
+    record = adaptation.load(args.record)
+    base = Path(args.base)
+    problems = []
+    if trial.tree_digest(base) != record['base']['tree_sha256']:
+        problems.append('the base tree is not the tree the record captured')
+    if trial.evaluator_digest(base) != record['evaluator']['base_sha256']:
+        problems.append('the evaluator set at the base is not the one the record captured')
+    if problems:
+        print('rollback  [NOT demonstrated]')
+        for problem in problems:
+            print(f'  {problem}')
+        return 1
+    if not args.skip_gate:
+        import subprocess
+        done = subprocess.run((sys.executable, '-m', 'shopping_advisor', 'maintenance', 'check'),
+                              cwd=base, capture_output=True, text=True, timeout=3600)
+        if done.returncode != 0:
+            print('rollback  [NOT demonstrated]: the gate does not pass at the base')
+            print(done.stdout[-2000:])
+            return 1
+    record['rollback'] = {'instructions': list(args.instruction or record['rollback']['instructions']),
+                          'demonstrated': True, 'demonstrated_at': _now()}
+    adaptation.seal(record)
+    write_json_atomically(args.record, record)
+    print(f'rollback  [demonstrated at {record["rollback"]["demonstrated_at"]}]: the base tree, its '
+          f'evaluator set and the gate stand as the record captured them')
+    return 0
+
+
+def adaptation_check_command(args):
+    """``adaptation-check RECORD`` -- validate and print the record."""
+    _print_record(adaptation.load(args.record))
+    return 0
+
 def main(argv=None):
+    argv = list(sys.argv[1:] if argv is None else argv)
+    # ``adaptation-run RECORD [options] -- COMMAND...``: the command after the
+    # separator is the trial's, not this parser's, and is handed over whole.
+    trial_command = []
+    if argv and argv[0] == 'adaptation-run' and '--' in argv:
+        separator = argv.index('--')
+        trial_command, argv = argv[separator + 1:], argv[:separator]
     parser = argparse.ArgumentParser(
         prog='shopping_advisor.study',
         description='Persist and replay a research study, offline.')
@@ -682,6 +908,12 @@ def main(argv=None):
     running.add_argument('--intake-review',
                          help='intake review bound to the plan, snapshotted inside the bundle; '
                               'a review recording a failure refuses the run')
+    running.add_argument('--adaptation',
+                         help='R15: the adaptation record whose method this study rests on; '
+                              'its descriptor enters the study id and the record travels in the bundle')
+    running.add_argument('--trial', action='store_true',
+                         help='run on an adaptation that is not yet adopted, to measure its patch; '
+                              'the manifest says so and the bundle delivers nothing')
     running.set_defaults(handler=run_command)
 
     ledger_check = commands.add_parser(
@@ -702,6 +934,9 @@ def main(argv=None):
     recording.add_argument('ledger')
     recording.add_argument('action')
     recording.add_argument('--run', help='crawl run directory whose manifest reports the consumption')
+    recording.add_argument('--adaptation',
+                           help='engineering (ledger v2): the adaptation record whose checks report '
+                                'the seconds and attempts')
     recording.add_argument('--state', choices=session.DONE,
                            help='without a run: whether it completed or was interrupted')
     recording.add_argument('--consumption', help='without a run: JSON table of unit -> amount, declared')
@@ -771,7 +1006,72 @@ def main(argv=None):
     reviewing_delivery.add_argument('review', help='delivery review JSON bound to one event of this bundle')
     reviewing_delivery.add_argument('--input-root', default='')
     reviewing_delivery.set_defaults(handler=review_delivery_command)
+    adapting = commands.add_parser(
+        'adaptation-template', help='R15: a new adaptation record naming the gap, the ledger action and the budget')
+    adapting.add_argument('id', help='slug for the adaptation')
+    adapting.add_argument('--session', required=True, help='session ledger (v2) holding the engineering action')
+    adapting.add_argument('--action', required=True, help='the engineering action id in that ledger')
+    adapting.add_argument('--layer', required=True, choices=adaptation.LAYERS)
+    adapting.add_argument('--hypothesis', required=True, help='what the patch is expected to change, and why')
+    adapting.add_argument('--seconds', required=True, type=int, help='budget in seconds of runner time')
+    adapting.add_argument('--attempts', required=True, type=int, help='budget in checks run')
+    adapting.add_argument('--plan', help='the intake plan revision the gap was found in')
+    adapting.add_argument('-o', '--output', required=True, help='new JSON record path')
+    adapting.set_defaults(handler=adaptation_template_command)
+    capturing = commands.add_parser(
+        'adaptation-capture', help='R15: archive the patch between a base tree and a worktree and inspect it statically')
+    capturing.add_argument('record')
+    capturing.add_argument('--base', required=True, help='the base checkout (trusted side)')
+    capturing.add_argument('--worktree', required=True, help='the patched worktree')
+    capturing.add_argument('--method-versions', help='JSON table of capability key -> method version the patch declares')
+    capturing.set_defaults(handler=adaptation_capture_command)
+    probing = commands.add_parser(
+        'adaptation-probe', help='R15: demonstrate the execution boundary with failure cases')
+    probing.add_argument('--worktree', required=True)
+    probing.add_argument('--scratch', required=True, help='the one writable directory, inside the worktree')
+    probing.add_argument('--venv', default='.venv', help='the locked virtual environment to read')
+    probing.add_argument('--interpreter', default='', help='default: <venv>/bin/python')
+    probing.add_argument('--outside', required=True, help='a directory outside the worktree the probe must not reach')
+    probing.set_defaults(handler=adaptation_probe_command)
+    running_check = commands.add_parser(
+        'adaptation-run', help='R15: run one check on the patched worktree inside the boundary and record it')
+    running_check.add_argument('record')
+    running_check.add_argument('--worktree', required=True)
+    running_check.add_argument('--scratch', required=True, help='the one writable directory, inside the worktree')
+    running_check.add_argument('--venv', default='.venv')
+    running_check.add_argument('--interpreter', default='')
+    running_check.add_argument('--timeout', type=int, default=0, help='seconds; default: the remaining budget')
+    running_check.add_argument('--exception', default='',
+                               help='the maintainer\'s recorded exception (ledger revision or message ref) '
+                                    'that permits a harness-only boundary; the check is labelled so')
+    running_check.set_defaults(handler=adaptation_run_command, command=[])
+    reviewing_adaptation = commands.add_parser(
+        'adaptation-review', help='R15: record a reviewer\'s verdict bound to the patch and checks as they stand')
+    reviewing_adaptation.add_argument('record')
+    reviewing_adaptation.add_argument('--reviewer', required=True)
+    reviewing_adaptation.add_argument('--verdict', required=True, choices=[v for v in adaptation.VERDICTS if v != 'pending'])
+    reviewing_adaptation.add_argument('--finding', action='append', help='one finding; repeat')
+    reviewing_adaptation.set_defaults(handler=adaptation_review_command)
+    adopting = commands.add_parser(
+        'adaptation-adopt', help='R15: record the adoption decision, once, by a role')
+    adopting.add_argument('record')
+    adopting.add_argument('--decision', required=True, choices=[d for d in adaptation.DECISIONS if d != 'pending'])
+    adopting.add_argument('--by', required=True, help='the deciding role, never a person')
+    adopting.add_argument('--reason', required=True)
+    adopting.set_defaults(handler=adaptation_adopt_command)
+    rolling_back = commands.add_parser(
+        'adaptation-rollback', help='R15: demonstrate that the base tree, its evaluator and the gate still stand')
+    rolling_back.add_argument('record')
+    rolling_back.add_argument('--base', required=True)
+    rolling_back.add_argument('--instruction', action='append', help='one rollback instruction; repeat')
+    rolling_back.add_argument('--skip-gate', action='store_true', help='digests only; do not run the gate at the base')
+    rolling_back.set_defaults(handler=adaptation_rollback_command)
+    checking_adaptation = commands.add_parser('adaptation-check', help='R15: validate and print an adaptation record')
+    checking_adaptation.add_argument('record')
+    checking_adaptation.set_defaults(handler=adaptation_check_command)
     args = parser.parse_args(argv)
+    if trial_command:
+        args.command = trial_command
     try:
         return args.handler(args)
     except (BriefError, BundleError, StudyError, audit.AuditError,

@@ -445,6 +445,109 @@ assumed complete. The committed
 ledger holds an interrupted collection recorded conservatively, a resumed
 collection the remaining responses prevent, and a retained engineering proposal.
 
+### Adapt inside a study
+
+When a study finds that the repository lacks what the question needs — a
+category, a parser, a comparison method — the gap is an engineering proposal
+in the session ledger (`kind: engineering`, state `planned`), against an
+engineering allowance the research allowance never funds. Closing it inside
+the study is [R15](ROADMAP.md#r15--controlled-task-driven-capability-adaptation)'s
+procedure, and its contract is
+[CONTRACT §15](CONTRACT.md#15-adaptation-record-v1-and-session-ledger-v2-r15-phase-0).
+The shape is the maintenance workflow with three things added: the patch is
+captured whole before anything imports it, every check runs inside a declared
+boundary, and the study that rests on the patch carries the method in its id.
+Nothing below authorises anything by itself: the ledger must be **v2**, the
+engineering limit must be funded by the maintainer's recorded decision, and
+the action must pass `session-authorise` like any other.
+
+```text
+uv run --offline --locked python -m shopping_advisor.study session-authorise data/sessions/<session>.json <engineer-action> --record
+uv run --offline --locked python -m shopping_advisor.study adaptation-template <id> --session data/sessions/<session>.json --action <engineer-action> --layer category --hypothesis "..." --seconds 14400 --attempts 3 --plan data/plans/<plan>.json -o data/adaptations/<id>.json
+git worktree add --detach ../<id>-base HEAD
+git worktree add --detach ../<id>-trial HEAD
+```
+
+Patch the trial worktree and nothing else; the base worktree is the trusted
+side and stays untouched. Then capture, inspect and demonstrate the boundary
+before the first import:
+
+```text
+uv run --offline --locked python -m shopping_advisor.study adaptation-capture data/adaptations/<id>.json --base ../<id>-base --worktree ../<id>-trial
+uv run --offline --locked python -m shopping_advisor.study adaptation-probe --worktree ../<id>-trial --scratch ../<id>-trial/data/r15-scratch --outside /private/tmp/<id>-outside
+```
+
+`adaptation-capture` archives every added, modified and deleted file with its
+content, digests both trees and the lock, reads the changed Python for
+import-time work, network, subprocess and file writes, and **refuses** (exit 1)
+a patch that touches the evaluator set — the maintenance gate, its test module,
+the baseline, the project file, the lock — or a worktree whose copies of that
+set are not byte-identical to the base. That change is ordinary maintenance;
+a gate the patch may rewrite judges nothing. `adaptation-probe` must report
+`demonstrated`: a read and a write outside the tree, a write to the tree, a
+socket connection and a read of the home directory refused, the scratch write
+allowed. Where it does not, stop and record the blocker; do not run the patch
+in a weaker mode and call it the boundary.
+
+Run the checks inside the boundary, each one recorded with its exit, its
+seconds and its output digest, and each one an attempt against the budget:
+
+```text
+uv run --offline --locked python -m shopping_advisor.study adaptation-run data/adaptations/<id>.json --worktree ../<id>-trial --scratch ../<id>-trial/data/r15-scratch -- python -m unittest discover -s tests
+uv run --offline --locked python -m shopping_advisor.study adaptation-run data/adaptations/<id>.json --worktree ../<id>-trial --scratch ../<id>-trial/data/r15-scratch -- python -m shopping_advisor maintenance check
+```
+
+The gate inside the trial compares against the base revision's baseline,
+because the baseline is in the frozen evaluator set: a new category is
+`capability_untracked` and a new test module moves the floor, and both are
+findings the record keeps. The baseline is re-recorded **at adoption**, in the
+main checkout, as its own explained part of the change — never from inside the
+trial. A check that exceeds the timeout is killed with every child it spawned
+and recorded with no exit status; it is not a pass, and the next attempt is a
+new one. When the attempts or the seconds are spent, `adaptation-run` refuses
+and the record keeps what was done.
+
+Review, adopt, account, and only then run a study on the method:
+
+```text
+uv run --offline --locked python -m shopping_advisor.study adaptation-review data/adaptations/<id>.json --reviewer "<role>" --verdict pass --finding "..."
+uv run --offline --locked python -m shopping_advisor.study adaptation-adopt data/adaptations/<id>.json --decision accepted --by "repository maintainer" --reason "..."
+uv run --offline --locked python -m shopping_advisor.study session-record data/sessions/<session>.json <engineer-action> --adaptation data/adaptations/<id>.json
+uv run --offline --locked python -m shopping_advisor.study run <brief> --plan data/plans/<plan>.json --session data/sessions/<session>.json --adaptation data/adaptations/<id>.json
+uv run --offline --locked python -m shopping_advisor.study adaptation-rollback data/adaptations/<id>.json --base ../<id>-base
+```
+
+The review binds the patch digest and the checks digest it read; a patch
+edited or a check run afterwards makes the record refuse to load until the
+review is reissued. `accepted` needs a passing review, a frozen evaluator and a
+last check that finished with exit 0. `run --adaptation` refuses a record that
+is not accepted — `--trial` runs it anyway to measure the patch, and the
+manifest says `adoption: pending` — and the study id it writes carries the
+method descriptor, so the same brief over the same bytes under the base method
+is another study. `adaptation-rollback` proves the base still stands: its tree
+and evaluator digests match the record and the gate passes there. Remove the
+trial worktree afterwards; the record, not the worktree, is what reconstructs
+the patch.
+
+The committed example is a synthetic method patch over the bronze-die brief,
+replayed by the gate:
+
+```text
+uv run --offline --locked python -m shopping_advisor.study adaptation-check tests/intake/adaptation-record.json
+uv run --offline --locked python -m shopping_advisor.study run tests/studies/pasta-bronze-die.toml --adaptation tests/intake/adaptation-record.json --session tests/intake/adaptation-session-r2.json -o data/adaptation-example-study
+uv run --offline --locked python -m shopping_advisor.study verify data/adaptation-example-study
+uv run --offline --locked python -m shopping_advisor.study resume data/adaptation-example-study --reference 2026-09-18T12:00:00+00:00
+```
+
+Its id is `pasta-bronze-die-306e33f25417` where the unadapted study is
+`pasta-bronze-die-bde2b027b117`, with the same decisions. What this procedure
+does not establish: that a patch is *right* — that is the review's judgement
+and the semantic diff's evidence — or that the boundary holds anywhere but the
+machine it was measured on. `sandbox-exec` is present on macOS and deprecated
+by Apple; `git` does not run inside the profile, which is why the controlling
+commands run outside it; and a `harness-only` exception the maintainer records
+is labelled as such in every check and counts toward none of R15's Done-when.
+
 ### Agree the brief
 
 A request arrives underspecified and that is normal: "I need a new vacuum

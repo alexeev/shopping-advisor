@@ -198,7 +198,7 @@ class Index(unittest.TestCase):
         studies = {row['key']: row['studies'] for row in data['capabilities']}
         self.assertEqual(
             sorted(study['name'] for study in studies['dry_pasta']),
-            ['pasta-bronze-die', 'pasta-delivered-cost',
+            ['pasta-adaptation', 'pasta-bronze-die', 'pasta-delivered-cost',
              'pasta-low-temperature-drying', 'pasta-purchase-budget'])
         self.assertEqual(sorted(study['name'] for study in studies['basmati_rice']),
                          ['t3-insufficient', 't3-positive'])

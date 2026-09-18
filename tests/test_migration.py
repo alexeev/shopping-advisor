@@ -23,7 +23,7 @@ from unittest.mock import patch
 
 from shopping_advisor import maintenance
 from shopping_advisor.analysis import categories  # noqa: F401
-from shopping_advisor.study import (audit, brief as brief_module, bundle, delivery,
+from shopping_advisor.study import (adaptation, audit, brief as brief_module, bundle, delivery,
                                     delivery_review, intake, intake_review, inventory, session)
 from shopping_advisor.study.__main__ import main
 
@@ -100,11 +100,18 @@ class TheInventory(MigrationCase):
         self.assertEqual(len(inventory.ARTIFACTS), 9)
         self.assertEqual(set(inventory.OPTIONAL),
                          {intake.SNAPSHOT, intake_review.SNAPSHOT, delivery.RECORD,
-                          session.SNAPSHOT, delivery_review.RECORD})
+                          session.SNAPSHOT, delivery_review.RECORD, adaptation.RECORD})
 
     def test_a_full_bundle_writes_nothing_the_inventory_does_not_name(self):
+        # R15: the adaptation record is the one optional artifact a v1 ledger
+        # cannot fund, so the committed record is re-pointed at this ledger's
+        # retained engineering proposal; the method digest does not move.
+        record = adaptation.load(INTAKE / 'adaptation-record.json')
+        record['origin'].update(session_id='pasta-delivered-session', action_id='engineer-1')
+        adaptation.seal(record)
         directory, manifest = self.plan_backed(
-            review=str(PASSING_INTAKE_REVIEW), session_ledger=str(INTAKE / 'session-ledger.json'))
+            review=str(PASSING_INTAKE_REVIEW), session_ledger=str(INTAKE / 'session-ledger.json'),
+            adaptation_record=record)
         self.cli('deliver', directory, '--reference', AT)
         template = delivery_review.template(directory)
         template['reviewer'] = 'r'
@@ -181,7 +188,7 @@ class TheReviewBasisIsAContract(MigrationCase):
     def test_the_semantic_rows_are_the_basis_and_the_delivery_rows_are_not(self):
         self.assertEqual(set(inventory.bound(inventory.SEMANTIC)),
                          {'brief.json', 'candidates.jsonl', 'cards.jsonl', 'ranking.json', 'ledger.json',
-                          'claim-index.json', intake.SNAPSHOT, intake_review.SNAPSHOT})
+                          'claim-index.json', intake.SNAPSHOT, intake_review.SNAPSHOT, adaptation.RECORD})
         self.assertEqual(set(inventory.bound(inventory.DELIVERY)), {delivery.RECORD, session.SNAPSHOT})
         self.assertEqual(inventory.bound(inventory.REPORT_TARGET), (bundle.REPORT,))
         self.assertEqual(set(inventory.bound(inventory.REVIEW_RECORD)),
@@ -362,13 +369,18 @@ class IdsMoveDecisionsDoNot(MigrationCase):
         self.assertEqual((versions['study_manifest'], versions['semantic_review'], versions['delivery_review']),
                          (3, 2, 1))
         for name in ('brief', 'intake_plan', 'intake_review', 'stage_gates', 'delivery_record',
-                     'session_ledger', 'evidence_ledger', 'study_audit'):
+                     'evidence_ledger', 'study_audit'):
             self.assertEqual(versions[name], 1, name)
+        # R15 phase 0 (2026-09-18): the ledger moved to let engineering run, and
+        # the adaptation record arrived; the manifest stayed at v3 on purpose.
+        self.assertEqual((versions['session_ledger'], versions['adaptation_record']), (2, 1))
         self.assertEqual(maintenance.load_baseline()['contracts'], versions)
 
     def test_every_example_decides_as_it_did_before_the_migration_under_a_new_id(self):
         examples = {e['name']: e for e in maintenance.load_baseline()['examples']}
-        self.assertEqual(set(examples), set(DECISIONS_BEFORE))
+        # Examples added after the migration have no pre-migration decision to
+        # hold to; the adaptation example's claim is in test_adaptation.
+        self.assertEqual(set(examples) - {'pasta-adaptation'}, set(DECISIONS_BEFORE))
         for name, before in DECISIONS_BEFORE.items():
             with self.subTest(example=name):
                 expect = examples[name]['expect']

@@ -38,6 +38,7 @@
     "tests"
   ],
   "contracts": {
+    "adaptation_record": 1,
     "brief": 1,
     "delivery_record": 1,
     "delivery_review": 1,
@@ -47,7 +48,7 @@
     "intake_review": 1,
     "run_manifest": 2,
     "semantic_review": 2,
-    "session_ledger": 1,
+    "session_ledger": 2,
     "stage_gates": 1,
     "study_audit": 1,
     "study_manifest": 3,
@@ -183,18 +184,38 @@
       "name": "pasta-purchase-budget",
       "plan": "tests/intake/budget-plan.json",
       "why": "R13 stage 6's budget-plus-unit-price case: the unsupported purchase budget is detected without changing its units, and nothing is put forward."
+    },
+    {
+      "adaptation": "tests/intake/adaptation-record.json",
+      "brief": "tests/studies/pasta-bronze-die.toml",
+      "deliver_at": "2026-09-17T00:00:00+00:00",
+      "expect": {
+        "current_advice": "not_in_scope",
+        "excluded": 3,
+        "intake_review": "",
+        "offers": 5,
+        "outcome": "recommendation",
+        "resumable": "yes",
+        "shortlisted": 3,
+        "stop": "",
+        "study_id": "pasta-bronze-die-306e33f25417"
+      },
+      "name": "pasta-adaptation",
+      "session": "tests/intake/adaptation-session-r2.json",
+      "why": "R15 phase 0: the bronze-die brief resting on an adopted adaptation record -- a synthetic method patch checked inside the kernel boundary, reviewed and adopted -- with the v2 session ledger that funded and accounted for it. Its id differs from pasta-bronze-die's because the method does, and nothing else does."
     }
   ],
   "note": "What the maintenance gate is entitled to find. Tracked on purpose: a task-local change that lowers a floor, drops a check, promotes or retires a capability or moves an example's decision has to say so here, in a reviewable diff. Re-record with `maintenance baseline --update` from a tree that passes; a capability's lifecycle moves only after ROADMAP records the decision.",
-  "recorded_at": "2026-09-18T10:32:36+00:00",
+  "recorded_at": "2026-09-18T17:16:05+00:00",
   "runtime": {
     "lock_sha256": "e24bc67da2dba6c49538700bc8bce61658748c715e9103603f537c15694a32cd",
     "python": "3.14",
     "scrapy": "2.19"
   },
   "tests": {
-    "minimum": 814,
+    "minimum": 857,
     "modules": [
+      "test_adaptation",
       "test_analysis",
       "test_attributed_search",
       "test_audit",

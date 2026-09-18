@@ -98,6 +98,20 @@ only when it changes cost, time, confidence or the decision. Making that
 routine is the [product vision](ROADMAP.md#product-vision--the-shopping-conversation),
 and it is planned, not shipped.
 
+## Who operates it
+
+The buyer and the operator are the same person, and today every one of them
+is an IT professional working through an agentic coding harness. The goal is
+the purchase decision; the means is driving the agent's tools, reading its
+diffs and judging its changes. Nobody without that expertise operates the
+product, and the documents do not pretend otherwise. Two things follow. A
+change the agent makes is reviewed at once by an experienced engineer, and the
+harness's own permission system stands in front of anything unsafe, so the
+repository's guards exist to make that review mechanical and replayable, not
+to replace the engineer or defend against them. And an expert buyer is still a
+buyer: the questions, the coverage statement and the honesty rules above are
+owed to them exactly as they would be to anyone else.
+
 ## What a finished outcome owes the buyer
 
 A study is done when the buyer holds all of the following. Each item names the

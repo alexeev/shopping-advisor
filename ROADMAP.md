@@ -2045,9 +2045,106 @@ hard requirement must remain missing regardless of any score.
 
 ## R15 — Controlled task-driven capability adaptation
 
-**Status: PLANNED. Depends on R13's gap plan. T4's local maintenance gate has
-shipped and is the baseline R15 validates against; the provider and platform
-trials deferred from T4 are not a dependency.**
+**Status: IN PROGRESS. Phase 0 — the procedure, with no real adaptation
+through it yet — shipped on 2026-09-18 and is recorded below. T4's local
+maintenance gate is the baseline R15 validates against; the provider and
+platform trials deferred from T4 are not a dependency. Next: the first
+category written through the procedure (R11's first case, the smartwatch
+task experiment over the third R13 trial's committed feeds) and the
+extraction case.**
+
+**2026-09-18 — Phase 0: the procedure, built as reviewed maintenance before
+any adaptation used it.** The maintainer accepted the plan the same day, with
+seven decisions: an additive `adaptation` key in manifest v3 whose method
+digest enters the study id only when bound; session ledger v2 so that
+engineering can run against its own allowance; a `sandbox-exec` runner
+measured where the trial runs, with a stop rather than a weaker fallback and a
+recorded, labelled exception as the maintainer's override; a frozen evaluator
+set a patch may not touch; the third trial's plan revision 7 committed as it
+is with its `limited` review; runtime-bound-to-its-mode as the extraction
+case if the page inspection confirms the layer, with redacted pages permitted
+in the corpus; and the 14 400 s already proposed in the trial's ledger as the
+category's envelope. The operating context that shaped the threat model —
+every user is an IT professional driving the harness, and an engineer reviews
+every change — is recorded in [PURPOSE](PURPOSE.md#who-operates-it): the
+runner and the frozen evaluator defend against agent-written code
+misbehaving and against a patch widening its own checks, not against the
+operator, and they make the review mechanical and replayable rather than
+stand in for it.
+
+What shipped, under [CONTRACT §15](CONTRACT.md#15-adaptation-record-v1-and-session-ledger-v2-r15-phase-0)
+and [adapt inside a study](RESEARCH.md#adapt-inside-a-study): **the adaptation
+record** (`study/adaptation.py`, tracked as `adaptation_record` v1) — origin
+in a plan revision and a ledger action, budget in seconds and attempts, the
+patch as a complete archive with every added or modified file's content, the
+digests of both trees and the lock, a method descriptor that excludes the
+review, the evaluator set and whether it stayed frozen, a static inspection
+computed before any import, every check with its exit or its kill, a review
+bound to the patch and checks it read, an adoption recorded once by a role,
+and a rollback with its demonstration; **the trial procedure**
+(`study/trial.py`) — tree identity, patch capture, static inspection for
+import-time work, network, subprocess, file writes, moved version constants,
+dependencies and the evaluator set, a deny-by-default profile, execution with
+a process-group watchdog, and the boundary probe; **session ledger v2** — an
+engineering action is authorised, runs, completes or is interrupted against an
+`engineering` limit in seconds, recorded from its adaptation record as
+`consumption_source: adaptation_record`, while a v1 file keeps refusing to
+execute engineering; **the study binding** — `run --adaptation` (refusing an
+unadopted record unless `--trial`), the record as a `semantic` artifact in the
+inventory, `verify` requiring the manifest to name exactly it and the id to
+re-derive with its descriptor, and `code_caveats` naming the record instead of
+the dirty flag; seven `study adaptation-*` commands and `session-record
+--adaptation`; the gate replaying an adaptation-backed example.
+
+**Measured.** Step 0, before any patch: the gate at `1626b49` passed in 23.2 s
+with 814 tests in 28 modules and 6 of 6 examples; the full suite and the full
+gate then passed *inside* the deny-by-default profile (814 tests, 22.6 s; gate
+23.2 s), after two facts the profile forced into the open — `TMPDIR` must point
+inside the scratch directory or 50 tests find no temporary directory, and six
+test modules write `tests/studies/.tmp-*` briefs beside the fixtures, now the
+one write the profile admits beside the scratch directory — and `git` does not
+run inside it (its shim writes a cache under `TMPDIR` and reads the user's
+configuration), so tree and patch identity are computed outside. Boundary
+probes, inside the profile: a read outside, a write outside, a write to the
+tree, a socket connection and a read of the home directory refused with
+`EPERM`; the scratch write allowed; the identical `sandbox-exec` probe exits 0
+here and 71 inside the reviewing agent's own container, which forbids nested
+sandboxes. The loop end to end on a synthetic method patch (one new test
+module and one README line against a clean worktree at `1626b49`): captured as
+2 files, nothing flagged, evaluator frozen; the whole offline suite run inside
+the boundary as one attempt, 815 tests, 21.6 s, exit 0; reviewed, adopted,
+accounted in a v2 ledger revision that names its predecessor's digest and
+records 21.6 s consumed; the bronze-die brief bound to it is
+`pasta-bronze-die-306e33f25417` where the unadapted study is
+`pasta-bronze-die-bde2b027b117`, with the same decisions, and it verifies and
+resumes; rollback demonstrated — base tree and evaluator digests unchanged,
+the gate green at the base. That loop is committed as the fixtures under
+[tests/intake](tests/intake/README.md) and the gate's seventh example. After
+the change: 857 tests in 29 modules (814 → 857, +43 in `test_adaptation.py`),
+7 of 7 examples with the six earlier ids unchanged, `session_ledger` 1 → 2
+and `adaptation_record` 1 recorded in the baseline as the two explained
+contract moves, manifest v3 unchanged, gate 26.4 s. Negative cases, in the
+suite: a patch or a check after the review makes the record refuse to load; a
+timed-out check has no exit and no pass, and a hung check's child died with
+it; an evaluator rewritten in the worktree is refused before anything runs; a
+patch touching the evaluator set is captured and refused at capture; the
+budget spent refuses the next attempt; a tampered record, a manifest naming
+another adoption, an id without the method and a reader without the inventory
+row all fail `verify` by name.
+
+**Not established, and not claimed.** No real adaptation has passed through
+the procedure: the fixture patch is semantic-free by design, so this entry is
+not "R15's first shipped adaptation" for R16's review trigger, and the first
+Done-when bullet is untouched. Of the others: the faulty-patch case is covered
+only as a recorded non-zero exit, not yet as a real regression a category
+patch introduces; the source-embedded-instruction case waits for a category
+with text to carry it; the `harness-only` exception path is specified and
+tested for its label, never exercised. The static inspection reads names, not
+intent. `sandbox-exec` is deprecated by Apple and was measured on one machine
+(R17 owns the rest). The `.tmp-*` write beside the fixtures is a boundary
+decision, stated, not a boundary proven necessary: moving those six modules to
+`TMPDIR` is open. What R16 review 1 assigned to R15 — the report-level
+provisional status — is Phase 1's, with the category.
 
 **2026-09-18 — The first control case, built as reviewed maintenance ahead
 of the gates: `axis_bound`.** The second school-backpack trial recorded under

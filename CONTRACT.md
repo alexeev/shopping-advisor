@@ -1094,3 +1094,116 @@ baseline records `study_manifest` 3, `semantic_review` 2 and `delivery_review`
 inventory decides what a review covers, not whether the reviewer looked. Nothing
 here detects a requirement the plan never captured or a declaration that is
 false.
+
+---
+
+## 15. Adaptation record v1 and session ledger v2 (R15, phase 0)
+
+R15 makes a bounded engineering operation part of a study. Phase 0 is the
+procedure without a real category yet: the record that binds a gap to a patch,
+its checks, its review and its adoption; the ledger revision that lets
+engineering run against its own allowance; the runner that executes checks
+inside a declared boundary; and the binding that puts the method into the
+study's identity. It changes no eligibility, ordering or outcome — the six
+committed studies replay with their ids unchanged, which the gate measures —
+and it adds one committed example whose id differs *because* its method does.
+
+### The adaptation record
+
+**Adaptation record v1** is `study/adaptation.py`, tracked as
+`adaptation_record`. It is JSON data with closed fields; a private working
+record lives under `data/adaptations/` or an explicit private path; `study run
+--adaptation` snapshots it into the bundle as `adaptation.json`. It runs
+nothing: `study/trial.py` is the controlling procedure that fills it in, on the
+trusted side, and `verify` checks it.
+
+| Part | Contract |
+|---|---|
+| `adaptation_version`, `id`, `layer`, `hypothesis` | `1`; a slug; one of `category`, `extraction`, `validation`, `analysis`, `acquisition`, `evidence`, `method`; what the patch is expected to change and why |
+| `origin`, `predecessor` | the intake plan id, revision and canonical digest the gap was found in (or empty, `0`, empty when there was no plan), and the session ledger id and **engineering action** id the work accounts against. The predecessor is `plan_session` (this case's first link: the trial produced no bundle) or a prior `adaptation`, with a reference and a digest, or `null` |
+| `budget`, `attempts`, `consumption` | seconds of runner time and checks run, both positive; recorded attempts never exceed the budget — exhaustion stops new work, it does not extend the envelope. `consumption.seconds` is a number or `null` (unknown is not zero); `consumption.attempts` equals the attempts recorded |
+| `base`, `patch`, `result_tree_sha256`, `lock_sha256`, `method_versions` | the base git revision (empty where git could not answer) and the digest of the base tree; **the patch as a complete archive** — every added or modified file with its full content, as text or base64, and its digest, every deleted file named, and one digest over the sorted path/status/digest rows; the digest of the resulting tree; the lock digest; and the capability key → method version table the patch declares. A commit in a disposable worktree reconstructs nothing once the worktree is gone; the archive does |
+| `descriptor_sha256` | the **method identity**: a canonical digest over base revision, base tree, patch digest, result tree, lock digest and method versions. It **enters `study_id`** when the record is bound, and only then. It excludes the review and the adoption on purpose: approval cannot be part of what it approves |
+| `evaluator` | the **evaluator set** — `shopping_advisor/maintenance/`, `tests/test_maintenance.py`, `pyproject.toml`, `uv.lock` — as the files present at the base, their digest, and `frozen`: whether the trial tree's copies are byte-identical. A patch that touches the set is captured, flagged, and **not executed as an adaptation**: a gate a patch may rewrite judges nothing, so that change goes through ordinary maintenance |
+| `inspection` | computed **before any import**: every path with its status; flags `import_side_effects`, `network`, `subprocess`, `file_writes`, `evaluator`, `contracts` (a `*_VERSION = n` line that moved), `dependencies`, each a list of `path:line: what`; and findings in sentences |
+| `runner` | the boundary the checks ran under — `kernel` (a `sandbox-exec` profile, digest recorded) or `harness-only`, which is an **exception the maintainer recorded** and must name it — the interpreter, the temporary directory and the timeout |
+| `checks[]` | one entry per attempt: the command, both instants, seconds, `exit` (**`null` when killed**), `timed_out`, the output's digest and path, a summary, the boundary. A timed-out check has no exit status and no pass |
+| `review` | reviewer, verdict `pending`/`pass`/`fail`/`limited`, findings (never empty when completed), and the `patch_sha256` and `checks_sha256` the reviewer read. A completed review must equal the record's current patch and checks digests: **a patch edited or a check run after the review supersedes it**, and the record refuses to load until the review is reissued |
+| `adoption` | decision `pending`/`accepted`/`rejected`/`withdrawn`/`interrupted`/`budget_exhausted`, the instant, the deciding role, the reason; recorded once. **`accepted` needs a passing review, a frozen evaluator, a non-empty patch and a last check that finished with exit 0** — no decision turns a failed or killed check into success |
+| `rollback` | instructions, and whether the base was demonstrated to stand (tree digest, evaluator digest and the gate at the base) with the instant |
+
+### The binding
+
+| Artifact | Present | Binding | Meaning |
+|---|---|---|---|
+| `adaptation.json` | with `run --adaptation` | `semantic` | the method that produced the decisions is part of what a final review approves; a replaced record supersedes the review |
+
+The manifest records `adaptation` — `id`, `layer`, `descriptor_sha256`, the
+record's canonical `sha256`, the `adoption` decision and the `boundary`. `run
+--adaptation` refuses a record that is not `accepted` unless `--trial` is
+given; a trial run measures a patch, its manifest says `adoption: pending`, and
+it delivers nothing. `verify` loads the record, requires the manifest's entry
+to name exactly it, and **re-derives the study id with the descriptor in it**:
+a mismatch, a missing record behind a manifest that names one, or a tampered
+record is `adaptation_invalid` (or `artifact_altered`, when the bytes moved).
+A build without the inventory row reports the file as `artifact_undeclared`
+and the bundle does not verify: an older reader refuses rather than reading an
+adaptation-backed bundle as an ordinary v3 one. `code_caveats` names the record
+instead of the dirty flag: the tree was patched on purpose, and the patch is
+on record.
+
+**The identity decision.** The study id material gains one term,
+`adaptation`, present only when a record is bound. Measured: the six committed
+ids are unchanged, and the same brief over the same bytes under the committed
+fixture adaptation is `pasta-bronze-die-306e33f25417` where the unadapted study
+is `pasta-bronze-die-bde2b027b117`, with the same decisions — the method moved
+the id, nothing else did. Manifest v3 is unchanged in version: the key is
+additive, and the id rule is conditional on it.
+
+### Session ledger v2
+
+| Change | Contract |
+|---|---|
+| `session_version` | `2`. This build reads `1` and `2`; a v1 file keeps v1's rules — engineering is `planned` or `abandoned`, never authorised — because the file says what its author was entitled to, and a newer reader grants nothing more |
+| Engineering under v2 | an engineering action may be `authorised`, `running`, `completed` or `interrupted` like any other, against an `engineering` limit in `seconds`. Attempts are the adaptation record's own budget; acquisition units stay research's. A research allowance still never funds engineering |
+| `consumption_source: adaptation_record` | engineering only, and engineering never records from `run_manifest`. `run_id` is the record's id, `run_manifest` the record's path and digest, linked only when the attempt finished; `seconds` come from the record's checks, `null` when unknown |
+| `session-record LEDGER ACTION --adaptation RECORD` | records what the attempt did from the record; the record must account against this ledger's id and this action. A record whose last check timed out and whose adoption is still pending records the action as `interrupted` |
+
+Why a version and not an allowance: v1's text says engineering is never
+executed, and a reader of a v2 file that let it run under v1's rules would be
+reading a state the contract had refused. That is a change of meaning
+(§6), and it moved the version.
+
+### The execution boundary
+
+The runner is one measured profile, wrapping the locked virtual environment's
+interpreter directly (never `uv run`) in a `sandbox-exec` profile that denies
+by default and allows: reads of `/`, `/usr`, `/System`, `/Library`,
+`/private/etc`, `/private/var/db`, `/dev`, the worktree, the interpreter's
+distribution and the virtual environment; writes under one scratch directory
+inside the worktree, `/dev`, and `tests/studies/.tmp-*` (six test modules write
+temporary briefs beside the committed fixtures, because a brief's inputs are
+relative to the brief file — a measured exception, stated); no network; and a
+watchdog that kills the whole process group at the timeout. `TMPDIR` points
+inside the scratch directory. Measured on 2026-09-18 on the development
+machine: the full offline suite and the full gate pass inside the profile
+(814 and 815 tests, about 22 s); a read outside, a write outside, a write to
+the tree, a socket connection and a read of the home directory are refused
+with `EPERM`; the write to the scratch directory succeeds; a check that
+spawned a child and hung was killed with its child at the timeout.
+
+What the boundary does not do, and says so: `git` does not run inside it (its
+shim writes a cache under `TMPDIR` and reads the user's configuration), so tree
+and patch identity are computed by the controlling procedure outside, never by
+code inside; Apple marks `sandbox-exec` deprecated, and nothing here claims
+portability beyond the machine it was measured on (R17). Where the profile
+cannot be demonstrated the default is to stop and record the blocker; the
+maintainer may record an exception, and then the checks are labelled
+`harness-only`, count toward none of R15's Done-when, and are never presented
+as the demonstrated boundary.
+
+**Limits.** A digest proves that bytes did not change, not that they are
+safe; the static inspection reads names, not intent, and a patch can reach the
+network through a name it does not list — which is what the boundary is for.
+The review is a reviewer's judgement, the adoption a role's decision; the
+contract checks that both bind the bytes they read, not that they were right.

@@ -45,7 +45,7 @@ from ..analysis import report as report_module
 from ..analysis.category import is_match
 from ..run import read_jsonl
 from . import (writeup, audit, intake, intake_review, gates, delivery,
-               delivery_review, session, inventory)
+               delivery_review, session, inventory, adaptation)
 from .inventory import (ARTIFACTS, BINDINGS, BRIEF, CANDIDATES, CARDS, CLAIM_INDEX,
                         LEDGER, MANIFEST, RANKING, REPORT, REVIEW, VALIDATION)
 from .analysis import StudyError, analyse, brief_fault
@@ -81,8 +81,14 @@ def input_digests(brief):
     return digests
 
 
-def study_id(brief, inputs, ledger=None):
-    """``<brief id>-<digest>`` over everything the answer is pinned to."""
+def study_id(brief, inputs, ledger=None, adaptation_record=None):
+    """``<brief id>-<digest>`` over everything the answer is pinned to.
+
+    An adaptation record adds one term -- its method descriptor digest -- and
+    adds it only when a record is bound (R15): a study produced under a
+    patched method is a different revision from the same brief over the same
+    bytes under the base method, and a study without one keeps the id it had.
+    """
     code = code_identity()
     material = {
         'ledger': ledger or audit.empty(),
@@ -93,6 +99,8 @@ def study_id(brief, inputs, ledger=None):
         'schema_version': code['extraction_schema_version'],
         'contract_version': code['validated_contract_version'],
     }
+    if adaptation_record is not None:
+        material['adaptation'] = adaptation_record['descriptor_sha256']
     digest = sha256_text(json.dumps(material, sort_keys=True))
     return f'{brief.id}-{digest[:12]}'
 
@@ -221,13 +229,24 @@ def load_manifest(directory):
 
 def run(brief_path, directory=None, root=DEFAULT_STUDY_ROOT, force=False,
         started_at='', finished_at='', evidence=None, plan=None, session_ledger=None,
-        plan_review=None):
+        plan_review=None, adaptation_record=None, trial=False):
     """Validate a brief, analyse its inputs, and write the bundle.
 
     ``(directory, manifest)``. Nothing here collects: every byte it reads was
-    already on disk when the command started.
+    already on disk when the command started. An ``adaptation_record`` binds
+    the method that produced the study (R15): its descriptor enters the id,
+    the record travels in the bundle, and unless ``trial`` is set the record
+    must be adopted -- a recommendation does not rest on an unreviewed patch.
+    A trial run is how the semantic diff of an unadopted patch is measured,
+    and its manifest says ``adoption: pending``.
     """
     brief = load(brief_path)
+    record = (adaptation.load(adaptation_record)
+              if isinstance(adaptation_record, (str, pathlib.Path)) else adaptation_record)
+    if record is not None and record['adoption']['decision'] != 'accepted' and not trial:
+        raise BundleError(f'adaptation {record["id"]} is {record["adoption"]["decision"]}, not '
+                          f'accepted: a study rests on an adopted method. Run it as a trial '
+                          f'(--trial) to measure the patch, or record the adoption first.')
     plan = intake.load(plan) if isinstance(plan, (str, pathlib.Path)) else plan
     intake.check_transition(plan, brief)
     review = (intake_review.read(plan_review)
@@ -250,6 +269,29 @@ def run(brief_path, directory=None, root=DEFAULT_STUDY_ROOT, force=False,
                               f'the request. Nothing was written.')
     ledger_snapshot = (session.load(session_ledger)
                        if isinstance(session_ledger, (str, pathlib.Path)) else session_ledger)
+    if record is not None:
+        origin = record['origin']
+        if origin['plan_id']:
+            if plan is None:
+                raise BundleError(f'adaptation {record["id"]} originates in plan '
+                                  f'{origin["plan_id"]} revision {origin["plan_revision"]}; run '
+                                  f'this study with --plan so the bundle holds that revision')
+            if (origin['plan_id'], origin['plan_revision'], origin['plan_sha256']) != (
+                    plan['id'], plan['revision'], intake.digest(plan)):
+                raise BundleError(f'adaptation {record["id"]} originates in plan '
+                                  f'{origin["plan_id"]} revision {origin["plan_revision"]} '
+                                  f'({origin["plan_sha256"][:12]}); this study runs '
+                                  f'{plan["id"]} revision {plan["revision"]} '
+                                  f'({intake.digest(plan)[:12]}). A patch made for one reading '
+                                  f'of the request is not bound to another')
+        if ledger_snapshot is not None:
+            action = next((a for a in ledger_snapshot['actions']
+                           if a['id'] == origin['action_id']), None)
+            if ledger_snapshot['id'] != origin['session_id'] or action is None \
+                    or action['kind'] != 'engineering':
+                raise BundleError(f'adaptation {record["id"]} accounts against engineering '
+                                  f'action {origin["session_id"]}/{origin["action_id"]}, which '
+                                  f'the session ledger {ledger_snapshot["id"]} does not hold')
     if ledger_snapshot is not None:
         session.check(ledger_snapshot)
         # The snapshot travels with the study so it resumes without the working
@@ -276,7 +318,7 @@ def run(brief_path, directory=None, root=DEFAULT_STUDY_ROOT, force=False,
                 ledger['observations'].append(observation)
             elif existing[observation['id']] != observation:
                 raise audit.AuditError('reserved legacy observation differs from the reviewed ledger')
-    identity = study_id(brief, inputs, ledger)
+    identity = study_id(brief, inputs, ledger, record)
     target = pathlib.Path(directory) if directory else \
         pathlib.Path(root) / identity
     if target.exists():
@@ -302,6 +344,8 @@ def run(brief_path, directory=None, root=DEFAULT_STUDY_ROOT, force=False,
         write_json_atomically(target / intake_review.SNAPSHOT, review)
     if ledger_snapshot is not None:
         write_json_atomically(target / session.SNAPSHOT, ledger_snapshot)
+    if record is not None:
+        write_json_atomically(target / adaptation.RECORD, record)
     write_json_atomically(target / LEDGER, ledger)
     serialized = list(read_jsonl(target / CARDS))
     write_json_atomically(target / CLAIM_INDEX, audit.index(result, serialized, ledger))
@@ -323,6 +367,11 @@ def run(brief_path, directory=None, root=DEFAULT_STUDY_ROOT, force=False,
         # (INTAKE §11), and it does not enter study_id.
         written['intake_review'] = {'status': intake_review.status(review),
                                     'sha256': intake_review.digest(review)}
+    if record is not None:
+        # Identity-bearing through the descriptor (already in study_id) and
+        # integrity-bound through the digest: the manifest says which method
+        # produced this study and whether that method was adopted.
+        written['adaptation'] = adaptation.binding(record)
     write_json_atomically(target / MANIFEST, written)
     return target, written
 
@@ -404,6 +453,14 @@ def code_caveats(manifest_data):
     """
     code = manifest_data.get('code') or {}
     caveats = []
+    bound = manifest_data.get('adaptation')
+    if bound:
+        caveats.append(f'produced under adaptation {bound.get("id")} (method descriptor '
+                       f'{str(bound.get("descriptor_sha256"))[:12]}, adoption '
+                       f'{bound.get("adoption")}): the exact patch is the bundle\'s '
+                       f'{adaptation.RECORD}, and the working tree it ran in was patched on '
+                       f'purpose -- read the record, not the dirty flag.')
+        return caveats
     if code.get('git_dirty') is True:
         caveats.append(f'produced from a working tree with uncommitted changes: '
                        f'git_revision {str(code.get("git_revision"))[:12]} does not '
@@ -661,6 +718,26 @@ def verify(directory, input_root=''):
                     'the snapshot holds')
         except intake_review.IntakeReviewError as exc:
             findings.append({'code': 'intake_review_invalid', 'message': str(exc)})
+    if adaptation.RECORD in optional:
+        # The method's identity: the record validates, the manifest names
+        # exactly it, and the study id re-derives with the descriptor in it --
+        # so the same inputs under another method could not carry this id.
+        try:
+            record = adaptation.load(directory / adaptation.RECORD)
+            adaptation.check_binding(record, data.get('adaptation'))
+            expected_id = study_id(brief, data.get('inputs') or [], ledger, record)
+            if expected_id != data.get('study_id'):
+                raise adaptation.AdaptationError(
+                    f'the study id {data.get("study_id")} does not re-derive with this '
+                    f'record\'s method descriptor (expected {expected_id}): the id, the '
+                    f'inputs or the method moved')
+        except adaptation.AdaptationError as exc:
+            findings.append({'code': 'adaptation_invalid', 'message': str(exc)})
+    elif data.get('adaptation'):
+        findings.append({'code': 'adaptation_invalid',
+                         'message': 'the manifest names an adaptation but the bundle holds no '
+                                    f'{adaptation.RECORD}: the method that produced these '
+                                    'decisions is not on record'})
     if delivery_review.RECORD in optional:
         # Binding only, per event: a review is a reviewer's record, and what
         # is checked is that each one still binds the event, the report, the

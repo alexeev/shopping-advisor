@@ -1,0 +1,97 @@
+{
+  "session_version": 2,
+  "id": "pasta-adaptation-session",
+  "revision": 1,
+  "supersedes": "",
+  "plan": null,
+  "limits": [
+    {
+      "id": "research-seconds",
+      "kind": "research",
+      "unit": "seconds",
+      "amount": 600,
+      "measurement": "observed",
+      "mode": "stops_new_work",
+      "scope": "Synthetic R15 fixture: the analysis that found the gap, over the committed pasta cases.",
+      "authorization": {
+        "source": "existing_authorization",
+        "ref": "",
+        "text": "Offline analysis over committed records; no acquisition."
+      },
+      "deadline": "",
+      "note": "Declared analysis time."
+    },
+    {
+      "id": "engineering-seconds",
+      "kind": "engineering",
+      "unit": "seconds",
+      "amount": 3600,
+      "measurement": "observed",
+      "mode": "stops_new_work",
+      "scope": "Synthetic R15 fixture: one adaptation, checked inside the boundary.",
+      "authorization": {
+        "source": "operator",
+        "ref": "",
+        "text": "Maintainer's decision of 2026-09-18: one hour of runner time for the fixture adaptation."
+      },
+      "deadline": "",
+      "note": "Seconds are the runner's own clock, recorded from the adaptation record; attempts are the record's budget."
+    }
+  ],
+  "actions": [
+    {
+      "id": "analyse-1",
+      "kind": "analysis",
+      "purpose": "Read the committed bronze-die study and name the gap.",
+      "question": "",
+      "limit_ids": [
+        "research-seconds"
+      ],
+      "allocation": {
+        "seconds": 60
+      },
+      "state": "completed",
+      "started_at": "2026-09-18T10:00:00+00:00",
+      "finished_at": "2026-09-18T10:01:00+00:00",
+      "run_id": "",
+      "run_manifest": null,
+      "consumption": {
+        "seconds": 60
+      },
+      "consumption_source": "declared",
+      "depends_on": [],
+      "resumes": "",
+      "replay_of": "",
+      "result": null,
+      "promotion": null,
+      "authorisation": "checked"
+    },
+    {
+      "id": "engineer-1",
+      "kind": "engineering",
+      "purpose": "Fixture adaptation: a bounded patch to the tree, checked inside the boundary, reviewed and adopted or not.",
+      "question": "",
+      "limit_ids": [
+        "engineering-seconds"
+      ],
+      "allocation": {
+        "seconds": 1800
+      },
+      "state": "planned",
+      "started_at": "",
+      "finished_at": "",
+      "run_id": "",
+      "run_manifest": null,
+      "consumption": {},
+      "consumption_source": "unknown",
+      "depends_on": [
+        "analyse-1"
+      ],
+      "resumes": "",
+      "replay_of": "",
+      "result": null,
+      "promotion": null,
+      "authorisation": ""
+    }
+  ]
+}
