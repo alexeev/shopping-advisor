@@ -63,8 +63,9 @@ category list.
   new question. `study capabilities` publishes what each has earned, where it
   was measured and what it declines: three are maintained capabilities,
   `school_backpack` is a task experiment with one study behind it, and
-  `smartwatch` is a task experiment written through R15's procedure, whose
-  reports say beside their conclusion that they rest on one.
+  `smartwatch` is a task experiment written through R15's procedure, with one
+  committed study behind it, whose reports say beside their conclusion that
+  they rest on one.
 - Study reports now have deterministic evidence checks and a separate semantic
   review. The researcher still establishes requirements, verifies sources and
   their meaning, and records the limits. Automated checks do not establish truth.

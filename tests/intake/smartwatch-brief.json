@@ -1,0 +1,858 @@
+{
+  "assumptions": [
+    {
+      "default": "Read the 57 records as retained, two of which appear in two feeds and merge on their ASIN.",
+      "if_wrong": "A model the queries never surfaced is absent here, as the plan's discovery_record says; nothing below speaks for it.",
+      "statement": "The three probe feeds are the shelf the trial saw."
+    }
+  ],
+  "brief_version": 1,
+  "category": "smartwatch",
+  "constraints": {
+    "axis": "",
+    "cost_basis": "",
+    "decisive_margin": 0.05,
+    "max_axis_value": null,
+    "minimum_candidates": 3,
+    "require_claims": [],
+    "shortlist": 3,
+    "unit": ""
+  },
+  "delivery_region": "DE",
+  "freshness": {
+    "as_of": "2026-09-18",
+    "note": "The three probe feeds are committed evidence of one day's shelf, kept as crawled so that the trial's numbers re-derive; their prices are not an offer anyone can accept.",
+    "price_max_age_days": 7
+  },
+  "id": "smartwatch-dive-nfc",
+  "inputs": [
+    "../../data/evidence/probe-amazon-de-smartwatch-2026-09-18-class.jsonl.gz",
+    "../../data/evidence/probe-amazon-de-smartwatch-2026-09-18-named.jsonl.gz",
+    "../../data/evidence/probe-amazon-de-smartwatch-2026-09-18-asin.jsonl.gz"
+  ],
+  "intake": {
+    "plan_id": "peter-smartwatch-intake",
+    "plan_sha256": "1d3e02631869548f9b611f79d162854b24a8bbd1d3f760939a46760b4723d3ce",
+    "plan_version": 1,
+    "requirements": [
+      {
+        "assessment": {
+          "change": null,
+          "controls": [],
+          "evidence": [],
+          "gap": {
+            "kind": "category_interpretation",
+            "next_step": "Ask the one round of questions below; then a bounded reconnaissance probe on Amazon.de under a session ledger to see how the class is listed and which of these properties listings state; then decide whether a category is built as reviewed maintenance (its lifecycle record would say task experiment) or the study stays a bounded, hand-read comparison.",
+            "reason": "No smartwatch category is registered: no classifier, no claim keys (GPS, heart-rate sensor, barometric altimeter, dive mode, NFC payment), no axes (price, battery runtime, water rating) and no measured record set exist. The two shipped acquisition paths that would carry it are the Amazon.de product spider and the generic validation, which are category-neutral."
+          },
+          "path": "unsupported",
+          "reviews": [],
+          "state": "not_assessed"
+        },
+        "decisive": true,
+        "effects": [
+          {
+            "consequence": "Only smartwatches enter the comparison; fitness bands, dive computers without smartwatch functions and accessories are excluded with their reason. With no classifier this reading is done by a person and attributed as such.",
+            "stage": "candidate_assessment"
+          }
+        ],
+        "id": "watch_class",
+        "operative": true,
+        "priority": null,
+        "provenance": {
+          "applicability": "This purchase.",
+          "author": "user",
+          "basis": "user_statement",
+          "if_wrong": "If a tracker-style band were acceptable the shelf would be much wider and cheaper; the dive and style requirements make that unlikely.",
+          "rationale": "The request names the product class and sets it apart from a fitness tracker.",
+          "refs": [
+            "u2"
+          ],
+          "wording": "Я ищу себе новый smart watch"
+        },
+        "role": "hard_constraint",
+        "settlement": "stated",
+        "statement": "A smartwatch proper, not a fitness-tracker band: a watch-shaped device with a full display and the sport and payment functions below.",
+        "tradeoff": ""
+      },
+      {
+        "assessment": {
+          "change": {
+            "authority": [
+              "u5"
+            ],
+            "reason": "The agent proposed style as a reading that excludes nobody; the buyer never accepted that default, and u5 says style was his pre-filter ahead of battery and display. Replaced by style_filter.",
+            "replacement": "style_filter"
+          },
+          "controls": [],
+          "evidence": [],
+          "gap": null,
+          "path": "revised",
+          "reviews": [],
+          "state": "not_assessed"
+        },
+        "decisive": false,
+        "effects": [
+          {
+            "consequence": "Show case shape, material and diameter beside every candidate for the buyer to judge; the agent's own reading is labelled as its own.",
+            "stage": "conclusion"
+          }
+        ],
+        "id": "style",
+        "operative": true,
+        "priority": 3,
+        "provenance": {
+          "applicability": "This purchase.",
+          "author": "agent",
+          "basis": "reasonableness",
+          "if_wrong": "If the quality is a condition — as u5 later said — recording it as a reading admits candidates the buyer would have excluded; that is what happened.",
+          "rationale": "No listing field carries wearability with a suit, so the agent proposed to show it rather than filter on it. That was the agent's proposal, not the buyer's instruction; the buyer's own words ('можно носить с костюмом', u3) name the quality, not its role.",
+          "refs": [
+            "u2",
+            "u3"
+          ],
+          "wording": "shown from photographs and dimensions, excludes nobody"
+        },
+        "role": "preference",
+        "settlement": "assumed",
+        "statement": "The agent's default reading of the buyer's 'wearable with a suit': shown beside each candidate from case material and dimensions, excluding nobody. Proposed in the read-back; the buyer answered the definition question and did not address the default. Superseded by style_filter after u5.",
+        "tradeoff": ""
+      },
+      {
+        "assessment": {
+          "change": null,
+          "controls": [],
+          "evidence": [],
+          "gap": {
+            "kind": "category_interpretation",
+            "next_step": "Ask the one round of questions below; then a bounded reconnaissance probe on Amazon.de under a session ledger to see how the class is listed and which of these properties listings state; then decide whether a category is built as reviewed maintenance (its lifecycle record would say task experiment) or the study stays a bounded, hand-read comparison.",
+            "reason": "Sensor presence would be claim keys on a smartwatch category card; none exists. Presence is in any case the agent's proxy, not the buyer's condition."
+          },
+          "path": "unsupported",
+          "reviews": [],
+          "state": "not_assessed"
+        },
+        "decisive": false,
+        "effects": [
+          {
+            "consequence": "Listings are read for GPS, heart-rate sensor and barometric altimeter; a listing silent on one is flagged beside the row, not excluded, and presence admits nobody as measuring well.",
+            "stage": "candidate_assessment"
+          }
+        ],
+        "id": "sport_sensors",
+        "operative": true,
+        "priority": 4,
+        "provenance": {
+          "applicability": "This purchase.",
+          "author": "agent",
+          "basis": "hypothesis",
+          "if_wrong": "If the buyer also needs, say, an external chest strap or bike-sensor connection, the proxy is too narrow; if presence is treated as quality, a poorly measuring watch passes.",
+          "rationale": "The agent's reading of what 'biological data during running, cycling and mountain hiking' minimally requires in hardware. It does not replace the buyer's quality condition and does not admit anybody as qualified.",
+          "refs": [
+            "u2"
+          ],
+          "wording": "GPS, optical heart-rate sensor and barometric altimeter stated"
+        },
+        "role": "preference",
+        "settlement": "assumed",
+        "statement": "Built-in GPS, an optical heart-rate sensor and a barometric altimeter stated on the listing: the agent's proxy for the minimum hardware the three named activities need. A proxy for presence, not for the quality the buyer asked for; a listing silent on one is flagged, not excluded.",
+        "tradeoff": ""
+      },
+      {
+        "assessment": {
+          "change": null,
+          "controls": [],
+          "evidence": [],
+          "gap": null,
+          "path": "evidence_review",
+          "reviews": [],
+          "state": "not_assessed"
+        },
+        "decisive": true,
+        "effects": [
+          {
+            "consequence": "No candidate is admitted as satisfying measurement quality: listings cannot show it and no independent test was retained. Candidates are carried as 'quality not assessed', never as passed.",
+            "stage": "candidate_assessment"
+          },
+          {
+            "consequence": "The recommendation is withheld on this requirement; the report says quality was not assessed and puts nobody forward as meeting it.",
+            "stage": "conclusion"
+          }
+        ],
+        "id": "data_quality",
+        "operative": true,
+        "priority": null,
+        "provenance": {
+          "applicability": "This purchase.",
+          "author": "user",
+          "basis": "user_statement",
+          "if_wrong": "None: this is the buyer's condition. What is uncertain is only how it is assessed; until it is, no candidate is put forward as meeting it.",
+          "rationale": "The buyer asked for quality, and his message makes it a property the watch must have, not a tie-breaker. Independent test findings are external evidence through the ledger and the semantic review; they never move eligibility in the harness, which is why the study is bounded on this requirement.",
+          "refs": [
+            "u2"
+          ],
+          "wording": "качественно собирать биологические данные"
+        },
+        "role": "hard_constraint",
+        "settlement": "stated",
+        "statement": "The watch must measure well during running, cycling and mountain hiking: GPS track and heart-rate accuracy as established by independent tests of the exact model, not by the vendor's listing. Stated by the buyer as a condition. No listing carries it and the harness cannot assess it, so no candidate is admitted as qualified on it and the recommendation is withheld while it stays unassessed.",
+        "tradeoff": ""
+      },
+      {
+        "assessment": {
+          "change": null,
+          "controls": [],
+          "evidence": [],
+          "gap": {
+            "kind": "category_interpretation",
+            "next_step": "Ask the one round of questions below; then a bounded reconnaissance probe on Amazon.de under a session ledger to see how the class is listed and which of these properties listings state; then decide whether a category is built as reviewed maintenance (its lifecycle record would say task experiment) or the study stays a bounded, hand-read comparison.",
+            "reason": "A dive-mode claim and a depth rating would be claim keys and an axis on a smartwatch category card; none exists. The manufacturer's specification and any certification are external evidence, which the harness does not pass into eligibility."
+          },
+          "path": "unsupported",
+          "reviews": [],
+          "state": "not_assessed"
+        },
+        "decisive": true,
+        "effects": [
+          {
+            "consequence": "Every candidate must have a manufacturer-documented scuba mode with decompression guidance and a stated depth rating of at least the buyer's 30 m; a listing stating only a water-resistance rating is excluded. With no category, this reading is done by a person and attributed as such.",
+            "stage": "candidate_assessment"
+          },
+          {
+            "consequence": "Manufacturer specification and certification are cited per candidate; where only the listing asserts dive capability the report says so and puts nobody forward on that basis. Every manufacturer's own warning against use as a sole dive computer is quoted.",
+            "stage": "conclusion"
+          }
+        ],
+        "id": "dive_computer",
+        "operative": true,
+        "priority": null,
+        "provenance": {
+          "applicability": "This purchase.",
+          "author": "user",
+          "basis": "user_statement",
+          "if_wrong": "If a backup gauge were enough, more models would qualify; as stated, only watches whose manufacturer documents a scuba decompression mode remain.",
+          "rationale": "Stated in answer to the read-back: primary, not backup. A dive computer is life-safety equipment, so presence of the decompression mode is read from the manufacturer, and the report says where only the listing asserts it.",
+          "refs": [
+            "u3"
+          ],
+          "wording": "основной дайв-компьютер"
+        },
+        "role": "hard_constraint",
+        "settlement": "stated",
+        "statement": "The watch is the buyer's primary scuba dive computer for recreational dives to 30 m: a scuba mode with a decompression model (no-decompression limit, ascent-rate and safety-stop guidance) and a dive log, documented by the manufacturer; an Amazon listing's water-resistance rating alone never satisfies it. The depth rating the manufacturer states is read against 30 m; any margin above it is the agent's separate proposal (depth_margin).",
+        "tradeoff": ""
+      },
+      {
+        "assessment": {
+          "change": null,
+          "controls": [],
+          "evidence": [],
+          "gap": {
+            "kind": "category_interpretation",
+            "next_step": "Ask the one round of questions below; then a bounded reconnaissance probe on Amazon.de under a session ledger to see how the class is listed and which of these properties listings state; then decide whether a category is built as reviewed maintenance (its lifecycle record would say task experiment) or the study stays a bounded, hand-read comparison.",
+            "reason": "An NFC-payment claim would be a claim key on a smartwatch category card; none exists. Bank participation is outside any listing."
+          },
+          "path": "unsupported",
+          "reviews": [],
+          "state": "not_assessed"
+        },
+        "decisive": true,
+        "effects": [
+          {
+            "consequence": "A candidate meets the condition only where the manufacturer or the payment service documents the service on that watch in Germany; a candidate whose payment route rests on third-party reporting alone is carried as 'payment not resolved', never as passed. Bank participation is the buyer's own check and is not asserted.",
+            "stage": "candidate_assessment"
+          },
+          {
+            "consequence": "The report separates candidates with manufacturer-documented payment from those whose payment condition is unresolved, and names the source of each.",
+            "stage": "conclusion"
+          }
+        ],
+        "id": "nfc_payments",
+        "operative": true,
+        "priority": null,
+        "provenance": {
+          "applicability": "This purchase.",
+          "author": "user",
+          "basis": "user_statement",
+          "if_wrong": "If the buyer's bank supports none of the services on the surviving candidates, the requirement cannot be met by any of them; the buyer verifies this against the bank list before purchase.",
+          "rationale": "Stated as a must. An NFC chip alone does not pay: the payment service and the bank's participation do, and the service depends on the watch vendor and the phone platform.",
+          "refs": [
+            "u2"
+          ],
+          "wording": "Часы должны обладать NFC interface as enabler for contactless payments"
+        },
+        "role": "hard_constraint",
+        "settlement": "stated",
+        "statement": "NFC with a contactless payment service documented by the manufacturer or the service itself as usable on that watch in Germany (Garmin Pay, Google Wallet, or the vendor's equivalent). Where the only evidence is a third party — a blog, a retailer — the condition is unresolved, not met, and the candidate is carried as 'payment not resolved'. Whether the buyer's bank supports the service is checked by the buyer against the service's own bank list, never asked here.",
+        "tradeoff": ""
+      },
+      {
+        "assessment": {
+          "change": null,
+          "controls": [],
+          "evidence": [],
+          "gap": {
+            "kind": "category_interpretation",
+            "next_step": "Exclude Apple Watch before discovery; read each surviving vendor's Android compatibility statement.",
+            "reason": "Compatibility would be a claim key on a smartwatch category card; none exists."
+          },
+          "path": "unsupported",
+          "reviews": [],
+          "state": "not_assessed"
+        },
+        "decisive": true,
+        "effects": [
+          {
+            "consequence": "Apple Watch models are excluded; every surviving candidate must state Android compatibility.",
+            "stage": "candidate_assessment"
+          }
+        ],
+        "id": "phone_platform",
+        "operative": true,
+        "priority": null,
+        "provenance": {
+          "applicability": "This purchase.",
+          "author": "user",
+          "basis": "user_statement",
+          "if_wrong": "If the phone were replaced by an iPhone the shelf would invert; if a vendor requires its own brand of phone for a feature, that candidate loses the feature on a Vivo.",
+          "rationale": "Stated in answer to the read-back. It excludes Apple Watch and settles that Google Wallet, Garmin Pay or a vendor wallet are the candidate payment services.",
+          "refs": [
+            "u3"
+          ],
+          "wording": "Android (Vivo)"
+        },
+        "role": "hard_constraint",
+        "settlement": "stated",
+        "statement": "The watch pairs with the buyer's Android phone, a Vivo. Apple Watch is excluded; Wear OS, Garmin, Huawei, Suunto and similar pair with Android. Whether a vendor's companion app and payment service work on a Vivo phone specifically (Google services present, no Samsung-only features) is read from the vendor's compatibility statement.",
+        "tradeoff": ""
+      },
+      {
+        "assessment": {
+          "change": null,
+          "controls": [],
+          "evidence": [],
+          "gap": {
+            "kind": "category_interpretation",
+            "next_step": "A bounded reconnaissance probe on Amazon.de under the session ledger, to see how the class is listed and which of these properties listings state; then decide whether a category is built as reviewed maintenance (lifecycle: task experiment) or the study stays a bounded, hand-read comparison.",
+            "reason": "No smartwatch category publishes a battery-runtime axis; runtime is stated in listings and manufacturer specifications in several units (hours in GPS mode, days as a smartwatch, with or without solar)."
+          },
+          "path": "unsupported",
+          "reviews": [],
+          "state": "not_assessed"
+        },
+        "decisive": true,
+        "effects": [
+          {
+            "consequence": "Order candidates whose manufacturer states a 'GPS only' runtime by that figure, longer first; list candidates stated on another scale (a 'normal activity' or 'expedition' mode, or a solar 'max battery' mode) separately, unranked, with the mode named; show display and price beside each row.",
+            "stage": "comparison"
+          }
+        ],
+        "id": "ordering",
+        "operative": true,
+        "priority": 1,
+        "provenance": {
+          "applicability": "This purchase.",
+          "author": "user",
+          "basis": "user_statement",
+          "if_wrong": "If the buyer weighs the display above runtime, the ordering flips for the AMOLED candidates; the report shows both readings so the flip is visible.",
+          "rationale": "The buyer answered the ordering question with two criteria. Runtime is stated per model by the manufacturer in hours of GPS recording and in days of smartwatch use; the study ranks on GPS hours, the figure the named activities depend on.",
+          "refs": [
+            "u3"
+          ],
+          "wording": "батарея и экран"
+        },
+        "role": "objective",
+        "settlement": "stated",
+        "statement": "Among candidates carried past every hard condition, order by battery runtime with GPS recording as the manufacturer states it, longer first. Figures are only comparable within one manufacturer's mode definition; candidates whose manufacturer states runtime on another scale are listed with their figure and its mode name but are not given a place in the order. Then display (see display). Price is shown, not ranked.",
+        "tradeoff": "The buyer named battery and display together without ordering them. The agent places runtime first because it is a number the manufacturer states and the candidates differ on it by an order of magnitude, and display second because it is a quality read by eye; the two pull against each other (bright AMOLED displays cost runtime), so the report presents the ordering under each reading rather than folding them into one score."
+      },
+      {
+        "assessment": {
+          "change": {
+            "authority": [
+              "u3"
+            ],
+            "reason": "The buyer named battery as a deciding criterion, so the candidate preference became the ordering objective.",
+            "replacement": "ordering"
+          },
+          "controls": [],
+          "evidence": [],
+          "gap": null,
+          "path": "revised",
+          "reviews": [],
+          "state": "not_assessed"
+        },
+        "decisive": false,
+        "effects": [
+          {
+            "consequence": "Superseded: runtime is now the ordering objective (see ordering); this record keeps the candidate criterion as it was raised.",
+            "stage": "comparison"
+          }
+        ],
+        "id": "battery_life",
+        "operative": true,
+        "priority": 6,
+        "provenance": {
+          "applicability": "This purchase.",
+          "author": "agent",
+          "basis": "hypothesis",
+          "if_wrong": "If it matters, it becomes a stated minimum in hours or days and may replace price as the ordering; if not, it is shown and filters nobody.",
+          "rationale": "Mountain hiking and two dive weeks were named; whether multi-day use without charging matters was not. Independent sport-watch tests measure GPS runtime as a leading criterion, and the models that survive the dive requirement split sharply on it.",
+          "refs": [
+            "u2"
+          ],
+          "wording": "GPS battery runtime"
+        },
+        "role": "preference",
+        "settlement": "unresolved",
+        "statement": "Battery runtime with GPS recording, long enough for the buyer's hikes and dive days without a charger. A candidate criterion the agent raises: the surviving models differ by an order of magnitude here (roughly one to two days against one to several weeks), so it may decide between them.",
+        "tradeoff": ""
+      },
+      {
+        "assessment": {
+          "change": null,
+          "controls": [],
+          "evidence": [],
+          "gap": null,
+          "path": "not_applicable",
+          "reviews": [],
+          "state": "not_assessed"
+        },
+        "decisive": false,
+        "effects": [],
+        "id": "marketplace_scope",
+        "operative": false,
+        "priority": null,
+        "provenance": {
+          "applicability": "This study.",
+          "author": "agent",
+          "basis": "reasonableness",
+          "if_wrong": "If delivery is outside Germany, prices, availability and payment-service availability may not apply and the study stops.",
+          "rationale": "The buyer wrote 'Amazon.de' in answer to a question that also asked about delivery in Germany. Non-contradiction is not confirmation; Germany stays an assumption with its consequence.",
+          "refs": [
+            "u1",
+            "u3"
+          ],
+          "wording": "Amazon.de (stated); delivery in Germany (assumed)"
+        },
+        "role": "context",
+        "settlement": "assumed",
+        "statement": "Amazon.de, stated by the buyer (u3); delivery in Germany, assumed by the agent and not contradicted — the read-back question named both and the answer named only the marketplace. The study cannot answer for another shop or country.",
+        "tradeoff": ""
+      },
+      {
+        "assessment": {
+          "change": null,
+          "controls": [],
+          "evidence": [],
+          "gap": null,
+          "path": "not_applicable",
+          "reviews": [],
+          "state": "not_assessed"
+        },
+        "decisive": false,
+        "effects": [],
+        "id": "budget",
+        "operative": false,
+        "priority": null,
+        "provenance": {
+          "applicability": "This study.",
+          "author": "user",
+          "basis": "user_statement",
+          "if_wrong": "None: a stated no-cap removes the budget question.",
+          "rationale": "Stated in answer to the read-back.",
+          "refs": [
+            "u3"
+          ],
+          "wording": "бюджет не ограничен"
+        },
+        "role": "context",
+        "settlement": "stated",
+        "statement": "No purchase budget cap, stated by the buyer; prices are shown.",
+        "tradeoff": ""
+      },
+      {
+        "assessment": {
+          "change": null,
+          "controls": [],
+          "evidence": [],
+          "gap": null,
+          "path": "not_applicable",
+          "reviews": [],
+          "state": "not_assessed"
+        },
+        "decisive": false,
+        "effects": [],
+        "id": "freshness",
+        "operative": false,
+        "priority": null,
+        "provenance": {
+          "applicability": "This study.",
+          "author": "agent",
+          "basis": "reasonableness",
+          "if_wrong": "If delivery slips past the bound, current advice is blocked and the result is delivered as a dated historical comparison or recollected.",
+          "rationale": "The buyer is choosing a watch to buy, not studying history. Seven days is the bound the previous trials used for Amazon.de prices.",
+          "refs": [
+            "u2"
+          ],
+          "wording": "current advice, prices at most seven days old"
+        },
+        "role": "context",
+        "settlement": "assumed",
+        "statement": "Current buying advice intended: prices observed on 2026-09-18. Because no study bundle exists, no `study deliver` gate assessed freshness; the report carries its observation date and this scope is a declaration, not a checked delivery.",
+        "tradeoff": ""
+      },
+      {
+        "assessment": {
+          "change": null,
+          "controls": [],
+          "evidence": [],
+          "gap": null,
+          "path": "not_applicable",
+          "reviews": [],
+          "state": "not_assessed"
+        },
+        "decisive": false,
+        "effects": [],
+        "id": "evidence_basis",
+        "operative": false,
+        "priority": null,
+        "provenance": {
+          "applicability": "This study.",
+          "author": "agent",
+          "basis": "reasonableness",
+          "if_wrong": "If Amazon.de challenges the crawl, coverage is partial and the report says which queries were not seen.",
+          "rationale": "The retained feeds cover pasta, rice, mounting paste and school backpacks only. The Amazon.de product spider is the validated acquisition path on this machine.",
+          "refs": [
+            "u2"
+          ],
+          "wording": "fresh bounded collection under a session ledger"
+        },
+        "role": "context",
+        "settlement": "assumed",
+        "statement": "Evidence: three bounded probes on Amazon.de retained on 2026-09-18 under the session ledger (64 responses, 57 product pages), plus manufacturer manuals and specification pages recorded as plan sources. No smartwatch evidence existed on disk before them. No study bundle exists, so no delivery record and no review binding were produced; the report states its observation date instead.",
+        "tradeoff": ""
+      },
+      {
+        "assessment": {
+          "change": null,
+          "controls": [],
+          "evidence": [],
+          "gap": null,
+          "path": "evidence_review",
+          "reviews": [],
+          "state": "not_assessed"
+        },
+        "decisive": false,
+        "effects": [
+          {
+            "consequence": "The manufacturer's certification statement, or its absence, is shown beside each candidate.",
+            "stage": "conclusion"
+          }
+        ],
+        "id": "certification",
+        "operative": true,
+        "priority": 5,
+        "provenance": {
+          "applicability": "This purchase.",
+          "author": "user",
+          "basis": "user_statement",
+          "if_wrong": "If the buyer's dive operator later requires it, it becomes a hard constraint and candidates without a documented certification leave.",
+          "rationale": "Stated in answer to the read-back.",
+          "refs": [
+            "u3"
+          ],
+          "wording": "EN 13319 is nice-to-have"
+        },
+        "role": "preference",
+        "settlement": "stated",
+        "statement": "Certification of the dive computer to EN 13319 is desirable, not required: shown beside each candidate, filters nobody.",
+        "tradeoff": ""
+      },
+      {
+        "assessment": {
+          "change": null,
+          "controls": [],
+          "evidence": [],
+          "gap": null,
+          "path": "evidence_review",
+          "reviews": [],
+          "state": "not_assessed"
+        },
+        "decisive": false,
+        "effects": [
+          {
+            "consequence": "Where two candidates state the same runtime on the same manufacturer scale, the brighter, larger, higher-resolution display ranks first; otherwise runtime order stands. No candidate is excluded on display type. A display-first ordering of the whole table is stated in prose beside the runtime ordering.",
+            "stage": "comparison"
+          },
+          {
+            "consequence": "Display type, size, resolution and brightness shown beside each row.",
+            "stage": "conclusion"
+          }
+        ],
+        "id": "display",
+        "operative": true,
+        "priority": 2,
+        "provenance": {
+          "applicability": "This purchase.",
+          "author": "user",
+          "basis": "user_statement",
+          "if_wrong": "If display quality outweighs runtime for the buyer, the ordering among the AMOLED and MIP candidates flips; both readings are shown.",
+          "rationale": "The buyer named the display as a deciding criterion. It is not a single number; the report shows the stated properties and says which candidates have an AMOLED display.",
+          "refs": [
+            "u3"
+          ],
+          "wording": "батарея и экран"
+        },
+        "role": "preference",
+        "settlement": "stated",
+        "statement": "Display quality is the buyer's second criterion after runtime: type (AMOLED or memory-in-pixel), size, resolution and stated brightness, read from the listing and manufacturer specification. It excludes nobody and it does not outweigh runtime: it orders candidates whose manufacturer-stated runtime is the same figure on the same scale, and is otherwise shown. A separate display-first reading of the table is stated so the buyer, who named both criteria without ordering them, can see what changes.",
+        "tradeoff": "Second to runtime by the agent's placement, see ordering; no threshold at which display overrides runtime is set, because the buyer set none."
+      },
+      {
+        "assessment": {
+          "change": null,
+          "controls": [],
+          "evidence": [],
+          "gap": null,
+          "path": "not_applicable",
+          "reviews": [],
+          "state": "not_assessed"
+        },
+        "decisive": false,
+        "effects": [],
+        "id": "price_shown",
+        "operative": false,
+        "priority": null,
+        "provenance": {
+          "applicability": "This study.",
+          "author": "user",
+          "basis": "user_statement",
+          "if_wrong": "If price matters after all, it is a further stated criterion and the ordering is revisited.",
+          "rationale": "The buyer stated no budget and named battery and display, not price, as deciding.",
+          "refs": [
+            "u3"
+          ],
+          "wording": "бюджет не ограничен"
+        },
+        "role": "context",
+        "settlement": "stated",
+        "statement": "Listed price is shown beside each candidate and ranks nobody; the buyer set no budget and did not name price as a criterion.",
+        "tradeoff": ""
+      },
+      {
+        "assessment": {
+          "change": null,
+          "controls": [],
+          "evidence": [],
+          "gap": null,
+          "path": "not_applicable",
+          "reviews": [],
+          "state": "not_assessed"
+        },
+        "decisive": false,
+        "effects": [],
+        "id": "discovery_record",
+        "operative": false,
+        "priority": null,
+        "provenance": {
+          "applicability": "This study.",
+          "author": "agent",
+          "basis": "reasonableness",
+          "if_wrong": "If a dive-capable, paying Android smartwatch exists that neither the class queries nor the agent named, it is missing from the comparison.",
+          "rationale": "Selection-bias record required by the session ledger: candidates the agent knew were searched for by name.",
+          "refs": [
+            "u3"
+          ],
+          "wording": "agent-supplied candidates confirmed by named-model queries"
+        },
+        "role": "context",
+        "settlement": "assumed",
+        "statement": "Three probes: class queries surfaced Suunto Ocean, Suunto Nautic S and Garmin Descent G2; the Garmin Descent Mk3, fenix 8/9 and Huawei Watch Ultimate candidates were supplied by the agent from manufacturer documentation and confirmed on the shelf by named-model queries. No probe changed a criterion. The comparison is a person's reading of listings and manufacturer documents; no category, control or study bundle exists.",
+        "tradeoff": ""
+      },
+      {
+        "assessment": {
+          "change": {
+            "authority": [
+              "u5"
+            ],
+            "reason": "The buyer withdraws depth rating as a reliability proxy and restates it as a proxy for water and dust ingress protection, a durability property. Replaced by ingress_protection.",
+            "replacement": "ingress_protection"
+          },
+          "controls": [],
+          "evidence": [],
+          "gap": null,
+          "path": "revised",
+          "reviews": [],
+          "state": "not_assessed"
+        },
+        "decisive": false,
+        "effects": [
+          {
+            "consequence": "Depth rating per candidate is already in the report; a reliability-proxy reading is added in the grading section as the buyer's, not the agent's.",
+            "stage": "conclusion"
+          }
+        ],
+        "id": "reliability",
+        "operative": true,
+        "priority": 7,
+        "provenance": {
+          "applicability": "This purchase, and a candidate default question for future unsupported-category intakes.",
+          "author": "user",
+          "basis": "user_statement",
+          "if_wrong": "If the depth rating is a poor proxy, a buyer ordering on it overpays for a pressure margin they never use; if reliability should have been asked by default, this intake asked one question too few.",
+          "rationale": "Stated after delivery. The depth rating was already shown per candidate, but never read as a reliability proxy because nobody had named reliability; the previous buyer (school backpack) had named it and it went unsupported there too.",
+          "refs": [
+            "u4"
+          ],
+          "wording": "Максимальная заявленная глубина для меня сильный прокси надёжности"
+        },
+        "role": "preference",
+        "settlement": "stated",
+        "statement": "Reliability, raised by the buyer after delivery as a criterion that should be assumed important unless a buyer excludes it; the buyer's own proxy is the maximum stated dive depth rating. No listing field or control carries reliability; the proxy is the buyer's hypothesis, and a depth rating attests the case's pressure test, not failure rates of the electronics, strap or battery.",
+        "tradeoff": ""
+      },
+      {
+        "assessment": {
+          "change": null,
+          "controls": [],
+          "evidence": [],
+          "gap": {
+            "kind": "comparison_method",
+            "next_step": "Show case material, finish and diameter per candidate and ask the buyer which delivered candidates fail his filter; do not decide it for him.",
+            "reason": "No field carries wearability with formal clothes; a person's reading of materials and finish is the only assessment."
+          },
+          "path": "unsupported",
+          "reviews": [],
+          "state": "not_assessed"
+        },
+        "decisive": true,
+        "effects": [
+          {
+            "consequence": "The buyer's pre-filter; the agent applies no exclusion on his behalf and shows the material, finish and dimensions each verdict would rest on.",
+            "stage": "candidate_assessment"
+          }
+        ],
+        "id": "style_filter",
+        "operative": true,
+        "priority": null,
+        "provenance": {
+          "applicability": "This purchase.",
+          "author": "user",
+          "basis": "user_statement",
+          "if_wrong": "If the buyer applies it, some delivered candidates leave; the ordering among those that stay is unchanged.",
+          "rationale": "Stated after delivery. Its verdict per candidate is not stated; the agent must not supply one.",
+          "refs": [
+            "u5"
+          ],
+          "wording": "Стиль был для меня параметром предварительного отсева"
+        },
+        "role": "hard_constraint",
+        "settlement": "stated",
+        "statement": "Wearable with a suit or shirt is the buyer's hard pre-filter, applied before battery and display order the survivors. Which delivered candidates fail it is the buyer's judgement and has not been stated: u4 says every delivered candidate was on his shortlist. The agent's own reading of case material and finish is shown beside each candidate and excludes nobody on the buyer's behalf.",
+        "tradeoff": ""
+      },
+      {
+        "assessment": {
+          "change": null,
+          "controls": [],
+          "evidence": [],
+          "gap": null,
+          "path": "evidence_review",
+          "reviews": [],
+          "state": "not_assessed"
+        },
+        "decisive": false,
+        "effects": [
+          {
+            "consequence": "Water-resistance, depth and IP ratings shown per candidate as the manufacturer states them.",
+            "stage": "conclusion"
+          }
+        ],
+        "id": "ingress_protection",
+        "operative": true,
+        "priority": 8,
+        "provenance": {
+          "applicability": "This purchase, and a candidate default question for unsupported-category intakes.",
+          "author": "user",
+          "basis": "user_statement",
+          "if_wrong": "If ingress ratings do not predict service life, a buyer paying for a larger margin gains nothing from it.",
+          "rationale": "A stated rating is a manufacturer's test claim about the sealed case; as a durability proxy it says nothing about the strap, battery or electronics, and the buyer accepts that.",
+          "refs": [
+            "u5"
+          ],
+          "wording": "это прокси для водонепроницаемости и пыленепроницаемости - важные параметры долговечности"
+        },
+        "role": "preference",
+        "settlement": "stated",
+        "statement": "Water and dust ingress protection as a durability property, proxied by the stated water-resistance rating (ATM), the dive depth rating and any IP rating. For the chosen Huawei Watch Ultimate 2 the manufacturer states 20 ATM, IP68 and IP69, diving to 150 m.",
+        "tradeoff": ""
+      },
+      {
+        "assessment": {
+          "change": null,
+          "controls": [],
+          "evidence": [],
+          "gap": null,
+          "path": "evidence_review",
+          "reviews": [],
+          "state": "not_assessed"
+        },
+        "decisive": false,
+        "effects": [
+          {
+            "consequence": "The manufacturer's depth rating is shown per candidate beside the 30 m the buyer stated; the agent's 40 m proposal is labelled as its own.",
+            "stage": "conclusion"
+          }
+        ],
+        "id": "depth_margin",
+        "operative": true,
+        "priority": 9,
+        "provenance": {
+          "applicability": "This purchase.",
+          "author": "agent",
+          "basis": "hypothesis",
+          "if_wrong": "If the buyer wants a larger margin as a durability proxy (see ingress_protection) the reading tightens; if he wants none, a 30 m-rated device would qualify, and none was on the shelf anyway.",
+          "rationale": "Dive computers are rated with margin above their intended use; 40 m is the recreational-diving limit the fenix 8/9 manuals name as their rating. The buyer stated 30 m and no margin.",
+          "refs": [
+            "u2",
+            "u3"
+          ],
+          "wording": "a stated depth rating of at least 40 m"
+        },
+        "role": "preference",
+        "settlement": "assumed",
+        "statement": "A depth rating with margin above the buyer's 30 m: the agent proposes at least 40 m as a reading, not a cutoff. Every candidate whose manufacturer documents a scuba mode states 40 m or more, so the proposal excluded nobody.",
+        "tradeoff": ""
+      }
+    ],
+    "revision": 7
+  },
+  "limits": [
+    "The listed-price order is the category's default axis, not a criterion the buyer set: plan revision 7 says price ranks nobody, and the buyer's ordering -- battery runtime, then display -- has no executable control. The order below is a price list of the admitted candidates, not an answer to his ordering.",
+    "Every claim is the vendor's own sentence. A stated dive function is not a licence to replace a dive computer; NFC on the page is not a payment service usable in Germany; a sensor's presence is not measurement quality.",
+    "The named-model probe's candidates were supplied by the operating agent from manufacturer documentation and confirmed on the shelf; the session ledger records that as selection bias. Search did not enumerate the shelf.",
+    "Runtimes are shown in the vendor's own mode and ranked on by nobody: two vendors' hours are not on one scale.",
+    "The smartwatch category is a task experiment with one study's worth of evidence; the report says so beside its conclusion."
+  ],
+  "marketplace": "www.amazon.de",
+  "question": "Which smartwatch on Amazon.de should Peter buy: one that looks like a watch, records running, cycling and mountain hiking well, serves as a scuba dive computer to 30 m once a year and pays contactlessly by NFC?",
+  "questions": [
+    {
+      "answer": "Amazon.de stated by the buyer; delivery in Germany assumed and not contradicted (plan revision 7, marketplace_scope).",
+      "blocking": true,
+      "question": "Amazon.de with delivery in Germany?"
+    },
+    {
+      "answer": "Android, a Vivo; Apple Watch excluded (plan revision 7, phone_platform).",
+      "blocking": true,
+      "question": "Which phone?"
+    }
+  ],
+  "sources": [],
+  "unacceptable": [
+    "Fitness bands and trackers, pure dive computers without smartwatch functions, and accessories -- the category classifier declines them with the reason."
+  ],
+  "use_case": "Peter was referred by the product's maintainer to help close milestone R13 and was given the maintainer's coding-agent account for the experiment. Before the request he asked whether to withhold the product he has already chosen; the agent asked him to record his intent, requirements, chosen product and acceptable outcomes outside this conversation, before his first request, and to keep the choice hidden. His request names the product class, three sport activities, an annual two-week scuba trip to 30 m the watch should cover instead of a separate dive computer, and NFC payments. It names no phone, marketplace, budget, ordering criterion or definition of stylish. Agent inference: the third R13 trial, graded against expectations written before the first message; the buyer's hidden choice is a reason to record whether any probe or source changed the criteria."
+}

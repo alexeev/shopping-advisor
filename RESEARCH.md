@@ -511,14 +511,20 @@ and recorded with no exit status; it is not a pass, and the next attempt is a
 new one. When the attempts or the seconds are spent, `adaptation-run` refuses
 and the record keeps what was done.
 
-Review, adopt, account, and only then run a study on the method:
+Review, adopt, demonstrate the rollback, account, and only then run a study
+on the method — in that order, because the rollback demonstration is written
+into the record and the ledger digests the record when it accounts for the
+attempt: a rollback run after `session-record` leaves the ledger naming a
+digest the record no longer has, and `resume` reports the action's manifest
+as altered (the first real adaptation did exactly this, and its ledger was
+re-pointed by hand; the order below is the fix):
 
 ```text
 uv run --offline --locked python -m shopping_advisor.study adaptation-review data/adaptations/<id>.json --reviewer "<role>" --verdict pass --finding "..."
 uv run --offline --locked python -m shopping_advisor.study adaptation-adopt data/adaptations/<id>.json --decision accepted --by "repository maintainer" --reason "..."
+uv run --offline --locked python -m shopping_advisor.study adaptation-rollback data/adaptations/<id>.json --base ../<id>-base
 uv run --offline --locked python -m shopping_advisor.study session-record data/sessions/<session>.json <engineer-action> --adaptation data/adaptations/<id>.json
 uv run --offline --locked python -m shopping_advisor.study run <brief> --plan data/plans/<plan>.json --session data/sessions/<session>.json --adaptation data/adaptations/<id>.json
-uv run --offline --locked python -m shopping_advisor.study adaptation-rollback data/adaptations/<id>.json --base ../<id>-base
 ```
 
 The review binds the patch digest and the checks digest it read; a patch
@@ -544,7 +550,10 @@ uv run --offline --locked python -m shopping_advisor.study resume data/adaptatio
 ```
 
 Its id is `pasta-bronze-die-306e33f25417` where the unadapted study is
-`pasta-bronze-die-bde2b027b117`, with the same decisions. What this procedure
+`pasta-bronze-die-bde2b027b117`, with the same decisions. The first study
+resting on a *real* adaptation is the gate's eighth example, `smartwatch-dive-nfc`
+under [tests/intake](tests/intake/README.md): the third trial's plan revision 7
+as it is, the v2 ledger that funded the category and its accepted record. What this procedure
 does not establish: that a patch is *right* — that is the review's judgement
 and the semantic diff's evidence — or that the boundary holds anywhere but the
 machine it was measured on. `sandbox-exec` is present on macOS and deprecated

@@ -379,8 +379,10 @@ class IdsMoveDecisionsDoNot(MigrationCase):
     def test_every_example_decides_as_it_did_before_the_migration_under_a_new_id(self):
         examples = {e['name']: e for e in maintenance.load_baseline()['examples']}
         # Examples added after the migration have no pre-migration decision to
-        # hold to; the adaptation example's claim is in test_adaptation.
-        self.assertEqual(set(examples) - {'pasta-adaptation'}, set(DECISIONS_BEFORE))
+        # hold to; the adaptation example's claim is in test_adaptation, and
+        # the smartwatch study's (R15 phase 2) in test_smartwatch and the gate.
+        self.assertEqual(set(examples) - {'pasta-adaptation', 'smartwatch-dive-nfc'},
+                         set(DECISIONS_BEFORE))
         for name, before in DECISIONS_BEFORE.items():
             with self.subTest(example=name):
                 expect = examples[name]['expect']
