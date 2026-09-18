@@ -258,6 +258,69 @@
       "run_manifest": null,
       "started_at": "2026-09-18T18:36:37+00:00",
       "state": "completed"
+    },
+    {
+      "allocation": {
+        "seconds": 3600
+      },
+      "authorisation": "checked",
+      "consumption": {
+        "seconds": 25.133
+      },
+      "consumption_source": "adaptation_record",
+      "depends_on": [
+        "engineer-1",
+        "analyse-3"
+      ],
+      "finished_at": "2026-09-18T19:10:15+00:00",
+      "id": "engineer-2",
+      "kind": "engineering",
+      "limit_ids": [
+        "engineering-seconds"
+      ],
+      "promotion": null,
+      "purpose": "Second adaptation through R15: repair the smartwatch category's scuba_dive_mode claim, whose pattern the study revision (analyse-3) found admitting a water-resistance sentence ('tauchfähig bis 40m') and freediving ('Freitauchen bis zu 45 Metern', 'Apnoe') as a stated dive function -- the substitution plan revision 7's dive_computer forbids. Method version 2 of the category; the KOSPET Tank T4 listing becomes the counterexample. No marketplace request.",
+      "question": "Once the claim reads only a stated scuba function (a dive mode, dive computer, nitrox or a decompression model), which of the 20 listings that carried it keep it, and does any committed decision move beyond the claim itself?",
+      "replay_of": "",
+      "result": null,
+      "resumes": "",
+      "run_id": "smartwatch-dive-claim",
+      "run_manifest": {
+        "path": "tests/intake/smartwatch-dive-claim.json",
+        "sha256": "9cf9611aac08d36c3a1ddcb5dece34de311ec3c12a517a2f1d891c1c39b55d3d"
+      },
+      "started_at": "2026-09-18T19:07:02+00:00",
+      "state": "completed"
+    },
+    {
+      "allocation": {
+        "seconds": 300
+      },
+      "authorisation": "checked",
+      "consumption": {
+        "seconds": 0
+      },
+      "consumption_source": "declared",
+      "depends_on": [
+        "engineer-2",
+        "analyse-3"
+      ],
+      "finished_at": "2026-09-18T19:12:56+00:00",
+      "id": "analyse-4",
+      "kind": "analysis",
+      "limit_ids": [
+        "research-seconds"
+      ],
+      "promotion": null,
+      "purpose": "Re-derive the study of analyse-3 under the category's method version 2 (engineer-2): the same brief, plan revision 7 and feeds, bound to the second adaptation record, so that the study id carries the new method and the dive claim's change is read from the cards. No new marketplace request.",
+      "question": "Under the repaired dive claim, which rows lose scuba_dive_mode, and does any candidate, price or outcome decision move?",
+      "replay_of": "",
+      "result": null,
+      "resumes": "",
+      "run_id": "",
+      "run_manifest": null,
+      "started_at": "2026-09-18T19:12:56+00:00",
+      "state": "completed"
     }
   ],
   "id": "peter-smartwatch-session",

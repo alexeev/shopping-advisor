@@ -122,6 +122,8 @@ class Claims(unittest.TestCase):
     def test_a_dive_function_is_a_stated_mode_not_the_word_diving(self):
         found = self.claims('Mehrere Tauchmodi und DiveView-Karten')['scuba_dive_mode']
         self.assertEqual((found.value, found.status, found.source), (True, TRUSTED, TEXT))
+        found = self.claims('Der bewährte Bühlmann ZHL-16C Dekompressionsalgorithmus')['scuba_dive_mode']
+        self.assertEqual((found.value, found.status), (True, TRUSTED))
         for text in ('Ob Laufen, Radfahren, Surfen oder Tauchen: über 80 Sport-Apps',
                      'Erkennung von Schlafapnoe über Nacht',
                      'wassergeschützt bis 100 m – perfekt zum Schwimmen, Tauchen und Wassersport'):
@@ -129,6 +131,23 @@ class Claims(unittest.TestCase):
                 self.assertEqual(self.claims(text)['scuba_dive_mode'].status, NOT_CLAIMED)
         self.assertEqual(self.claims('Nicht zum Tauchen geeignet')['scuba_dive_mode'].status,
                          NOT_CLAIMED)
+
+    def test_dive_capable_and_freediving_are_not_a_scuba_function(self):
+        # Method version 2 (R15, the second adaptation). Version 1 read all
+        # three of these as a stated dive function; the study revision over
+        # the trial's plan found a 178 EUR watch credited with one on the
+        # third, and the plan's dive_computer condition says a water-resistance
+        # sentence never satisfies it.
+        for text in ('Wasserdichte Tasten machen sie tauchfähig bis 40m Tiefe.',
+                     'für anspruchsvolle Unterwasseraktivitäten konzipiert – inklusive '
+                     'Freitauchen bis zu 45 Metern.',
+                     '40 Meter Tauchleistung, mit Unterstützung für Apnoe-Tauchaktivitäten',
+                     'Die weltweit erste Smartwatch für Tauchgänge in bis zu 150 Metern'):
+            with self.subTest(text=text):
+                self.assertEqual(self.claims(text)['scuba_dive_mode'].status, NOT_CLAIMED)
+        found = self.claims('Tauchtechnologie für bis zu 150 m Tiefe: Die weltweit erste Smartwatch '
+                            'für Tauchgänge in bis zu 150 Metern')['scuba_dive_mode']
+        self.assertEqual((found.value, found.status), (True, TRUSTED))
 
     def test_nfc_and_a_payment_service_are_one_claim_and_payment_in_germany_is_none(self):
         found = self.claims('bezahlen Sie kontaktlos mit Garmin Pay')['nfc_payment']
@@ -307,13 +326,30 @@ class RealCases(unittest.TestCase):
         cited = {asin for decline in CATEGORY.lifecycle.applicability.declines for asin in decline.asins}
         self.assertEqual(cited, set(self.DIVE_COMPUTERS) | set(self.ACCESSORIES) | set(self.BANDS_AND_TRACKERS))
 
-    def test_the_dive_function_is_stated_where_the_trial_read_it_and_not_where_it_did_not(self):
-        for asin in ('B0CZ6S2SX7', 'B0DX21FHWP', 'B0FL1YW13Z', 'B0CPF5C7XH', 'B0DC71V3ZD'):
+    # The vendor states a scuba function: a dive mode, a dive computer or a
+    # decompression model, in the fields the search reads.
+    STATE_A_DIVE_FUNCTION = ('B0CZ6S2SX7', 'B0CZ6G2XC1', 'B0CZ6KJVZZ', 'B0DX21FHWP', 'B0DX1T7JQ3',
+                             'B0CNSG78ZQ', 'B0CNSF5DK2', 'B0CNSCY41D', 'B0CPF5C7XH', 'B0CPF2Q5PB',
+                             'B0B45XTKRN', 'B0FL1YW13Z', 'B0FL2JXW3B', 'B0GKPJLHNH', 'B0DBV9ZV69')
+    # Method version 1 credited these five on "tauchfähig bis 40m" (fenix 8,
+    # three sizes), "Apnoe-Tauchaktivitäten" and "Tauchleistung" (fenix 8 Pro)
+    # and "Freitauchen bis zu 45 Metern" (KOSPET Tank T4). The fenix 8's A+
+    # image alt text says "Tauchfunktion", which the search does not read;
+    # Garmin's manual documents the dive apps, and a manual is not the page.
+    DIVE_CAPABLE_OR_FREEDIVING_ONLY = ('B0DC6ZD321', 'B0DC71V3ZD', 'B0DC6ZD31R', 'B0FPMK7KYX',
+                                       'B0FR8LXTWP')
+
+    def test_the_dive_function_is_stated_where_the_page_states_a_scuba_function(self):
+        for asin in self.STATE_A_DIVE_FUNCTION:
             with self.subTest(asin=asin):
                 self.assertEqual(self.cards[asin]['claims']['scuba_dive_mode'].value, True)
-        for asin in ('B0DSG9VCRH', 'B0FQFJQK5K', 'B0HFP18YKP', 'B0HCN4V5KD'):
+        for asin in self.DIVE_CAPABLE_OR_FREEDIVING_ONLY + ('B0DSG9VCRH', 'B0FQFJQK5K',
+                                                            'B0HFP18YKP', 'B0HCN4V5KD'):
             with self.subTest(asin=asin):
                 self.assertEqual(self.cards[asin]['claims']['scuba_dive_mode'].status, NOT_CLAIMED)
+        stated = [asin for asin, card in self.cards.items()
+                  if card['category'].value == KEY and card['claims']['scuba_dive_mode'].value]
+        self.assertEqual(sorted(stated), sorted(self.STATE_A_DIVE_FUNCTION))
 
     def test_the_three_unpriced_listings_have_no_price_value(self):
         for asin in ('B0DC6ZD321', 'B0CPF5C7XH', 'B0B45XTKRN'):

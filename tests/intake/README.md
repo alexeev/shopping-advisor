@@ -162,8 +162,9 @@ the check's output path names the scratch directory of the run, whose output
 is identified by its digest. `smartwatch-session.json` is the trial's v2 ledger
 at revision 5 with `engineer-1` completed from that record, the three probes
 pointing at their committed manifests (the same bytes) and `analyse-3`, the
-study run, completed with its declared seconds. Together they replay as the
-gate's `smartwatch-dive-nfc` example: `smartwatch-dive-nfc-2d5b51c7d0d9`, 39 of
+study run, completed with its declared seconds. Together they replayed as the
+gate's `smartwatch-dive-nfc` example under method version 1:
+`smartwatch-dive-nfc-2d5b51c7d0d9` (phase 3 below moved it), 39 of
 55 classified, 35 priced offers, the recommendation withheld on six decisive
 requirements, the price order as the bounded finding, delivered as history and
 resumable from its own snapshot. The comparison with the trial's hand-read
@@ -175,6 +176,28 @@ uv run --offline --locked python -m shopping_advisor.study adaptation-check test
 uv run --offline --locked python -m shopping_advisor.study run tests/intake/smartwatch-brief.json --plan tests/intake/smartwatch-plan.json --session tests/intake/smartwatch-session.json --adaptation tests/intake/smartwatch-adaptation.json -o data/smartwatch-example-study
 uv run --offline --locked python -m shopping_advisor.study verify data/smartwatch-example-study
 uv run --offline --locked python -m shopping_advisor.study resume data/smartwatch-example-study --reference 2026-09-18T20:00:00+00:00
+```
+
+**R15 phase 3 coverage (2026-09-18).** `smartwatch-dive-claim.json` is the
+**second adaptation record**: the dive claim repaired as method version 2 —
+three files captured whole, a first check that exited 71 without importing
+anything (the runner's relative `.venv`, since fixed in the CLI) and a second
+that failed inside the kernel boundary on exactly the declared method-version
+move, the review, the adoption and the rollback demonstrated before the ledger
+accounted for it. Its `predecessor` names `smartwatch-adaptation.json`'s
+private original by canonical digest, the first use of the `adaptation` link;
+the committed copy differs from that original only in the runner's two paths,
+as this one does from its own. `smartwatch-session.json` now carries
+`engineer-2` completed from the second record and `analyse-4`, the
+re-derivation of the study under the new method. The gate's
+`smartwatch-dive-nfc` example binds the second record: its id is
+`smartwatch-dive-nfc-8f62da3c1256` where the same brief under method version 1
+was `smartwatch-dive-nfc-2d5b51c7d0d9`, with every decision unchanged — the
+claim that moved on five cards is not among the decisions the baseline pins.
+
+```text
+uv run --offline --locked python -m shopping_advisor.study adaptation-check tests/intake/smartwatch-dive-claim.json
+uv run --offline --locked python -m shopping_advisor.study run tests/intake/smartwatch-brief.json --plan tests/intake/smartwatch-plan.json --session tests/intake/smartwatch-session.json --adaptation tests/intake/smartwatch-dive-claim.json -o data/smartwatch-v2-example-study
 ```
 
 The [runbook](../../RESEARCH.md#retain-an-intake-plan-before-the-executable-brief)

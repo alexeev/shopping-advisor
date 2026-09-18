@@ -188,12 +188,21 @@ CLAIMS = (
         # 32 of 55 mention diving; the pure dive computers among them are
         # declined by the classifier before this claim is read.
         # "Tauchen" alone is an activity in a list ("Surfen oder Tauchen: über
-        # 80 Sport-Apps") and is not matched: the claim is a dive *function*.
-        r'tauch(?:modus|modi|funktion\w*|technologie|computer|g[äa]nge?n?|f[äa]hig\w*)'
-        # "Schlafapnoe" is sleep apnoea detection, not freediving.
-        r'|scuba|dive\s*mode|\bapnoe|nitrox|dekompression\w*|freitauch\w*',
-        why='the vendor says the watch has a dive function. Whether it may '
-            'replace a dive computer on a real dive is not on the page'),
+        # 80 Sport-Apps") and is not matched: the claim is a stated *scuba*
+        # function -- a dive mode, function or technology, a dive computer,
+        # nitrox or a decompression model. Method version 2 (R15, the second
+        # adaptation) stopped reading "tauchfähig bis 40m" (dive-capable: a
+        # water-resistance sentence, which the trial's plan says never
+        # satisfies a dive-computer condition), "Tauchgänge" (dives as an
+        # activity), and "Freitauchen" and "Apnoe" (freediving is not scuba):
+        # version 1 credited the fenix 8, the fenix 8 Pro and a 178 EUR KOSPET
+        # with a dive function on those words.
+        r'tauch(?:modus|modi|funktion\w*|technologie|computer)'
+        r'|scuba|dive\s*mode|nitrox|dekompression\w*',
+        why='the vendor says the watch has a scuba function: a dive mode, a '
+            'dive computer or a decompression model. A water-resistance or '
+            'freediving sentence is not one, and whether the watch may replace '
+            'a dive computer on a real dive is not on the page'),
     cat.Claim(
         'nfc_payment', 'NFC payment',
         # 11 of 55: "NFC", "bezahlen Sie kontaktlos mit Garmin Pay", "Wallet".
@@ -433,7 +442,9 @@ LIFECYCLE = cat.Lifecycle(
                 'r13--the-conversation-as-the-entry-point'),
     reviewed='2026-09-18',
     review='architectural-review-1--2026-09-18',
-    method_version=1,
+    # 2 since the second R15 adaptation (2026-09-18): the dive claim's meaning
+    # moved on five committed records.
+    method_version=2,
 )
 
 
