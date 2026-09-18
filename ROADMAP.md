@@ -2073,6 +2073,33 @@ review if the maintainer wants the category's controls mapped, the
 source-embedded-instruction and `harness-only` cases, and a faulty patch
 withdrawn on a real regression.**
 
+**2026-09-18 — Plan revisions 8 to 10 under independent review: the plan
+that maps the category to the trial's request.** After the category entered
+through the procedure, the trial's plan had to say what its controls answer.
+Three revisions, each read afresh by the independent reviewer against the
+five retained messages, the private expectations record and the live
+catalogue; the plans and reviews stay private under `data/plans/` and are
+identified here by digest, as the revision 5–7 chain is under R13.
+
+| Revision | What it did | Review |
+|---|---|---|
+| 8 (`db0ec28ca0af`) | `watch_class` mapped to `classification`; three agent-authored, assumed hard constraints mapped to `require_claims` on the dive, payment and Android claims as "necessary, not sufficient" conditions; the buyer's decisive conditions kept unsupported. Measured: 6 priced offers of 39 | **fail** (`3d40859c18f9`): faithfulness, adequacy, assumptions. A function being necessary does not make its mention in this listing necessary; the filters excluded silence before manufacturer evidence could inform selection (Descent Mk3 and Mk3i to the Android filter, fenix 8 to an unread alt text). The `nfc_payment` pattern credited a connectivity row's bare "NFC" as payment — the finding that became the fourth adaptation |
+| 9 (`7981c98fdd65`) | The maintainer's decision: all three filters dropped, the classifier kept; the parents' gaps rewritten so that a silent listing is unassessed, not excluded. Measured: 35 priced offers, as under revision 7 | **fail** (`cf7f0098160a`): faithfulness, stage effects. The parents' `effects` still ordered the exclusions the gaps forbade ("a listing stating only a water-resistance rating is excluded"; "every surviving candidate must state Android compatibility"), and the readback reproduced both |
+| 10 (`4c1d42260b8c`) | The three parents' effects rewritten to match: "not assessed" for a silent listing, exclusion only on a stated incompatibility, payment split into documented, third-party and silent; `nfc_payments` described under method version 3 | **limited** (`0f230cd9a163`): faithfulness, adequacy, assumptions and stage effects pass; omissions `limited` on the `missing_context` the plan has carried since revision 1, which CONTRACT §13 never lets pass. The reviewer records the price table as not answering the buyer's ordering criterion and the `price_shown` tension as a remaining limit |
+
+**What the chain established.** The plan that survives review maps one
+control — the classifier — and no claim filter: the 35-row price table is the
+honest bounded finding, and its length is a presentation defect, not grounds
+for a constraint the buyer did not state (the maintainer's ruling on revision
+9). A reviewer's first-quote reading of a card is not the page: the count of
+six bare-NFC listings was the operating agent's and was five. The procedure's
+binding held where it should: a record that originated in revision 7 refused
+to bind to revision 8, which changed candidate admission, and the reviewer
+judged that refusal correct. **Not done:** the committed examples still bind
+revision 7, because the four adaptation records originate there; a study
+under revision 10 carrying its limited review as an attached intake review
+would be a further example, and whether to commit it is the maintainer's call.
+
 **2026-09-18 — Phase 5: the fourth adaptation, the payment claim repaired
 on the independent reviewer's finding.** Plan revision 8 — the classifier
 mapped to `classification` and three agent-authored listing filters on the
