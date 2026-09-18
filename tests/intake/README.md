@@ -142,6 +142,41 @@ uv run --offline --locked python -m shopping_advisor.study session-check tests/i
 uv run --offline --locked python -m shopping_advisor.study run tests/studies/pasta-bronze-die.toml --adaptation tests/intake/adaptation-record.json --session tests/intake/adaptation-session-r2.json -o data/adaptation-example-study
 ```
 
+**R15 phase 2 coverage (2026-09-18).** The first study resting on a real
+adaptation. `smartwatch-plan.json` is the third R13 trial's intake plan,
+revision 7, committed as it is (case 20 below is its lesson); it maps no
+control to any requirement, because it was written when no category existed,
+and its independent review is not committed because `run --intake-review`
+refuses it: the review's basis recorded no control catalogue and the live
+`smartwatch` catalogue exists now. `smartwatch-brief.json` is the plan-bound
+brief over the three retained probe feeds under `data/evidence`, with the
+plan's question and use case verbatim, no required claim and no explicit axis —
+the plan carries none, and `plan-bind` refuses a filter it does not. It says in
+its limits that the price order is the category's default and not the buyer's
+ordering. `smartwatch-adaptation.json` is the **accepted adaptation record** of
+the category (R15 phase 1) — the 10-file patch archived whole, one gate run
+inside the kernel boundary that failed on exactly the declared baseline moves,
+the review, the adoption and the demonstrated rollback; only the runner's
+interpreter and temporary-directory paths were made repository-relative, and
+the check's output path names the scratch directory of the run, whose output
+is identified by its digest. `smartwatch-session.json` is the trial's v2 ledger
+at revision 5 with `engineer-1` completed from that record, the three probes
+pointing at their committed manifests (the same bytes) and `analyse-3`, the
+study run, completed with its declared seconds. Together they replay as the
+gate's `smartwatch-dive-nfc` example: `smartwatch-dive-nfc-2d5b51c7d0d9`, 39 of
+55 classified, 35 priced offers, the recommendation withheld on six decisive
+requirements, the price order as the bounded finding, delivered as history and
+resumable from its own snapshot. The comparison with the trial's hand-read
+table is in [ROADMAP](../../ROADMAP.md#r15--controlled-task-driven-capability-adaptation).
+
+```text
+uv run --offline --locked python -m shopping_advisor.study plan-check tests/intake/smartwatch-plan.json --brief tests/intake/smartwatch-brief.json
+uv run --offline --locked python -m shopping_advisor.study adaptation-check tests/intake/smartwatch-adaptation.json
+uv run --offline --locked python -m shopping_advisor.study run tests/intake/smartwatch-brief.json --plan tests/intake/smartwatch-plan.json --session tests/intake/smartwatch-session.json --adaptation tests/intake/smartwatch-adaptation.json -o data/smartwatch-example-study
+uv run --offline --locked python -m shopping_advisor.study verify data/smartwatch-example-study
+uv run --offline --locked python -m shopping_advisor.study resume data/smartwatch-example-study --reference 2026-09-18T20:00:00+00:00
+```
+
 The [runbook](../../RESEARCH.md#retain-an-intake-plan-before-the-executable-brief)
 contains the full bind/run/verify sequence. The test suite exercises those CLIs,
 checks the expected original decisions, and replays after deleting the originating

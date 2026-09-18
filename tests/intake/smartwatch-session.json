@@ -1,0 +1,338 @@
+{
+  "actions": [
+    {
+      "allocation": {
+        "responses": 40,
+        "runs": 1,
+        "seconds": 900
+      },
+      "authorisation": "checked",
+      "consumption": {
+        "responses": 22,
+        "runs": 1,
+        "seconds": 234.65388037500088
+      },
+      "consumption_source": "run_manifest",
+      "depends_on": [],
+      "finished_at": "2026-09-18T12:09:36+00:00",
+      "id": "probe-1",
+      "kind": "probe",
+      "limit_ids": [
+        "research-responses",
+        "research-seconds",
+        "research-runs"
+      ],
+      "promotion": {
+        "assessment": "The probe supplied the first candidates (Suunto Ocean, Suunto Nautic S, Garmin Descent G2) and moved no criterion. Discovery by class query alone is incomplete: models the agent knows to document scuba modes (Garmin Descent Mk3, fenix 8, Huawei Watch Ultimate) did not appear on the first page, so a named-model probe follows and is recorded as agent-supplied, not shelf-discovered.",
+        "changed_criteria": false,
+        "into": "plan_inputs",
+        "promoted": true,
+        "supplied_candidates": true
+      },
+      "purpose": "Reconnaissance of how dive-capable smartwatches are listed on Amazon.de: two class queries without brand names, first search page each, up to ten product pages per query, search pages retained.",
+      "question": "Do class queries surface smartwatches with a scuba dive mode at all, and which of the plan's properties (GPS, heart rate, barometer, dive mode, depth rating, NFC payment, Android compatibility, display, battery) do listings state?",
+      "replay_of": "",
+      "result": {
+        "next_action": "probe-2: named-model queries for dive-capable smartwatches the class queries did not surface (Garmin Descent Mk3, Descent G1, fenix 8, tactix 8, Huawei Watch Ultimate), recorded as agent-supplied candidates.",
+        "summary": "22 responses, 20 product pages, 2 search pages, no challenges. Query 1 (Smartwatch Tauchcomputer) surfaced three dive-capable smartwatches: Suunto Ocean (3 colour ASINs, 799 EUR), Suunto Nautic S (549 EUR), Garmin Descent G2 (2 colour ASINs, 588-650 EUR), beside cheap generic smartwatches and the Suunto D5 dive computer. Query 2 (Tauchcomputer Uhr GPS NFC) returned pure dive computers (Cressi, Mares) and noise; NFC in a query does not select for payment. Listings state dive mode, depth, display and GPS runtime; none of the three dive-capable smartwatches states NFC payment in its bullets, so payment and EN 13319 are read from manufacturer specifications."
+      },
+      "resumes": "",
+      "run_id": "20260918T120542Z-www.amazon.de-13fe3a7e",
+      "run_manifest": {
+        "path": "data/evidence/probe-amazon-de-smartwatch-2026-09-18-class.manifest.json",
+        "sha256": "97dfe169c0f669db6d6c503cc22b4d1ed7090d714b057e648b4fec20950147c6"
+      },
+      "started_at": "2026-09-18T12:05:42+00:00",
+      "state": "completed"
+    },
+    {
+      "allocation": {
+        "responses": 45,
+        "runs": 1,
+        "seconds": 900
+      },
+      "authorisation": "checked",
+      "consumption": {
+        "responses": 35,
+        "runs": 1,
+        "seconds": 363.4638678749907
+      },
+      "consumption_source": "run_manifest",
+      "depends_on": [
+        "probe-1"
+      ],
+      "finished_at": "2026-09-18T12:17:12+00:00",
+      "id": "probe-2",
+      "kind": "probe",
+      "limit_ids": [
+        "research-responses",
+        "research-seconds",
+        "research-runs"
+      ],
+      "promotion": {
+        "assessment": "Candidates were supplied by the agent from manufacturer documentation, not discovered on the shelf; the comparison must say so, and the class-query probe stands as the shelf-discovered baseline.",
+        "changed_criteria": false,
+        "into": "plan_inputs",
+        "promoted": true,
+        "supplied_candidates": true
+      },
+      "purpose": "Named-model reconnaissance: five queries for dive-capable smartwatches the agent knows from manufacturer documentation but the class queries did not surface, up to six product pages each, search pages retained.",
+      "question": "Are Garmin Descent Mk3/Mk3i, Descent G1, fenix 8, tactix 8 and Huawei Watch Ultimate listed on Amazon.de, at what price, and do their listings state a scuba mode, depth rating, NFC payment, Android compatibility, display and GPS runtime?",
+      "replay_of": "",
+      "result": {
+        "next_action": "Read the feed: which named models are listed, their prices and stated properties; then compile the candidate table and read manufacturer specifications for dive mode, payment service and EN 13319.",
+        "summary": "35 responses, 30 product pages, 5 search pages, no challenges; named-model queries on Amazon.de. Result read in the next step from the feed."
+      },
+      "resumes": "",
+      "run_id": "20260918T121109Z-www.amazon.de-ed25ac38",
+      "run_manifest": {
+        "path": "data/evidence/probe-amazon-de-smartwatch-2026-09-18-named.manifest.json",
+        "sha256": "71d4995a54c5c17f5381e1661a49067579bbc370cbfd21abb72507f34e7aac3f"
+      },
+      "started_at": "2026-09-18T12:11:09+00:00",
+      "state": "completed"
+    },
+    {
+      "allocation": {
+        "responses": 12,
+        "runs": 1,
+        "seconds": 600
+      },
+      "authorisation": "checked",
+      "consumption": {
+        "responses": 7,
+        "runs": 1,
+        "seconds": 64.63474587499513
+      },
+      "consumption_source": "run_manifest",
+      "depends_on": [
+        "probe-2"
+      ],
+      "finished_at": "2026-09-18T12:20:07+00:00",
+      "id": "probe-3",
+      "kind": "probe",
+      "limit_ids": [
+        "research-responses",
+        "research-seconds",
+        "research-runs"
+      ],
+      "promotion": {
+        "assessment": "Completes the opened listings for models already named in probe-2; no new candidate and no criterion moved.",
+        "changed_criteria": false,
+        "into": "plan_inputs",
+        "promoted": true,
+        "supplied_candidates": false
+      },
+      "purpose": "Fetch by ASIN the seven product pages that probe-2's search pages sighted but did not open and that may be candidates: Garmin Descent Mk3 43 mm stainless and bronze, Descent Mk3i 51 mm, Descent G1, fenix 9 51 mm, fenix 8 Pro 51 mm, Huawei Watch Ultimate 2 green.",
+      "question": "What do these listings state on price, scuba mode, depth rating, payment, display and GPS runtime, so that every candidate model has at least one opened listing?",
+      "replay_of": "",
+      "result": {
+        "next_action": "Compile the candidate table from all three probes; read manufacturer specifications for dive mode, payment service and EN 13319; write the plan sources and the report.",
+        "summary": "7 responses, 7 product pages by ASIN, no challenges. Contents read in the next step."
+      },
+      "resumes": "",
+      "run_id": "20260918T121902Z-www.amazon.de-47a60b36",
+      "run_manifest": {
+        "path": "data/evidence/probe-amazon-de-smartwatch-2026-09-18-asin.manifest.json",
+        "sha256": "c0e94de961300da89940db82bc9c530cb89ce749df3cd4b457e2cc6c58e6e0aa"
+      },
+      "started_at": "2026-09-18T12:19:02+00:00",
+      "state": "completed"
+    },
+    {
+      "allocation": {
+        "seconds": 1800
+      },
+      "authorisation": "checked",
+      "consumption": {
+        "seconds": 1500
+      },
+      "consumption_source": "declared",
+      "depends_on": [
+        "probe-1",
+        "probe-2",
+        "probe-3"
+      ],
+      "finished_at": "2026-09-18T12:46:00+00:00",
+      "id": "analyse-1",
+      "kind": "analysis",
+      "limit_ids": [
+        "research-seconds"
+      ],
+      "promotion": null,
+      "purpose": "Hand-read comparison of the candidates from probes 1-3 against the plan's requirements, using manufacturer manuals and specification pages recorded as plan sources; no executable brief exists because 'smartwatch' is not a registered category.",
+      "question": "Which listed Android-compatible smartwatches document a scuba decompression computer, NFC payment usable in Germany and GPS/HR/barometer, and how do they order on manufacturer-stated GPS runtime and display?",
+      "replay_of": "",
+      "result": null,
+      "resumes": "",
+      "run_id": "",
+      "run_manifest": null,
+      "started_at": "2026-09-18T12:21:00+00:00",
+      "state": "completed"
+    },
+    {
+      "allocation": {
+        "seconds": 14400
+      },
+      "authorisation": "checked",
+      "consumption": {
+        "seconds": 22.781
+      },
+      "consumption_source": "adaptation_record",
+      "depends_on": [],
+      "finished_at": "2026-09-18T18:03:53+00:00",
+      "id": "engineer-1",
+      "kind": "engineering",
+      "limit_ids": [
+        "engineering-seconds"
+      ],
+      "promotion": null,
+      "purpose": "Proposal, not funded: a 'smartwatch' category as a task experiment -- classifier over titles and breadcrumbs (Smartwatches node; excludes bands, pure dive computers and accessories), claim keys gps, heart_rate_sensor, barometric_altimeter, scuba_dive_mode, nfc_payment, android_compatible; axes price, gps_runtime_hours (unit-ambiguous across vendors: GPS-only vs all-systems vs expedition), depth_rating_m, display_type. Needs committed cases from the three probe feeds and counterexamples (Suunto Nautic S: dive computer without optical HR; fenix E: no dive). Execution is R15's.",
+      "question": "",
+      "replay_of": "",
+      "result": null,
+      "resumes": "",
+      "run_id": "smartwatch-category",
+      "run_manifest": {
+        "path": "tests/intake/smartwatch-adaptation.json",
+        "sha256": "d222e8cc9d4eea199fc5e78e32c99c8fc7761cbe502d914fb5891e4b3f84c8ed"
+      },
+      "started_at": "2026-09-18T18:03:30+00:00",
+      "state": "completed"
+    },
+    {
+      "allocation": {
+        "seconds": 900
+      },
+      "authorisation": "checked",
+      "consumption": {
+        "seconds": 600
+      },
+      "consumption_source": "declared",
+      "depends_on": [
+        "analyse-1"
+      ],
+      "finished_at": "2026-09-18T13:15:00+00:00",
+      "id": "analyse-2",
+      "kind": "analysis",
+      "limit_ids": [
+        "research-seconds"
+      ],
+      "promotion": null,
+      "purpose": "Re-read the retained probe feeds and plan sources under plan revision 6 after the independent intake review of revision 5 failed: quality and style carried as unassessed hard conditions, the agent's proxies labelled as its own, the report rewritten to claim no more than the plan supports. No new marketplace request.",
+      "question": "Does the retained evidence still support the candidate table once nothing is admitted as 'passed' on measurement quality or style, and which rows compare on runtime?",
+      "replay_of": "",
+      "result": null,
+      "resumes": "",
+      "run_id": "",
+      "run_manifest": null,
+      "started_at": "2026-09-18T13:05:00+00:00",
+      "state": "completed"
+    },
+    {
+      "allocation": {
+        "seconds": 600
+      },
+      "authorisation": "checked",
+      "consumption": {
+        "seconds": 407
+      },
+      "consumption_source": "declared",
+      "depends_on": [
+        "analyse-2",
+        "engineer-1"
+      ],
+      "finished_at": "2026-09-18T18:43:24+00:00",
+      "id": "analyse-3",
+      "kind": "analysis",
+      "limit_ids": [
+        "research-seconds"
+      ],
+      "promotion": null,
+      "purpose": "R15 phase 2: run the study over the three retained probe feeds under the smartwatch category adopted through engineer-1, bound to plan revision 7, its limited intake review and this ledger; compare the category's candidate table with the hand-read table of analyse-2 and explain every difference. No new marketplace request; the feeds are the committed evidence of 2026-09-18.",
+      "question": "Does the category, replayed over the same 57 records, admit the candidates the hand-read comparison admitted and state the same vendor claims -- and where it differs, is the difference the classifier's declared limit, a claim pattern, or an error?",
+      "replay_of": "",
+      "result": null,
+      "resumes": "",
+      "run_id": "",
+      "run_manifest": null,
+      "started_at": "2026-09-18T18:36:37+00:00",
+      "state": "completed"
+    }
+  ],
+  "id": "peter-smartwatch-session",
+  "limits": [
+    {
+      "amount": 400,
+      "authorization": {
+        "ref": "u3",
+        "source": "user_message",
+        "text": "Peter confirmed Amazon.de and answered every read-back question; the operating agent bounds the marketplace requests at 400 responses in total."
+      },
+      "deadline": "",
+      "id": "research-responses",
+      "kind": "research",
+      "measurement": "observed",
+      "mode": "stops_new_work",
+      "note": "Counted from downloader/response_count in each run manifest.",
+      "scope": "Probes and collections on Amazon.de for Peter's smartwatch study.",
+      "unit": "responses"
+    },
+    {
+      "amount": 5400,
+      "authorization": {
+        "ref": "",
+        "source": "operator",
+        "text": "Proposed by the operating agent; crawl seconds from the manifest, analysis seconds declared."
+      },
+      "deadline": "",
+      "id": "research-seconds",
+      "kind": "research",
+      "measurement": "observed",
+      "mode": "stops_new_work",
+      "note": "Crawl seconds read from stats.elapsed_time_seconds; analyses declare theirs.",
+      "scope": "Crawl wall-clock time and declared analysis time for this study.",
+      "unit": "seconds"
+    },
+    {
+      "amount": 8,
+      "authorization": {
+        "ref": "",
+        "source": "operator",
+        "text": "Proposed by the operating agent."
+      },
+      "deadline": "",
+      "id": "research-runs",
+      "kind": "research",
+      "measurement": "observed",
+      "mode": "stops_new_work",
+      "note": "One per run manifest.",
+      "scope": "Crawl runs for this study.",
+      "unit": "runs"
+    },
+    {
+      "amount": 14400,
+      "authorization": {
+        "ref": "",
+        "source": "operator",
+        "text": "Maintainer's decision of 2026-09-18 (R15 phase 0 accepted): fund engineer-1, the smartwatch task-experiment category, with the 14 400 s it proposed; the buyer never funded engineering and this allowance is the maintainer's, not the buyer's."
+      },
+      "deadline": "",
+      "id": "engineering-seconds",
+      "kind": "engineering",
+      "measurement": "observed",
+      "mode": "stops_new_work",
+      "note": "Runner wall time from the adaptation record (consumption_source adaptation_record); attempts are the record's own budget. Raised from 0 in revision 5 under session ledger v2.",
+      "scope": "Peter's smartwatch study.",
+      "unit": "seconds"
+    }
+  ],
+  "plan": {
+    "id": "peter-smartwatch-intake",
+    "revision": 7,
+    "sha256": "1d3e02631869548f9b611f79d162854b24a8bbd1d3f760939a46760b4723d3ce"
+  },
+  "revision": 5,
+  "session_version": 2,
+  "supersedes": "3ecebf4f4ff81628fe88978aea370518ef5b9855e5abccd11354a262796539ff"
+}

@@ -209,10 +209,30 @@
       "name": "pasta-adaptation",
       "session": "tests/intake/adaptation-session-r2.json",
       "why": "R15 phase 0: the bronze-die brief resting on an adopted adaptation record -- a synthetic method patch checked inside the kernel boundary, reviewed and adopted -- with the v2 session ledger that funded and accounted for it. Its id differs from pasta-bronze-die's because the method does, and nothing else does."
+    },
+    {
+      "adaptation": "tests/intake/smartwatch-adaptation.json",
+      "brief": "tests/intake/smartwatch-brief.json",
+      "deliver_at": "2026-09-18T20:00:00+00:00",
+      "expect": {
+        "current_advice": "not_in_scope",
+        "excluded": 3,
+        "intake_review": "",
+        "offers": 35,
+        "outcome": "recommendation",
+        "resumable": "yes",
+        "shortlisted": 0,
+        "stop": "requirement_unsupported",
+        "study_id": "smartwatch-dive-nfc-2d5b51c7d0d9"
+      },
+      "name": "smartwatch-dive-nfc",
+      "plan": "tests/intake/smartwatch-plan.json",
+      "session": "tests/intake/smartwatch-session.json",
+      "why": "R15 phase 2: the third R13 trial's plan revision 7, committed as it is, bound to a brief over the three retained probe feeds and run on the smartwatch category through its adaptation record and the v2 ledger that funded it. Every decisive condition stays unsupported, the recommendation is withheld, and the price order of the 35 priced smartwatches is the bounded finding -- the category's default axis, which the plan says ranks nobody. The first study resting on a capability that entered through the procedure."
     }
   ],
   "note": "What the maintenance gate is entitled to find. Tracked on purpose: a task-local change that lowers a floor, drops a check, promotes or retires a capability or moves an example's decision has to say so here, in a reviewable diff. Re-record with `maintenance baseline --update` from a tree that passes; a capability's lifecycle moves only after ROADMAP records the decision.",
-  "recorded_at": "2026-09-18T18:05:17+00:00",
+  "recorded_at": "2026-09-18T18:49:23+00:00",
   "runtime": {
     "lock_sha256": "e24bc67da2dba6c49538700bc8bce61658748c715e9103603f537c15694a32cd",
     "python": "3.14",

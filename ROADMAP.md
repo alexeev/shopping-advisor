@@ -2061,12 +2061,105 @@ hard requirement must remain missing regardless of any score.
 
 ## R15 — Controlled task-driven capability adaptation
 
-**Status: IN PROGRESS. Phase 0 — the procedure — and Phase 1 — the first
-category written through it, `smartwatch` — shipped on 2026-09-18 and are
-recorded below. T4's local maintenance gate is the baseline R15 validates
-against; the provider and platform trials deferred from T4 are not a
-dependency. Next: the study revision over the trial's plan (Phase 2) and the
-extraction case decided by inspection (Phase 3).**
+**Status: IN PROGRESS. Phase 0 — the procedure — Phase 1 — the first
+category written through it, `smartwatch` — and Phase 2 — the first study
+resting on it, committed as the gate's eighth example — shipped on 2026-09-18
+and are recorded below. T4's local maintenance gate is the baseline R15
+validates against; the provider and platform trials deferred from T4 are not a
+dependency. Next: the second adaptation the study revision found necessary
+(the dive claim's pattern, method version 2, with the faulty-patch case run
+for real), a plan revision 8 with a fresh intake review if the maintainer
+wants the category's controls mapped, and the extraction case decided by
+inspection (Phase 3).**
+
+**2026-09-18 — Phase 2: the study revision over the trial's plan, and what
+the category's table says next to the hand-read one.** The third trial's plan
+revision 7 (`1d3e02631869`), committed as it is by the maintainer's decision,
+was bound to a brief over the three retained probe feeds (`plan-bind` refused
+the first draft until the brief carried the plan's question and use case
+verbatim) and run on the `smartwatch` category through its accepted adaptation
+record (descriptor `e184aad39bab`) and the v2 ledger that funded it, under a
+new analysis action `analyse-3` (600 s allocated, 407 s declared). The study is
+`smartwatch-dive-nfc-2d5b51c7d0d9`: 57 records merged to 55 (two ASINs in two
+feeds), 39 classified `smartwatch` and 16 `other` with the reason, 35 offers
+ranked on `price`, 3 unpriced listings excluded, 1 folded, 0 shortlisted; stop
+`requirement_unsupported` on six decisive requirements and `data_quality`
+awaiting evidence, the recommendation withheld, and the price order kept as the
+bounded finding. It verifies, delivers as a historical comparison at a fixed
+reference and resumes from its own ledger snapshot. Brief, plan, ledger and
+record are committed under [tests/intake](tests/intake/README.md) and replay as
+the gate's **eighth example**, with the seven earlier ids unchanged.
+
+**What the plan's own words do to the report.** Revision 7 maps no control
+to any requirement — it was written when no category existed — so the brief
+could declare no required claim and no explicit axis (`plan-bind` refuses a
+filter the plan does not carry), the price order is the *category default*
+on a plan whose `price_shown` says price ranks nobody, and the report's
+withholding paragraph quotes gap reasons that begin "No smartwatch category
+is registered" while the same report rests on one. That is what "revision 7
+as it is" costs, and it is stated in the brief's limits rather than hidden.
+The plan's intake review could not be attached at all: `run --intake-review`
+refuses it because its basis recorded no control catalogue and the live
+`smartwatch` catalogue is `015add66fb87`, so its adequacy was judged against
+other controls. The study is therefore plan-backed and unreviewed, and
+`validate-report --require-review` is not claimed for it. Mapping the
+category's controls onto `watch_class`, `dive_computer`, `nfc_payments` and
+`phone_platform` is a plan revision 8 with a fresh independent review; a
+review template bound to the live catalogue was written privately for that.
+
+**The category's table against the hand-read one (`analyse-2`).** Same
+outcome where the page states what the manual stated: the Descent G2 (two
+listings, 587.74 and 649.97 EUR, dive, NFC and Android all stated), the
+fenix 8 (47 mm at 635.99), the Descent Mk3i 51 mm (1441.35 and 1647.27 with
+all three; 1852.99 without NFC on its page), the Mk3i 43 mm bronze at 1598
+(dive and NFC, Android unstated), the Mk3 43 mm steel unpriced, the Huawei
+Watch Ultimate 2 (799 twice with NFC stated, 899 in green without), the
+Ultimate at 544.78 (dive stated, NFC not — the hand table's "payment not
+resolved" reached from the page side), the Suunto Ocean (dive stated, no NFC,
+which is why the hand table excluded it), the Apple Watch Ultra 3 (Android
+not stated), and the Suunto Nautic S declined by its title where the hand
+table excluded it for having no optical sensor and no payment. Requiring the
+three page claims together — outside the study, through the analysis CLI —
+admits 8 of the 39 (7 priced): the hand table's block A without its two
+manual-only rows and without the bronze Mk3i, plus the Ultimate 2. Eight
+differences, each explained:
+
+| Difference | Explanation |
+|---|---|
+| fenix 8 Solar 51 mm (985.20) and fenix 9 51 mm (1079) are in the hand table's unranked block and state no dive function, no NFC (Solar) and no Android (fenix 9) on their pages | The hand table read Garmin's manuals and a press release, which are the plan's sources; the category reads the listing. Evidence source, not error |
+| The 1014 EUR end of the hand table's fenix 8 range (`B0DFLYZ28M`) is `other` | Its title names no class; the classifier's declared limit from Phase 1 |
+| The fenix 8 51 mm (732.26) is folded into the 47 mm listing as "another pack size" | Generic offer grouping treats case size as pack size; the fold hides a runtime the hand table kept apart (47 h against 84 h GPS). Not the category's decision and not one it can opt out of: `offer_grouping` is not optional. A generic gap, recorded |
+| The hand table filed 636 EUR under "fenix 8 43 mm, variant" | The listing priced at 635.99 is titled 47 mm; the 43 mm Steinweiss listing carries no price. The record decides |
+| KOSPET Tank T4 (178.49) carries `scuba_dive_mode: trusted`; the hand table had no cheap watch with a dive mode | The claim's pattern admits "Freitauchen bis zu 45 Metern" (freediving under an IP69K sentence) and, on the fenix 8, "tauchfähig bis 40m" — a water-resistance statement, which the plan's `dive_computer` says never satisfies it. **A semantic defect in the category**, not pinned by its tests (the five positives are Suunto Ocean, G2, Ultimate 2, Mk3 and fenix 8). With the dive claim alone required, 20 of 39 are admitted and the KOSPET leads on price |
+| Galaxy Watch Ultra2 (651, "not checked further" in the hand report) is nowhere in the study | It is in none of the 57 records; the words appear only in other listings' compatibility text. The hand report's row came from a search sighting, not a fetched page |
+| Depth ratings: 200 m on two Ultimate 2 pages and 150 on the third, 100 m on the Suunto Ocean title where its manual says 60 m EN 13319, 100 m on the Apple | The axis reads the page's "Wasserdichte Tiefe" row or a title, which is water resistance, not a dive rating, and the vendor's own pages disagree. Another reason it is shown and ranked on by nobody |
+| The hand table ordered its block A on GPS hours; the study orders on price | The plan gives runtime no control and the brief may not invent one; the study says beside the table that the order is the category's default and answers a narrower question than the buyer's |
+
+**What the procedure found about itself.** The first real ledger digest
+broke: `adaptation-rollback` writes its demonstration into the record after
+`session-record` has digested it, so `resume` reported `engineer-1`'s manifest
+as altered. The private ledger was re-pointed by hand at the record as it
+stands (`9674533ae156` → `256fcf6bda72`, the only field changed) and the
+runbook now demonstrates the rollback before it accounts for the attempt.
+The committed ledger fixture points the three probes at their committed
+manifests under `data/evidence` — the same bytes, the digests agree — and
+`engineer-1` at the committed record, whose runner paths are the only fields
+made repository-relative; its patch, checks, review and adoption are the
+private record's byte for byte. The record is 751 KB, because the patch
+archive carries the 55-record case feed; that is the price of an exact patch.
+
+**Measured.** 888 tests in 30 modules unchanged, 8 of 8 examples with the
+seven earlier ids unchanged, gate 30 s; the baseline diff is the eighth
+example's row and nothing else; the plan-backed examples are three; the
+extension-bearing study count under [R16](#r16--capability-lifecycle-and-architectural-review)
+moves to two. **Not established, and not claimed.** That the category's
+reading is right where it agrees with the hand table: both read the same
+pages, and the manuals the hand table added are not in the study. Any
+ordering on runtime. That a plan revision 8 would pass an independent review.
+The next adaptation is named by this study, not assumed: the dive claim's
+pattern, as method version 2 through the procedure with the KOSPET listing as
+its counterexample, which is also the first chance to run the faulty-patch
+Done-when case on a real regression.
 
 **2026-09-18 — Phase 1: the first adaptation through the procedure, a
 `smartwatch` task-experiment category.** The gap is the third R13 trial's
@@ -2350,7 +2443,9 @@ Retrieved text remains evidence, never execution instructions.
 
 **Status: IN PROGRESS.** The capability index, the lifecycle records of the four
 registered categories and the first architectural review shipped on 2026-09-18
-and are recorded below. The *task-experiment entry* — a capability arriving
+and are recorded below. The count toward the five-study cadence stands at
+**two** since R15's Phase 2 (the smartwatch study), and the second review is
+due: R15's first shipped adaptation was its trigger. The *task-experiment entry* — a capability arriving
 inside a study with a patch digest, a scope bound to the study and isolated
 checks — happened on 2026-09-18: `smartwatch` is the first capability whose
 lifecycle record points at an adaptation record rather than at reviewed

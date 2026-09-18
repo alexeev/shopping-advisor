@@ -376,9 +376,13 @@ class Contract(unittest.TestCase):
                                 for f in findings))
 
     def test_every_example_is_delivered_at_a_fixed_reference_as_history(self):
+        import datetime
         examples = maintenance.load_baseline()['examples']
         for example in examples:
-            self.assertEqual(example['deliver_at'], '2026-09-17T00:00:00+00:00', example['name'])
+            # A fixed instant with an offset, never the wall clock: the gate
+            # must fail with a change and never with the passage of time.
+            reference = datetime.datetime.fromisoformat(example['deliver_at'])
+            self.assertIsNotNone(reference.tzinfo, example['name'])
             self.assertEqual(example['expect']['current_advice'], delivery.NOT_IN_SCOPE, example['name'])
         bronze = next(e for e in examples if e['name'] == 'pasta-bronze-die')
         result = maintenance.check_examples({'examples': [bronze]})
