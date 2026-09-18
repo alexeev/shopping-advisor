@@ -467,6 +467,55 @@ def evaluate(record):
     return card
 
 
+# What this capability has earned (R16). Maintained: it is the category that
+# tested the contract, it carries five near-miss product classes as
+# counterexamples, and R7 and R8 reworked it over 127 records. What it has not
+# had is a second buyer -- see ``not_established``.
+LIFECYCLE = cat.Lifecycle(
+    state=cat.MAINTAINED,
+    decision='retained',
+    decided='2026-09-18',
+    maintainer='repository maintainer',
+    applicability=cat.Applicability(
+        marketplaces=('www.amazon.de',),
+        accepts='Tyre mounting pastes, gels, fluids and waxes whose title names '
+                'the paste before any accessory, purpose or other product class; '
+                'a title naming no product class at all is decided on the body '
+                'text, as unverified, when it describes a paste for tyres.',
+        declines=(
+            cat.Decline('carbon assembly paste, anti-seize, ceramic paste and a '
+                        'plug lubricant, all with "Montagepaste" in the title',
+                        ('B097C8JJY4', 'B0D1RJ1HLC', 'B00CSRY8OC', 'B0FJG6YJ2X',
+                         'B08VNDJJS6')),
+            cat.Decline('a brush named before the paste it is for',
+                        ('B01MXXA922', 'B01M6WXE0X')),
+            cat.Decline('tubeless sealant, wheel weights and a pressure gauge '
+                        'the same searches return',
+                        ('B07V48PZY5', 'B0CRTZ5ZJN', 'B0C1GHMX8V')),
+            cat.Decline('bicycle greases sold beside the pastes -- the "Fett" '
+                        'records that taught the generic layer a rule',
+                        ('B0068ICY70', 'B07J2W1S6Q', 'B0DGPV9TWZ', 'B0F4PQ7NMM')),
+        ),
+        not_established=(
+            "a second buyer's question: every study so far asked about one "
+            'scooter tyre, so smallest pack first is that buyer\'s constraint '
+            'carried as the category default',
+            'that a paste dries as claimed: the decisive criterion is a vendor '
+            'statement on 14 of 43 listings and verified on none',
+            'anything about car or motorcycle tyre mounting beyond the '
+            "listings' own words",
+        )),
+    evidence=('tests/cases/mounting_paste_v1.jsonl.gz',
+              'tests/test_mounting_paste.py'),
+    milestones=('r2--generic-validation-layer--published-extraction-contract',
+                'r7--attributed-search-finding-a-claim-vs-crediting-it',
+                'r8--marketplace-aware-text-matching'),
+    reviewed='2026-09-18',
+    review='architectural-review-1--2026-09-18',
+    method_version=1,
+)
+
+
 CATEGORY = cat.register(cat.Category(
     key=KEY,
     label='tyre mounting paste',
@@ -476,6 +525,7 @@ CATEGORY = cat.register(cat.Category(
     evaluate=evaluate,
     default_axis='quantity',
     extras=('suitability',),
+    lifecycle=LIFECYCLE,
     blurb='Ranked by pack size, smallest first: a scooter tyre needs a few '
           'grams and the shelf is five-kilogram workshop tubs. Price per '
           'kilogram is shown and deliberately not ranked on.',

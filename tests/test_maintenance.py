@@ -10,6 +10,7 @@ import json
 import sys
 import textwrap
 import unittest
+import unittest.mock
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -52,6 +53,15 @@ class TrackedBaseline(unittest.TestCase):
     def test_recorded_contracts_are_the_published_ones(self):
         self.assertEqual(self.baseline['contracts'],
                          maintenance._contract_versions())
+
+    def test_recorded_capabilities_are_the_declared_ones(self):
+        from shopping_advisor.analysis import categories
+        declared = {key: {'state': categories.get(key).lifecycle.state,
+                          'decision': categories.get(key).lifecycle.decision,
+                          'method_version':
+                              categories.get(key).lifecycle.method_version}
+                    for key in categories.known()}
+        self.assertEqual(self.baseline['capabilities'], declared)
 
 
 class Guard(unittest.TestCase):
@@ -129,6 +139,58 @@ class Categories(unittest.TestCase):
         kept = maintenance.check_categories({'categories': ['dry_pasta']})
         self.assertTrue(kept.passed, kept.findings)
         self.assertIn('new:', kept.summary)
+
+
+class Capabilities(unittest.TestCase):
+    """R16's promotion gate: a lifecycle moves by a recorded decision only."""
+
+    def setUp(self):
+        self.declared = dict(maintenance.load_baseline()['capabilities'])
+
+    def test_the_declared_lifecycles_pass_against_the_committed_baseline(self):
+        result = maintenance.check_capabilities({'capabilities': self.declared})
+        self.assertTrue(result.passed, result.findings)
+        self.assertIn('experiment', result.summary)
+        self.assertIn('maintained', result.summary)
+        self.assertEqual(set(result.observed['capabilities']), set(self.declared))
+
+    def test_a_silent_promotion_fails_naming_the_field(self):
+        pinned = dict(self.declared)
+        pinned['school_backpack'] = dict(pinned['school_backpack'],
+                                         state='maintained')
+        result = maintenance.check_capabilities({'capabilities': pinned})
+        self.assertEqual(codes(result.findings), ['capability_lifecycle_changed'])
+        self.assertIn('state', result.findings[0].message)
+        self.assertIn('ROADMAP', result.findings[0].message)
+
+    def test_a_silent_method_version_change_fails(self):
+        pinned = dict(self.declared)
+        pinned['dry_pasta'] = dict(pinned['dry_pasta'], method_version=99)
+        result = maintenance.check_capabilities({'capabilities': pinned})
+        self.assertEqual(codes(result.findings), ['capability_lifecycle_changed'])
+        self.assertIn('method_version', result.findings[0].message)
+
+    def test_an_untracked_capability_fails(self):
+        pinned = dict(self.declared)
+        del pinned['dry_pasta']
+        result = maintenance.check_capabilities({'capabilities': pinned})
+        self.assertEqual(codes(result.findings), ['capability_untracked'])
+        self.assertIn('dry_pasta', result.findings[0].message)
+
+    def test_a_declaration_defect_and_a_dead_roadmap_record_are_named(self):
+        from dataclasses import replace
+        from shopping_advisor.analysis import category
+        live = category.get('dry_pasta')
+        broken = replace(live, lifecycle=replace(
+            live.lifecycle, evidence=('tests/cases/nowhere.jsonl.gz',),
+            review='no-such-roadmap-heading'))
+        with unittest.mock.patch.dict(category.REGISTRY, dry_pasta=broken):
+            result = maintenance.check_capabilities(
+                {'capabilities': self.declared})
+        self.assertEqual(codes(result.findings),
+                         ['capability_invalid', 'capability_record_missing'])
+        self.assertIn('nowhere.jsonl.gz', result.findings[0].message)
+        self.assertIn('no-such-roadmap-heading', result.findings[1].message)
 
 
 class Tests(unittest.TestCase):

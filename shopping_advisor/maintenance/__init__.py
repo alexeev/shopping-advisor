@@ -19,9 +19,10 @@ The second thing this module does is refuse to be quietly weakened.
 ``baseline.json`` is tracked, and it records what the gate is *entitled to
 find*: which checks must run, which test modules must still exist and how
 many tests they must still contain, which contract versions are published,
-which categories are registered, and which decisions each committed example
-must still reproduce. A task-local change that deletes a test module, drops a
-check, bumps a contract version or moves an example's decision fails the gate
+which categories are registered and what lifecycle state each has earned,
+and which decisions each committed example must still reproduce. A
+task-local change that deletes a test module, drops a check, bumps a contract
+version, promotes a capability or moves an example's decision fails the gate
 with the baseline field that would have to change. Changing it is
 ``maintenance baseline --update``: one tracked file, one reviewable diff, and
 it refuses to run while the gate is failing, so a red baseline cannot be
@@ -46,7 +47,9 @@ BASELINE_PATH = Path(__file__).resolve().parent / 'baseline.json'
 #: The baseline file's own shape. It changes when the gate starts recording
 #: something new, which is a change to what "unweakened" means and therefore
 #: not something an old baseline may be silently reinterpreted against.
-BASELINE_VERSION = 1
+#: Version 2 added ``capabilities``: the lifecycle state, decision and method
+#: version of every registered capability (R16).
+BASELINE_VERSION = 2
 
 
 class GateError(Exception):
@@ -100,8 +103,8 @@ def load_baseline(path=BASELINE_PATH):
                         f'reads version {BASELINE_VERSION}. The recorded '
                         f'floors may mean something else -- re-record them '
                         f'deliberately instead of running against them.')
-    for field in ('checks', 'runtime', 'contracts', 'categories', 'tests',
-                  'examples', 'documentation'):
+    for field in ('checks', 'runtime', 'contracts', 'categories',
+                  'capabilities', 'tests', 'examples', 'documentation'):
         if field not in data:
             raise GateError(f'{path}: the baseline has no {field!r} section. '
                             f'A section removed is a check removed.')
@@ -273,6 +276,76 @@ def check_categories(baseline, root=ROOT):
         summary += f' (new: {", ".join(added)})'
     return Result('categories', summary, tuple(findings),
                   {'registered': list(present)})
+
+
+def check_capabilities(baseline, root=ROOT):
+    """Has every capability declared what it earned, and is that still it?
+
+    R16's promotion gate, made executable. Each registered category declares
+    a lifecycle beside its code: state, last decision, applicability with
+    case records behind it, evidence paths and roadmap anchors. This check
+    reads only that declaration -- it is what the capability index publishes
+    -- and asks three things of it. That it is complete and points at things
+    that exist, so the index cannot describe evidence the tree does not
+    hold. That every roadmap entry it cites is a heading, so a lifecycle
+    decision is recorded before it is declared. And that its state, decision
+    and method version are the ones the baseline pinned, so an experiment
+    becoming a maintained capability is a reviewed diff with its evidence in
+    ROADMAP rather than an adjective that changed in a commit.
+    """
+    from ..analysis import categories
+    from ..analysis.category import Lifecycle
+    from ..study import capabilities
+
+    declared = baseline['capabilities']
+    anchors = _anchors_of(Path(root) / 'ROADMAP.md')
+    findings, observed = [], {}
+    for key in categories.known():
+        category = categories.get(key)
+        for field, message in capabilities.problems(category, root):
+            findings.append(Finding(
+                'capability_invalid',
+                f'{key}: lifecycle.{field}: {message}. The index and this '
+                f'check read only the declaration beside the category.'))
+        lifecycle = category.lifecycle
+        if not isinstance(lifecycle, Lifecycle):
+            continue
+        for anchor in (*lifecycle.milestones, lifecycle.review):
+            if anchor not in anchors:
+                findings.append(Finding(
+                    'capability_record_missing',
+                    f'{key}: lifecycle cites ROADMAP.md#{anchor}, which is no '
+                    f'heading there. A lifecycle decision is recorded in the '
+                    f'roadmap before a declaration cites it.'))
+        observed[key] = {'state': lifecycle.state,
+                         'decision': lifecycle.decision,
+                         'method_version': lifecycle.method_version}
+        if key not in declared:
+            findings.append(Finding(
+                'capability_untracked',
+                f'{key} is registered as {lifecycle.state!r} but absent from '
+                f'baseline.capabilities. Retention is a decision: record the '
+                f'declared state, decision and method version there, in a '
+                f'reviewable diff.'))
+            continue
+        for field, actual in observed[key].items():
+            expected = declared[key].get(field)
+            if actual != expected:
+                findings.append(Finding(
+                    'capability_lifecycle_changed',
+                    f'{key}: {field} is {actual!r}; the baseline records '
+                    f'{expected!r}. Promotion, rejection and retirement are '
+                    f'R16 decisions: record the decision and its evidence in '
+                    f'ROADMAP, then re-record baseline.capabilities.'))
+    counts = {}
+    for row in observed.values():
+        counts[row['state']] = counts.get(row['state'], 0) + 1
+    summary = (f'{len(observed)} capabilities'
+               + (' (' + ', '.join(f'{n} {state}' for state, n in sorted(
+                   counts.items())) + ')' if counts else '')
+               + f', {sum(key in declared for key in observed)} pinned')
+    return Result('capabilities', summary, tuple(findings),
+                  {'capabilities': observed})
 
 
 def check_tests(baseline, root=ROOT):
@@ -473,6 +546,13 @@ def slug(heading):
     return text.strip().replace(' ', '-')
 
 
+def _anchors_of(path):
+    """The heading anchors one Markdown document publishes."""
+    lines = _strip_fences(Path(path).read_text(encoding='utf-8'))
+    return {slug(match.group(2)) for match in
+            (_HEADING.match(line) for line in lines) if match}
+
+
 def check_docs(baseline, root=ROOT):
     """Do the documents still point at each other and at the code?
 
@@ -493,12 +573,7 @@ def check_docs(baseline, root=ROOT):
         f'{name} is in baseline.documentation but absent from the tree.')
         for name in declared if not (root / name).is_file()]
 
-    anchors = {}
-    for path in documents:
-        lines = _strip_fences(path.read_text(encoding='utf-8'))
-        anchors[path.resolve()] = {slug(match.group(2)) for match in
-                                   (_HEADING.match(line) for line in lines)
-                                   if match}
+    anchors = {path.resolve(): _anchors_of(path) for path in documents}
 
     links = 0
     for path in documents:
@@ -538,10 +613,7 @@ def _check_link(path, target, root, anchors):
         return []
     known = anchors.get(destination)
     if known is None:
-        lines = _strip_fences(destination.read_text(encoding='utf-8'))
-        known = {slug(match.group(2)) for match in
-                 (_HEADING.match(line) for line in lines) if match}
-        anchors[destination] = known
+        known = anchors[destination] = _anchors_of(destination)
     if fragment not in known:
         return [Finding('dead_anchor',
                         f'{relative}: {target} names no heading in '
@@ -552,8 +624,8 @@ def _check_link(path, target, root, anchors):
 #: Order matters only for reading: cheap identity checks first, then the
 #: suite, then the examples that take the longest to replay.
 CHECKS = {'runtime': check_runtime, 'contracts': check_contracts,
-          'categories': check_categories, 'tests': check_tests,
-          'examples': check_examples, 'docs': check_docs}
+          'categories': check_categories, 'capabilities': check_capabilities,
+          'tests': check_tests, 'examples': check_examples, 'docs': check_docs}
 
 
 # ------------------------------------------------------------------ runner
@@ -603,6 +675,8 @@ def measure(baseline, root=ROOT):
         updated['contracts'] = observed['contracts']
     if observed.get('categories'):
         updated['categories'] = observed['categories']['registered']
+    if observed.get('capabilities'):
+        updated['capabilities'] = observed['capabilities']['capabilities']
     if observed.get('tests'):
         updated['tests'] = {'minimum': observed['tests']['minimum'],
                             'modules': observed['tests']['modules']}

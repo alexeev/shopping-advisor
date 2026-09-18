@@ -60,7 +60,10 @@ category list.
 - Four category analyzers ship: `dry_pasta`, `tyre_mounting_paste`,
   `basmati_rice` and `school_backpack`. Their defaults reflect particular use
   cases; a ranking alone
-  does not establish suitability for a new question.
+  does not establish suitability for a new question. `study capabilities`
+  publishes what each has earned, where it was measured and what it declines:
+  three are maintained capabilities and `school_backpack` is a task
+  experiment with one study behind it.
 - Study reports now have deterministic evidence checks and a separate semantic
   review. The researcher still establishes requirements, verifies sources and
   their meaning, and records the limits. Automated checks do not establish truth.
@@ -78,10 +81,11 @@ What all of that is for, and what the product is not, is stated once in
 
 The [product vision and roadmap assessment](ROADMAP.md#product-vision--the-shopping-conversation)
 define the minimum operating model, architectural safeguards and delivery order.
-The local maintenance gate and R13's intake machinery have shipped; R13's
-conversational trials come next, then R15 controlled adaptation, R11 category
-synthesis, R12 coverage, R16 lifecycle and R14 unseen-problem trials. The supported scope above remains the operational
-limit until those gates ship. Cross-platform and provider-interchangeability
+The local maintenance gate, R13's intake machinery and R16's capability index
+with its lifecycle records have shipped; R13's conversational trials come next,
+then R15 controlled adaptation, R11 category synthesis, R12 coverage, R16's
+task-experiment entry for task-born capabilities and R14 unseen-problem trials.
+The supported scope above remains the operational limit until those gates ship. Cross-platform and provider-interchangeability
 trials are [deferred to R17](ROADMAP.md#r17--portability-evidence) and block
 only the claim that either provider stack can operate this repository; the
 repository is provider-neutral by design, and that has not been measured.
@@ -106,10 +110,10 @@ it as a side effect of ordinary research. No virtualenv activation is needed.
 
 The second command is the repository's one verification gate, and the only
 check a change has to pass. It runs the offline suite, the published contract
-and schema versions, the category registry, the committed study examples
-replayed through their documented commands, and the local documentation links,
-and it compares them against the tracked
-`shopping_advisor/maintenance/baseline.json`. It takes about fifteen seconds,
+and schema versions, the category registry and each category's lifecycle
+record, the committed study examples replayed through their documented
+commands, and the local documentation links, and it compares them against the
+tracked `shopping_advisor/maintenance/baseline.json`. It takes about fifteen seconds,
 needs no network after setup, and needs no credentials or model provider. A
 green run on a clean clone is the evidence that this repository still does what
 the rest of this file says it does.
@@ -219,6 +223,12 @@ as ranking values.
 | `basmati_rice` | Price per kilogram, lower first | Cultivar, review signals, historical external findings, a seven-component score |
 | `school_backpack` | Weight of the bag, lower first | Reflective elements, manufacturer warranty, height-adjustable back, hip or chest strap; volume and stated body-height range shown, not ranked |
 
+Each category also declares its `Lifecycle`: what it has earned, where it was
+measured, what it declines and the evidence behind that. `study capabilities`
+publishes the four declarations as one index, and the maintenance gate pins
+each state so that a promotion is a reviewed diff. Maturity is not trust: a
+value's status comes from validation whatever the category's state.
+
 `rank` sorts one axis. **It does not rank by basmati's composite score**, and
 no CLI produces a score-ordered shortlist. The score is a category method that
 basmati's cards show — in text and, since T2, in JSON — beside the inputs it
@@ -254,6 +264,7 @@ still covers one marketplace: feeds spanning several stop the command until
 | `python -m shopping_advisor.run inspect RUN_DIR` | What a run did, which code and settings produced it, how it ended, what it retained |
 | `python -m shopping_advisor.study check BRIEF` | Whether a brief is usable, and every default it will fall back to |
 | `python -m shopping_advisor.study controls --category CATEGORY` | JSON catalogue of the live category's candidate controls, parameters and limits; no feed required |
+| `python -m shopping_advisor.study capabilities` | The capability index as JSON: each registered capability's lifecycle state and decision, marketplaces, what it declines with the proving case records, evidence, committed studies and roadmap records; `--category KEY` narrows, `--marketplace HOST` compares hosts |
 | `python -m shopping_advisor.study plan-check PLAN` | Validate an intake plan before category support or feeds exist; optional `--brief BRIEF` checks preservation |
 | `python -m shopping_advisor.study plan-readback PLAN` | Render the authoritative plan revision; `--record` saves presented bytes with no-response status |
 | `python -m shopping_advisor.study plan-bind BRIEF --plan PLAN -o NEW.json` | Check existing brief controls and bind the plan's requirements into a new brief |
@@ -266,7 +277,7 @@ still covers one marketplace: feeds spanning several stop the command until
 | `python -m shopping_advisor.study review-delivery BUNDLE REVIEW.json` | Attach a delivery review to the event it binds; a recorded failure fails `validate-report` |
 | `python -m shopping_advisor.study validate-report BUNDLE --require-review` | Validate indexed claims, replay decisions and require a separate completed semantic review, plus a passing intake review on a plan-backed study and a passing delivery review of a permitted current-advice event |
 | `python -m shopping_advisor.study verify BUNDLE` | Re-derives the decisions from the bundle's own inputs and reports what moved |
-| `python -m shopping_advisor maintenance check` | The gate: runtime, offline suite, contract versions, categories, replayed examples and documentation links, against the tracked baseline |
+| `python -m shopping_advisor maintenance check` | The gate: runtime, offline suite, contract versions, categories and their lifecycle records, replayed examples and documentation links, against the tracked baseline |
 | `python -m shopping_advisor maintenance baseline --update` | Deliberately re-record the floors, from a tree that passes; refuses otherwise |
 
 Run these with `uv run --offline --locked`. The analysis commands accept

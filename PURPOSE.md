@@ -167,6 +167,7 @@ lives there; this is the index.
 | Card | One product's evidence, quoted and attributed, in text or JSON | [RESEARCH.md](RESEARCH.md#3-inspect-a-card-and-its-evidence) |
 | ASIN, offer, family | Amazon's identifier for one listing; pack-size variants folded into one offer; non-size variants kept apart | [CONTRACT.md](CONTRACT.md#listing-identity-is-a-marketplace-and-an-asin) |
 | Controls | The executable filters and limits a category actually offers a brief | [RESEARCH.md](RESEARCH.md#inspect-executable-controls-before-mapping-requirements) |
+| Capability index, lifecycle | What each registered capability has earned — a task experiment, a maintained capability, a shared foundation or a retired one — where it was measured and what it declines; inspection, and never a statement about a value's trust | [RESEARCH.md](RESEARCH.md#inspect-executable-controls-before-mapping-requirements), [ROADMAP.md, R16](ROADMAP.md#r16--capability-lifecycle-and-architectural-review) |
 | Feed, run, manifest | The JSONL a crawl wrote; the directory that records what the crawl did, with which code, and what it retained | [README.md](README.md#collecting-and-retaining-evidence) |
 | Coverage | What a collection searched and how deep; never a claim to have seen the shelf | [ROADMAP.md, R12](ROADMAP.md#r12--discovery-that-states-its-own-coverage) |
 | Corpus, cases | Saved pages that pin extraction; selected records that pin a category's verdicts, counterexamples included | [tests/corpus](tests/corpus/README.md), [tests/cases](tests/cases/README.md) |

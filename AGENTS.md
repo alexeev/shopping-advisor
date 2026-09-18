@@ -68,11 +68,15 @@ when two of them pull in different directions these settle the matter:
   [product vision](ROADMAP.md#product-vision--the-shopping-conversation) plans
   how it grows: a permanently extensible research harness operated through a
   coding-agent conversation. Task-driven adaptation covers categories, sources,
-  extraction and methods, not just a larger category catalogue. R13 defines intake/gap
-  planning; R15 controls adaptation; R16 governs reuse and architectural review;
-  R14 tests the complete loop. **These are planned capabilities, not runtime
+  extraction and methods, not just a larger category catalogue. R13 defines
+  intake/gap planning; R15 controls adaptation; R16 governs reuse and
+  architectural review — its capability index, lifecycle records and executable
+  promotion gate shipped on 2026-09-18, and the entry of task-born capabilities
+  as experiments waits for R15; R14 tests the complete loop. **The rest are
+  planned capabilities, not runtime
   authority.** Until R11 and R15 gates ship, follow the unsupported-category
-  rule below; a category written mid-study remains reviewed maintenance.
+  rule below; a category written mid-study remains reviewed maintenance, and
+  its lifecycle record says it is a task experiment.
 - The same conversation is the entry point for engineering and maintenance
   requests, and their intake belongs to the harness, not to this repository:
   the coding interface records the request, authorises each action and keeps
@@ -96,10 +100,11 @@ uv run --offline --locked python -m shopping_advisor maintenance check
 
 **The second command is the gate, and it is the authoritative one.** It runs
 the locked-runtime check, the full offline suite, the published contract and
-schema versions, the category registry, the committed study examples replayed
-through their documented commands, and the local documentation links — and it
-compares all of that against `shopping_advisor/maintenance/baseline.json`,
-which records what it is entitled to find. Add `--json` for machine-readable
+schema versions, the category registry and each category's lifecycle record,
+the committed study examples replayed through their documented commands, and
+the local documentation links — and it compares all of that against
+`shopping_advisor/maintenance/baseline.json`, which records what it is
+entitled to find. Add `--json` for machine-readable
 findings. `--only NAME` narrows a run while iterating and says in its own
 output that it is not the gate; it does not substitute for one.
 
@@ -158,7 +163,12 @@ convenience, never the authority.
 - Say when a category is not supported instead of working around it. Only
   `dry_pasta`, `tyre_mounting_paste`, `basmati_rice` and `school_backpack`
   ship; [README's supported scope](README.md#supported-scope) is the canonical
-  written list and wins where another document disagrees. Explain what is
+  written list and wins where another document disagrees, and
+  `study capabilities` is the index of what each has earned: its lifecycle
+  state, the marketplaces it was measured on, what it declines with the case
+  records that prove it, and what nothing establishes. Read it before deciding
+  that a category fits; an `experiment` is one study's worth of evidence, and
+  a report resting on one says so. Explain what is
   missing and what it costs in time, confidence or the answer, and give the
   evidence and gap plan; do not make the user choose an implementation module.
   Answering within stated generic limits stays available, and is not a
@@ -247,10 +257,12 @@ HTML; it must not be exported or promoted. Read
    simply to accept failures. Apply CONTRACT's version rules when behavior
    changes — the gate will notice a version that moved without them.
    If the change legitimately moves a floor the gate records — a retired
-   category, a test module that merged into another, a versioned contract
-   change, an example whose decision genuinely moved — re-record it with
+   category, a capability whose lifecycle state or method version moved, a
+   test module that merged into another, a versioned contract change, an
+   example whose decision genuinely moved — re-record it with
    `maintenance baseline --update` **as a separate, explained part of the same
-   change**. Never lower a floor to make a run green: a baseline edit is a
+   change**. A lifecycle move is recorded in ROADMAP first, with its evidence;
+   the gate refuses the declaration until the roadmap heading it cites exists. Never lower a floor to make a run green: a baseline edit is a
    claim about the repository, and it is reviewed like one.
 6. Update current docs alongside behavior. Record evidence-backed learnings as
    fixtures, code, source observations or dated roadmap decisions. Hypotheses
@@ -274,4 +286,8 @@ owns data semantics; `RESEARCH.md` owns operational procedure;
 `ROADMAP.md` owns priorities and measured decisions. `BASELINE.md`, `EXTRACTION.md`,
 and `USABILITY.md` retain dated investigations, not alternate current instructions.
 Use code/tests for verified behavior and study notes for observations awaiting
-verification. Do not create provider-specific hidden memory as a source of truth.
+verification. A capability's maturity, applicability and last retention
+decision live in its `Lifecycle` declaration beside the code, published by
+`study capabilities` and pinned by the gate; the decision that moved it is a
+dated ROADMAP entry. Do not create provider-specific hidden memory as a source
+of truth.
