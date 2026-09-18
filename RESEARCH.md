@@ -9,8 +9,10 @@ this are recorded in the
 [roadmap](ROADMAP.md#agent-operation-transition); provider and cross-platform
 trials are [deferred to R17](ROADMAP.md#r17--portability-evidence).
 
-The permanent product interface is the coding-agent conversation. The
-[revised product vision](ROADMAP.md#product-vision--the-shopping-conversation)
+The permanent product interface is the coding-agent conversation.
+[PURPOSE.md](PURPOSE.md) says what the work is for and whom the agent works
+for; this runbook says how it is done. The
+[product vision](ROADMAP.md#product-vision--the-shopping-conversation)
 plans routine, controlled extension during research, including new sources,
 extractors and methods. R13/R15/R16 define the missing planning, execution and
 reuse gates; this runbook describes current operation until those gates ship.
@@ -449,6 +451,32 @@ A request arrives underspecified and that is normal: "I need a new vacuum
 cleaner" is a real starting point, not a defective one. The job of this step is
 to end with a written brief, not to interrogate.
 
+The step exists for the buyer, not for the form. A parent who has decided on a
+school backpack has not decided whether it must be visible in traffic, and will
+not think of it until the first dark morning; finding that requirement before
+collection is what the questions are for. It is the part of a purchase a buyer
+would otherwise get from an expert friend, and the part no shelf of listings
+supplies on its own. [PURPOSE.md](PURPOSE.md#the-buyers-problem) states it as
+the product's second problem.
+
+Candidate requirements have four sources, and each is recorded where it
+belongs. The buyer's own words and the agent's reading of them go into the
+plan with their author. A cited source — including the criteria list of a
+professional test of the class or an adjacent one — goes into the plan with
+its citation. The category's defaults, which encode what earlier buyers of that
+product class needed, appear in the study report as the decisions the brief
+did not make. The cited source is how visibility entered the school-backpack
+study: Stiftung Warentest grades satchels on traffic visibility, the agent
+asked whether that mattered, the parent confirmed it as a hard requirement,
+and the two bounded probes then found it stated by every in-class ergonomic
+brand and by none of the daypacks — so it separated the shelf where the request
+alone would not have. A criterion taken from a test is a *candidate* question,
+recorded as agent-authored with its source, and it enters the plan only when
+the buyer confirms it. Making that reading a default step for unsupported
+categories is [R11's](ROADMAP.md#r11--category-synthesis-as-a-default-step)
+proposal, recorded under
+[R13](ROADMAP.md#r13--the-conversation-as-the-entry-point) and not adopted.
+
 Write the brief down **separately from the code**. This repository has already
 paid for not doing that: tyre mounting paste ranks the *smallest* pack first
 because one reader was fitting one scooter tyre, and basmati's score weights
@@ -518,7 +546,8 @@ chose, and make the report show what would change if that default were wrong.
 #### Say so when the category is not supported
 
 Four categories ship: `dry_pasta`, `tyre_mounting_paste`, `basmati_rice` and
-`school_backpack`, and `study capabilities` says what each has earned:
+`school_backpack`; [README's supported scope](README.md#supported-scope) is the
+canonical written list, and `study capabilities` says what each has earned:
 `school_backpack` is a task experiment with one study behind it, and a report
 that rests on it says so in its limits. For
 anything else — a vacuum cleaner, a display — the generic layer still works

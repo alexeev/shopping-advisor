@@ -31,8 +31,10 @@ measurements as history.
 
 ## Product vision — the shopping conversation
 
-**Revised product direction, 2026-09-16. The extension operating model below
-is planned; the shipped scope remains in [README](README.md#supported-scope).**
+**What the product is for, whose side the agent is on and what the product is
+not are stated once, in [PURPOSE.md](PURPOSE.md). This section plans how the
+product grows — the extension operating model, revised 2026-09-16 — and that
+model is planned; the shipped scope remains in [README](README.md#supported-scope).**
 
 Shopping Advisor is a **durable, continuously extensible research harness for
 an AI software agent**. Its permanent user interface is an AI coding interface,
@@ -65,17 +67,6 @@ the purchasing decision. A conditional comparison, tie or precise
 insufficient-evidence answer is a valid outcome. Missing software should normally
 trigger bounded adaptation; unavailable decisive evidence must never trigger
 invented certainty.
-
-### What the product is not
-
-- A fixed shopping application awaiting its own chat or web frontend. The coding
-  interface is the lasting interface; CLI commands are tools used by the agent.
-- A scraper with advice appended, or a programme to prebuild every category.
-  Acquisition and maintained categories serve decisions, not coverage targets.
-- An unrestricted self-modifying agent. A task cannot silently rewrite its own
-  trust policy, permissions or acceptance criteria to manufacture success.
-- A universal product ontology, scoring engine or agent framework. Shared
-  abstractions earn their place through demonstrated use.
 
 ### Two kinds of request, one interface
 
@@ -594,6 +585,54 @@ operate or extend this repository describes a migration any more.
   code, contract version, snapshot or example decision moved. The only baseline
   change is the document removed from its index, which is the reviewable claim
   that this repository no longer publishes it.
+
+### Documentation review — 2026-09-18: the purpose gets an owner
+
+Onboarding a business analyst exposed a gap the 2026-09-16 review had left
+open. An agent no longer had to read a migration framework to learn what the
+system is, but what the system is *for* still had no owner. It was split
+across README's first paragraph, the vision section above — a paragraph dated
+as a direction revision, inside a section about a planned model — one link in
+AGENTS whose first screen was the Scrapy acquisition path, and the
+brief-agreement section of the runbook. The ownership list in AGENTS named
+CONTRACT, RESEARCH and ROADMAP, and nobody for purpose. Read from those
+fragments, three readers got three products: a stakeholder a harness, an
+operator an acquisition path, a maintainer an extension model. The buyer — the
+shelf too wide to read by hand, the requirement forgotten until the first dark
+morning, the test result that is not on the page — appeared in none of the
+openings, and the agent's role was named only in passing, as a researcher.
+
+- **Added:** [PURPOSE.md](PURPOSE.md), owning the buyer's problem; the agent's
+  role as an independent researcher on the buyer's side, with its five limits;
+  what a finished outcome owes the buyer, as an index into the contracts that
+  enforce each item; what the product is not; and a glossary that points at
+  owners rather than redefining terms. It carries no numbers that go stale. It
+  is indexed in the gate's baseline, which is the reviewable claim that the
+  repository publishes it.
+- **Moved:** *What the product is not*, from this section to PURPOSE, with a
+  fifth boundary — the agent is not a product expert who knows the range. This
+  section keeps the extension operating model, the assessment and the
+  priorities, and its opening note now says so.
+- **Reordered:** AGENTS opens with whom the agent works for and five
+  tie-breakers for rules that pull apart, before the acquisition path; its
+  ownership list names PURPOSE; its maintenance workflow links the decision
+  principles it had paraphrased without naming.
+- **Runbook:** *Agree the brief* now says what the questioning step is for from
+  the buyer's side, and where candidate requirements come from — the buyer, the
+  agent's reading, a cited source such as a professional test's criteria list,
+  and the category's defaults — each recorded where it belongs, with the
+  school-backpack visibility requirement as the worked case and the
+  default-step version left as R11's unadopted proposal.
+- **README:** opens with the buyer before the harness; *Start here* gains a row
+  per reader and a row for a finished outcome; *Supported scope* is named the
+  canonical written list, with the registry the gate checks as the truth behind
+  it; the category table gains its fourth row.
+- **Measured effect:** the gate passes. The tracked documentation index went
+  from 17 documents, 215 local links and 276 anchors to **18 documents, 281
+  local links and 284 anchors**, with no broken link or anchor. 774
+  offline tests, unchanged and green. No code, contract version, snapshot or
+  example decision moved. The only baseline change is the document added to
+  its index.
 
 ---
 
@@ -1861,7 +1900,8 @@ two of them depended on nothing that was missing.
   36 decline ASINs proven on the committed cases; six committed studies
   cross-referenced onto the categories their briefs name (four pasta, two
   basmati, none for the other two — the review below records that debt);
-  221 local links and 277 anchors across 17 documents; every
+  290 local links and 285 anchors across 18 documents on the tree merged
+  with the same day's purpose review, from its 281 and 284; every
   example decision, every contract version and every snapshot unchanged. The
   gate baseline diff is two deliberate parts — the version and the pinned
   lifecycles — and one re-recorded floor, the test count.
@@ -1902,7 +1942,7 @@ are one run each on this container.
 | Unused capabilities | `Category.render_extra`: one consumer (basmati). `Axis.render`: two categories (pasta's raw-material axis, school backpack's height and warranty axes). Marketplace profiles `amazon.co.uk` and `amazon.it`: unvalidated, documented as such, `.it` referenced by no test. `settings_scrapeops`: opt-in, unvalidated, import isolation tested. `keep_search_pages`: used. Nothing is obsolete |
 | Replay compatibility | Six committed studies replay through their documented commands with the recorded decisions; a manifest v1/v2 bundle refuses with `unsupported_manifest_version` by the stage-10 decision; no pre-v3 bundle is tracked |
 | Test cost | The full gate: 50 s on this container against the 15 s recorded on the development machine, 797 tests in 28 modules. Of it the suite alone is 46 s, the six example replays 1 s and the documentation index under a second: the suite is the cost, and the replays are nearly free |
-| Unresolved debt | Two of four categories have no committed replayable study (mounting paste, school backpack): the gate pins their verdicts per record and replays no decision of theirs. Basmati has no committed acquired record set. A task-experiment category has delivered permitted current advice without a report-level provisional status ([INTAKE §15](INTAKE.md#15-what-stays-owned-elsewhere) places that contract under R11/R15). `cost_basis`, `unacceptable` and `limits` remain narrative. Weights in pounds stay text. The README's category table listed three of four categories |
+| Unresolved debt | Two of four categories have no committed replayable study (mounting paste, school backpack): the gate pins their verdicts per record and replays no decision of theirs. Basmati has no committed acquired record set. A task-experiment category has delivered permitted current advice without a report-level provisional status ([INTAKE §15](INTAKE.md#15-what-stays-owned-elsewhere) places that contract under R11/R15). `cost_basis`, `unacceptable` and `limits` remain narrative. Weights in pounds stay text. The README's category table listed three of four categories when measured |
 
 **Decisions.** Each is retain, simplify or retire, with its evidence, its
 owner (the repository maintainer throughout) and a next checkpoint. No code
@@ -1921,7 +1961,7 @@ semantic diff of its own rather than riding on this one.
 | **Retain** | Spider default query, CLI default category | Defaults, documented, and the runbook says to name the category on every command. Changing the spider default would silently change a documented command | None; revisit if a study is ever run on the default by mistake |
 | **Debt, recorded** | No committed replayable study for mounting paste or school backpack | Their cases exist, so a brief over them is cheap; it was not added here because a study example is a claim about a decision and deserves its own change and its own baseline row | The next change touching either category adds a committed brief and its baseline example |
 | **Debt, recorded** | Provisional-method report status | A task experiment has delivered current advice. Until R11/R15 add the report-level contract, the index is where its maturity is visible, and the runbook tells a report resting on an `experiment` to say so | R15 |
-| **Fixed here** | README category table | Listed three of four categories; the fourth row is added in this change | — |
+| **Fixed on main** | README category table | Listed three of four categories when measured; the [documentation review of the same day](#documentation-review--2026-09-18-the-purpose-gets-an-owner) added the row on main, and this branch merged it rather than adding a second | — |
 
 **Next review.** [R15](#r15--controlled-task-driven-capability-adaptation)'s
 first shipped adaptation, or the fifth extension-bearing study, whichever
