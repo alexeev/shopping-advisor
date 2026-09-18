@@ -367,8 +367,9 @@ class RealCases(unittest.TestCase):
     # connectivity row's "NFC" (both Watch Ultimate 2, two GT 7 Pro, the Watch
     # D3); version 3 reads a payment service or a contactless-payment phrase,
     # and fifteen keep the claim on one -- the Amazfit Active Max among them,
-    # on "Mit Zepp Pay und NFC bezahlst du", which the revision-8 review's
-    # first-quote reading had filed under the bare word.
+    # on "Mit Zepp Pay und NFC bezahlst du", which the operating agent's
+    # first-quote reading of the revision-8 study's cards had filed under the
+    # bare word; the review itself named the Huawei listings only.
     STATE_A_PAYMENT_SERVICE = ('B0BXM1RQR5', 'B0CNSF5DK2', 'B0CNSG78ZQ', 'B0CP819M6S', 'B0CPF2Q5PB',
                                'B0CPF5C7XH', 'B0DC6ZD31R', 'B0DC6ZD321', 'B0DC71V3ZD', 'B0DSC8GLRX',
                                'B0DSG9VCRH', 'B0DX1T7JQ3', 'B0DX21FHWP', 'B0G1ZGK7MV', 'B0HFP18YKP')

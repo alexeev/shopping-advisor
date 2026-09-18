@@ -2098,7 +2098,8 @@ bezahlen", "NFC-Zahlung"), `method_version` 3 with the reason beside it, two
 tests and the cases README rows. **Three attempts, all spent, all on the
 record.** Each was the full gate inside the kernel boundary. The first two
 failed on the declared move and on the new real-card test: the hypothesis,
-read from the revision-8 study's first quote per card, filed the Amazfit
+the operating agent's reading of the revision-8 study's first quote per card
+(the review itself had named only the Huawei listings), filed the Amazfit
 Active Max under the bare word, but its bullet says "Mit Zepp Pay und NFC
 bezahlst du" and the narrowed pattern rightly keeps it — five listings rest
 on NFC alone, not six, all Huawei. The pins were corrected between checks
