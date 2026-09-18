@@ -57,13 +57,14 @@ category list.
   Amazon.it profile entries are not validated support. The `.it` profile uses
   German labels; unknown domains fall back to English. Do not treat successful
   parsing or a profile entry as proof that a marketplace is supported.
-- Four category analyzers ship: `dry_pasta`, `tyre_mounting_paste`,
-  `basmati_rice` and `school_backpack`. Their defaults reflect particular use
-  cases; a ranking alone
-  does not establish suitability for a new question. `study capabilities`
-  publishes what each has earned, where it was measured and what it declines:
-  three are maintained capabilities and `school_backpack` is a task
-  experiment with one study behind it.
+- Five category analyzers ship: `dry_pasta`, `tyre_mounting_paste`,
+  `basmati_rice`, `school_backpack` and `smartwatch`. Their defaults reflect
+  particular use cases; a ranking alone does not establish suitability for a
+  new question. `study capabilities` publishes what each has earned, where it
+  was measured and what it declines: three are maintained capabilities,
+  `school_backpack` is a task experiment with one study behind it, and
+  `smartwatch` is a task experiment written through R15's procedure, whose
+  reports say beside their conclusion that they rest on one.
 - Study reports now have deterministic evidence checks and a separate semantic
   review. The researcher still establishes requirements, verifies sources and
   their meaning, and records the limits. Automated checks do not establish truth.
@@ -224,10 +225,11 @@ as ranking values.
 | `tyre_mounting_paste` | Pack quantity, lower first | Drying, material compatibility, adverse lubricant claims |
 | `basmati_rice` | Price per kilogram, lower first | Cultivar, review signals, historical external findings, a seven-component score |
 | `school_backpack` | Weight of the bag, lower first | Reflective elements, manufacturer warranty, height-adjustable back, hip or chest strap; volume and stated body-height range shown, not ranked |
+| `smartwatch` | Listed price, lower first | GPS, heart-rate sensor, barometric altimeter, dive mode, NFC payment and Android compatibility as vendor statements; stated depth rating, ATM rating, GPS and watch-mode runtimes and display technology shown with the vendor's mode, never ranked or converted |
 
 Each category also declares its `Lifecycle`: what it has earned, where it was
 measured, what it declines and the evidence behind that. `study capabilities`
-publishes the four declarations as one index, and the maintenance gate pins
+publishes the five declarations as one index, and the maintenance gate pins
 each state so that a promotion is a reviewed diff. Maturity is not trust: a
 value's status comes from validation whatever the category's state.
 

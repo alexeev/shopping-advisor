@@ -473,7 +473,7 @@ side and stays untouched. Then capture, inspect and demonstrate the boundary
 before the first import:
 
 ```text
-uv run --offline --locked python -m shopping_advisor.study adaptation-capture data/adaptations/<id>.json --base ../<id>-base --worktree ../<id>-trial
+uv run --offline --locked python -m shopping_advisor.study adaptation-capture data/adaptations/<id>.json --base ../<id>-base --worktree ../<id>-trial --baseline-move "capabilities: <key> is a new experiment the baseline must record" --baseline-move "tests: test_<key>.py is a new module"
 uv run --offline --locked python -m shopping_advisor.study adaptation-probe --worktree ../<id>-trial --scratch ../<id>-trial/data/r15-scratch --outside /private/tmp/<id>-outside
 ```
 
@@ -499,9 +499,13 @@ uv run --offline --locked python -m shopping_advisor.study adaptation-run data/a
 
 The gate inside the trial compares against the base revision's baseline,
 because the baseline is in the frozen evaluator set: a new category is
-`capability_untracked` and a new test module moves the floor, and both are
-findings the record keeps. The baseline is re-recorded **at adoption**, in the
-main checkout, as its own explained part of the change — never from inside the
+`capability_untracked`, the evaluator's own tests that pin the tree to the
+baseline fail with it, and a new test module moves the floor. Those are
+findings the record keeps, and they are exactly what `--baseline-move` must
+have declared at capture: a failing last check is accepted only when the
+record declares the moves and the reviewer, reading the check's output, finds
+nothing else in it. The baseline is re-recorded **at adoption**, in the main
+checkout, as its own explained part of the change — never from inside the
 trial. A check that exceeds the timeout is killed with every child it spawned
 and recorded with no exit status; it is not a pass, and the next attempt is a
 new one. When the attempts or the seconds are spent, `adaptation-run` refuses

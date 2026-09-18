@@ -277,6 +277,20 @@ def render(result, study_id, inputs):
                            f'{item["records"]} records' for item in inputs)
              + ' |', '']
 
+    method = result.get('method')
+    if method:
+        # R15/R16: beside the conclusion, in the report's own words, so that a
+        # reader who never opens the capability index still learns what the
+        # method is worth. It changes no value's status; maturity is not trust.
+        limits = ' '.join(f'{item[0].upper()}{item[1:]}.' for item in method['not_established'])
+        lines.insert(4, f'**Provisional method.** This study rests on `{method["category"]}`, '
+                        f'a task-experiment capability (state `{method["state"]}`, method '
+                        f'version {method["method_version"]}, last decision '
+                        f'`{method["decision"]}` on {method["decided"]}) with one study\'s '
+                        f'worth of evidence behind it. What nothing establishes: {limits} '
+                        f'Every value\'s status in this report comes from validation, whatever '
+                        f'the category\'s state.')
+        lines.insert(5, '')
     if result['freshness']['stale_ranked'] or not result['freshness']['assessed'] or result['freshness']['undated']:
         lines.insert(2, '**Historical / incomplete comparison. Prices are stale or freshness '
                      'is not fully established; this is not current buying advice.**\n')

@@ -34,7 +34,7 @@ import datetime as _dt
 
 from ..analysis import feeds as feeds_module
 from ..analysis import report
-from ..analysis.category import get, is_match
+from ..analysis.category import EXPERIMENT, get, is_match
 
 #: A winner the evidence supports.
 RECOMMENDATION = 'recommendation'
@@ -264,6 +264,10 @@ def analyse(brief, plan=None):
     return {
         'brief': brief.as_dict(),
         'category': category.key, 'category_label': category.label,
+        # R15/R16: a study resting on a task experiment says so in its data,
+        # beside its conclusion, and changes no value's status by saying it.
+        # Absent (None) for a maintained category, so nothing committed moves.
+        'method': provisional_method(category),
         'marketplace': brief.marketplace,
         'merge': provenance,
         'classification': classification,
@@ -277,6 +281,23 @@ def analyse(brief, plan=None):
         'gates': gates,
         'claims': _claims(brief, ranked, eligible, classification, provenance),
     }, cards
+
+
+def provisional_method(category):
+    """What the report must say when the method is one study's worth of evidence.
+
+    ``None`` for a maintained capability. For a task experiment: the state,
+    the last decision, the method version and what the declaration says nothing
+    establishes -- the facts a reader needs beside the conclusion, taken from
+    the lifecycle declaration beside the code so they cannot drift from it.
+    """
+    lifecycle = category.lifecycle
+    if lifecycle is None or lifecycle.state != EXPERIMENT:
+        return None
+    return {'category': category.key, 'state': lifecycle.state,
+            'decision': lifecycle.decision, 'decided': lifecycle.decided,
+            'method_version': lifecycle.method_version,
+            'not_established': list(lifecycle.applicability.not_established)}
 
 
 def brief_fault(result):

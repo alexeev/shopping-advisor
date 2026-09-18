@@ -80,7 +80,7 @@ class Contract(unittest.TestCase):
     def test_closed_fields_and_vocabularies(self):
         base = accepted_record()
         for change, message in (
-                (lambda r: r.update(adaptation_version=2), 'unsupported version'),
+                (lambda r: r.update(adaptation_version=adaptation.ADAPTATION_VERSION + 1), 'unsupported version'),
                 (lambda r: r.update(scheduler='cron'), 'exactly these fields'),
                 (lambda r: r.update(layer='frontend'), 'expected one of'),
                 (lambda r: r['adoption'].update(decision='shipped'), 'expected one of'),
@@ -133,13 +133,29 @@ class Contract(unittest.TestCase):
         for change, message in (
                 (lambda r: r['review'].update(verdict='limited'), 'passing review'),
                 (lambda r: r['evaluator'].update(frozen=False), 'proven frozen'),
-                (lambda r: r['checks'][-1].update(exit=1, summary='exit 1'), 'finished and passed'),
-                (lambda r: r['checks'][-1].update(exit=None, timed_out=True), 'finished and passed')):
+                (lambda r: r['checks'][-1].update(exit=1, summary='exit 1'), 'declares none'),
+                (lambda r: r['checks'][-1].update(exit=None, timed_out=True), 'timed-out check')):
             record = accepted_record()
             change(record)
             record['review']['checks_sha256'] = adaptation.checks_digest(record)
             with self.subTest(message=message), self.assertRaisesRegex(adaptation.AdaptationError, message):
                 adaptation.check(record)
+
+    def test_a_failing_last_check_is_accepted_only_with_declared_baseline_moves_and_a_passing_review(self):
+        record = accepted_record()
+        record['checks'][-1].update(exit=1, summary='exit 1: capability_untracked, 3 baseline tests')
+        record['baseline_moves'] = ['capabilities: smartwatch is a new experiment the baseline must record',
+                                    'tests: test_smartwatch.py is a new module; the floor moves']
+        record['review']['checks_sha256'] = adaptation.checks_digest(record)
+        adaptation.check(record)
+        record['review']['verdict'] = 'limited'
+        with self.assertRaisesRegex(adaptation.AdaptationError, 'passing review'):
+            adaptation.check(record)
+        record['review']['verdict'] = 'pass'
+        record['checks'][-1].update(exit=None, timed_out=True)
+        record['review']['checks_sha256'] = adaptation.checks_digest(record)
+        with self.assertRaisesRegex(adaptation.AdaptationError, 'timed-out check'):
+            adaptation.check(record)
 
     def test_a_timed_out_check_has_no_exit_status_and_no_pass(self):
         record = accepted_record()
@@ -261,7 +277,7 @@ class StaticInspection(unittest.TestCase):
 
 class Boundary(unittest.TestCase):
     def setUp(self):
-        self.directory = pathlib.Path(self.enterContext(tempfile.TemporaryDirectory(dir='/private/tmp')))
+        self.directory = pathlib.Path(self.enterContext(tempfile.TemporaryDirectory()))
         self.worktree = self.directory / 'tree'
         self.scratch = self.worktree / 'data' / 'scratch'
         self.outside = self.directory / 'outside'
@@ -407,6 +423,7 @@ class LedgerV2(unittest.TestCase):
         versions = maintenance._contract_versions()
         self.assertEqual(versions['session_ledger'], 2)
         self.assertEqual(versions['adaptation_record'], adaptation.ADAPTATION_VERSION)
+        self.assertEqual(adaptation.ADAPTATION_VERSION, 2)
 
 
 class StudyBinding(unittest.TestCase):
@@ -512,7 +529,7 @@ class StudyBinding(unittest.TestCase):
 
 class CommandLine(unittest.TestCase):
     def setUp(self):
-        self.directory = pathlib.Path(self.enterContext(tempfile.TemporaryDirectory(dir='/private/tmp')))
+        self.directory = pathlib.Path(self.enterContext(tempfile.TemporaryDirectory()))
         self.base = self.directory / 'base'
         self.worktree = self.directory / 'trial'
         for root in (self.base, self.worktree):

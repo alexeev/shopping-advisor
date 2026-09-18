@@ -1110,8 +1110,9 @@ and it adds one committed example whose id differs *because* its method does.
 
 ### The adaptation record
 
-**Adaptation record v1** is `study/adaptation.py`, tracked as
-`adaptation_record`. It is JSON data with closed fields; a private working
+**Adaptation record v2** is `study/adaptation.py`, tracked as
+`adaptation_record` (v1 lived for an hour on 2026-09-18; the first real
+category moved it, see `baseline_moves` below). It is JSON data with closed fields; a private working
 record lives under `data/adaptations/` or an explicit private path; `study run
 --adaptation` snapshots it into the bundle as `adaptation.json`. It runs
 nothing: `study/trial.py` is the controlling procedure that fills it in, on the
@@ -1119,7 +1120,7 @@ trusted side, and `verify` checks it.
 
 | Part | Contract |
 |---|---|
-| `adaptation_version`, `id`, `layer`, `hypothesis` | `1`; a slug; one of `category`, `extraction`, `validation`, `analysis`, `acquisition`, `evidence`, `method`; what the patch is expected to change and why |
+| `adaptation_version`, `id`, `layer`, `hypothesis` | `2`; a slug; one of `category`, `extraction`, `validation`, `analysis`, `acquisition`, `evidence`, `method`; what the patch is expected to change and why |
 | `origin`, `predecessor` | the intake plan id, revision and canonical digest the gap was found in (or empty, `0`, empty when there was no plan), and the session ledger id and **engineering action** id the work accounts against. The predecessor is `plan_session` (this case's first link: the trial produced no bundle) or a prior `adaptation`, with a reference and a digest, or `null` |
 | `budget`, `attempts`, `consumption` | seconds of runner time and checks run, both positive; recorded attempts never exceed the budget — exhaustion stops new work, it does not extend the envelope. `consumption.seconds` is a number or `null` (unknown is not zero); `consumption.attempts` equals the attempts recorded |
 | `base`, `patch`, `result_tree_sha256`, `lock_sha256`, `method_versions` | the base git revision (empty where git could not answer) and the digest of the base tree; **the patch as a complete archive** — every added or modified file with its full content, as text or base64, and its digest, every deleted file named, and one digest over the sorted path/status/digest rows; the digest of the resulting tree; the lock digest; and the capability key → method version table the patch declares. A commit in a disposable worktree reconstructs nothing once the worktree is gone; the archive does |
@@ -1129,7 +1130,8 @@ trusted side, and `verify` checks it.
 | `runner` | the boundary the checks ran under — `kernel` (a `sandbox-exec` profile, digest recorded) or `harness-only`, which is an **exception the maintainer recorded** and must name it — the interpreter, the temporary directory and the timeout |
 | `checks[]` | one entry per attempt: the command, both instants, seconds, `exit` (**`null` when killed**), `timed_out`, the output's digest and path, a summary, the boundary. A timed-out check has no exit status and no pass |
 | `review` | reviewer, verdict `pending`/`pass`/`fail`/`limited`, findings (never empty when completed), and the `patch_sha256` and `checks_sha256` the reviewer read. A completed review must equal the record's current patch and checks digests: **a patch edited or a check run after the review supersedes it**, and the record refuses to load until the review is reissued |
-| `adoption` | decision `pending`/`accepted`/`rejected`/`withdrawn`/`interrupted`/`budget_exhausted`, the instant, the deciding role, the reason; recorded once. **`accepted` needs a passing review, a frozen evaluator, a non-empty patch and a last check that finished with exit 0** — no decision turns a failed or killed check into success |
+| `adoption` | decision `pending`/`accepted`/`rejected`/`withdrawn`/`interrupted`/`budget_exhausted`, the instant, the deciding role, the reason; recorded once. **`accepted` needs a passing review, a frozen evaluator, a non-empty patch and a last check that finished** — and that passed, unless `baseline_moves` declares why the frozen evaluator had to fail it. No decision turns a killed check into success |
+| `baseline_moves` | **v2.** The baseline changes the patch needs at adoption, in sentences: a new capability the baseline must record, a new test module, a moved floor. The evaluator set is frozen inside a trial and its own tests pin the tree to the committed baseline, so a patch that *adds* a capability necessarily fails `capability_untracked` and the baseline-pinning tests until adoption records it — R15's scope asks that such a patch "says so in the same diff", and this is where. With moves declared, a failing last check is accepted only on a passing review whose reviewer read the check's output; with none declared, it is not accepted at all |
 | `rollback` | instructions, and whether the base was demonstrated to stand (tree digest, evaluator digest and the gate at the base) with the instant |
 
 ### The binding

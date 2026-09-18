@@ -645,6 +645,8 @@ def _print_record(record):
           f'method {record["descriptor_sha256"][:12]}')
     print(f'  evaluator     {"frozen" if record["evaluator"]["frozen"] else "NOT proven frozen" if record["evaluator"]["frozen"] is False else "not checked"}'
           f' ({len(record["evaluator"]["files"])} file(s))')
+    for move in record['baseline_moves']:
+        print(f'  baseline move {move}')
     if record['inspection']:
         flagged = {k: v for k, v in record['inspection']['flags'].items() if v}
         print(f'  inspection    ' + (', '.join(f'{k} ×{len(v)}' for k, v in flagged.items()) or 'nothing flagged'))
@@ -691,6 +693,8 @@ def adaptation_capture_command(args):
     record['inspection'] = trial.inspect(captured['files'], args.base)
     if args.method_versions:
         record['method_versions'] = json.loads(args.method_versions)
+    if args.baseline_move:
+        record['baseline_moves'] = list(args.baseline_move)
     if not captured['files']:
         raise trial.TrialError(f'{args.worktree} does not differ from {args.base}: nothing to capture')
     adaptation.seal(record)
@@ -1024,6 +1028,10 @@ def main(argv=None):
     capturing.add_argument('--base', required=True, help='the base checkout (trusted side)')
     capturing.add_argument('--worktree', required=True, help='the patched worktree')
     capturing.add_argument('--method-versions', help='JSON table of capability key -> method version the patch declares')
+    capturing.add_argument('--baseline-move', action='append',
+                           help='one baseline move the patch needs at adoption (a new capability, a new '
+                                'test module, a moved floor); repeat. Declared here so a check the frozen '
+                                'evaluator fails for exactly this reason can still be accepted after review')
     capturing.set_defaults(handler=adaptation_capture_command)
     probing = commands.add_parser(
         'adaptation-probe', help='R15: demonstrate the execution boundary with failure cases')
