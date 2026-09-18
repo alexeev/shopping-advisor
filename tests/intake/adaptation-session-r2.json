@@ -54,7 +54,7 @@
       "run_id": "fixture-smoke",
       "run_manifest": {
         "path": "tests/intake/adaptation-record.json",
-        "sha256": "663a36236b1991832d4d3fbb8403f4ac739159bfec02b7aeb39e06e962f2102b"
+        "sha256": "847aa1b6d7b7ce0ab349b04b59f0f4bf268b903e7089d3501f1d0d382736cc02"
       },
       "started_at": "2026-09-18T17:06:51+00:00",
       "state": "completed"

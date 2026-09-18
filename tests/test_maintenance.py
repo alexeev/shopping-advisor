@@ -187,10 +187,13 @@ class Capabilities(unittest.TestCase):
         with unittest.mock.patch.dict(category.REGISTRY, dry_pasta=broken):
             result = maintenance.check_capabilities(
                 {'capabilities': self.declared})
-        self.assertEqual(codes(result.findings),
-                         ['capability_invalid', 'capability_record_missing'])
-        self.assertIn('nowhere.jsonl.gz', result.findings[0].message)
-        self.assertIn('no-such-roadmap-heading', result.findings[1].message)
+        # Only the findings about the declaration this test broke: a category
+        # the tree holds and the baseline has not yet recorded is a separate,
+        # legitimate finding (`capability_untracked`) during an R15 trial.
+        about = [f for f in result.findings if 'dry_pasta' in f.message]
+        self.assertEqual(codes(about), ['capability_invalid', 'capability_record_missing'])
+        self.assertIn('nowhere.jsonl.gz', about[0].message)
+        self.assertIn('no-such-roadmap-heading', about[1].message)
 
 
 class Tests(unittest.TestCase):

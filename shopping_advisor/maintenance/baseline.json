@@ -38,7 +38,7 @@
     "tests"
   ],
   "contracts": {
-    "adaptation_record": 1,
+    "adaptation_record": 2,
     "brief": 1,
     "delivery_record": 1,
     "delivery_review": 1,

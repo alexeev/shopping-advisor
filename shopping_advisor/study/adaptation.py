@@ -30,7 +30,14 @@ review, so approval cannot be part of what it approves.
 **Adoption is a decision, recorded once, by a role.** ``accepted`` needs a
 passing review; ``rejected``, ``withdrawn``, ``interrupted`` and
 ``budget_exhausted`` are outcomes in their own right and keep the record.
-Nothing here turns a failed check into success.
+Nothing here turns a failed check into success -- with one declared
+exception, found by the first real category (v2): the evaluator set is frozen
+inside a trial and its own tests pin the tree to the committed baseline, so a
+patch that *adds* a capability or a test module necessarily fails those tests
+until the baseline records it at adoption. R15's scope asks exactly that such
+a patch "says so in the same diff": ``baseline_moves`` is where it says so,
+and a failing last check is accepted only when the record declares the moves
+that explain it and a reviewer, reading the check's output, passed it.
 
 **The state machine is the session ledger's.** The engineering action in the
 ledger already knows ``planned``, ``authorised``, ``running``, ``completed``,
@@ -45,7 +52,8 @@ import re
 from ..provenance import sha256_text
 
 #: The shape of the record. Tracked by the maintenance gate as ``adaptation_record``.
-ADAPTATION_VERSION = 1
+#: v2 (2026-09-18): ``baseline_moves``, and the acceptance rule that reads it.
+ADAPTATION_VERSION = 2
 #: The record's name inside a study bundle.
 RECORD = 'adaptation.json'
 
@@ -200,7 +208,7 @@ def checks_digest(record):
 FIELDS = ('adaptation_version id layer hypothesis origin predecessor budget base '
           'patch result_tree_sha256 lock_sha256 method_versions evaluator inspection '
           'runner checks attempts consumption semantic_diff review adoption rollback '
-          'descriptor_sha256')
+          'baseline_moves descriptor_sha256')
 
 
 def check(data):
@@ -335,6 +343,8 @@ def check(data):
         _text(item['output_path'], where + '.output_path', empty=True)
         _text(item['summary'], where + '.summary', empty=True)
         _enum(item['boundary'], BOUNDARIES, where + '.boundary')
+    for move in _list(data['baseline_moves'], 'baseline_moves'):
+        _text(move, 'baseline_moves[]')
     _count(data['attempts'], 'attempts')
     if data['attempts'] > data['budget']['attempts']:
         _fail('attempts', f'{data["attempts"]} exceed the budget of {data["budget"]["attempts"]}: '
@@ -393,9 +403,14 @@ def check(data):
             _fail('adoption', 'accepted needs a passing review; a check that exited 0 is not one')
         if not files:
             _fail('adoption', 'nothing was patched, so nothing is adopted')
-        if not checks or checks[-1]['timed_out'] or checks[-1]['exit'] != 0:
-            _fail('adoption', 'accepted needs a last check that finished and passed; a timed-out '
-                              'or failing check is not turned into success by a decision')
+        if not checks or checks[-1]['timed_out']:
+            _fail('adoption', 'accepted needs a last check that finished; a timed-out check is '
+                              'not turned into success by a decision')
+        if checks[-1]['exit'] != 0 and not data['baseline_moves']:
+            _fail('adoption', 'accepted needs a last check that passed, unless the record declares '
+                              'the baseline moves that explain the failure (a new capability or '
+                              'test module the frozen evaluator cannot yet know); this record '
+                              'declares none, so a failing check is not turned into success')
         if evaluator['frozen'] is not True:
             _fail('adoption', 'accepted needs the evaluator set proven frozen against the base revision')
 
@@ -460,6 +475,7 @@ def template(identifier, layer, hypothesis, session_id, action_id, budget_second
                    'patch_sha256': '', 'checks_sha256': ''},
         'adoption': {'decision': 'pending', 'decided': '', 'by': '', 'reason': ''},
         'rollback': {'instructions': [], 'demonstrated': False, 'demonstrated_at': ''},
+        'baseline_moves': [],
         'descriptor_sha256': '',
     }
     record['descriptor_sha256'] = descriptor(record)
