@@ -205,6 +205,7 @@ def _contract_versions():
     from ..study.delivery import DELIVERY_VERSION
     from ..study.delivery_review import DELIVERY_REVIEW_VERSION
     from ..study.session import SESSION_VERSION
+    from ..study.adaptation import ADAPTATION_VERSION
     from ..validation.contract import CONTRACT_VERSION
 
     return {'extraction_schema': SCHEMA_VERSION,
@@ -217,6 +218,7 @@ def _contract_versions():
             'delivery_record': DELIVERY_VERSION,
             'delivery_review': DELIVERY_REVIEW_VERSION,
             'session_ledger': SESSION_VERSION,
+            'adaptation_record': ADAPTATION_VERSION,
             'study_manifest': STUDY_MANIFEST_VERSION,
             'evidence_ledger': audit.LEDGER_VERSION,
             'study_audit': audit.AUDIT_VERSION,
@@ -470,6 +472,10 @@ def _replay_example(example, directory, root):
         run_argv += ['--session', Path(root) / example['session']]
     if example.get('evidence'):
         run_argv += ['--evidence', Path(root) / example['evidence']]
+    if example.get('adaptation'):
+        # R15: a study resting on an adopted adaptation record; its method
+        # descriptor is in the study id the baseline pins.
+        run_argv += ['--adaptation', Path(root) / example['adaptation']]
     if invoke(*run_argv) != 0:
         return findings, {'name': name}
     invoke('verify', directory)

@@ -1,0 +1,102 @@
+{
+  "actions": [
+    {
+      "allocation": {
+        "seconds": 60
+      },
+      "authorisation": "checked",
+      "consumption": {
+        "seconds": 60
+      },
+      "consumption_source": "declared",
+      "depends_on": [],
+      "finished_at": "2026-09-18T10:01:00+00:00",
+      "id": "analyse-1",
+      "kind": "analysis",
+      "limit_ids": [
+        "research-seconds"
+      ],
+      "promotion": null,
+      "purpose": "Read the committed bronze-die study and name the gap.",
+      "question": "",
+      "replay_of": "",
+      "result": null,
+      "resumes": "",
+      "run_id": "",
+      "run_manifest": null,
+      "started_at": "2026-09-18T10:00:00+00:00",
+      "state": "completed"
+    },
+    {
+      "allocation": {
+        "seconds": 1800
+      },
+      "authorisation": "checked",
+      "consumption": {
+        "seconds": 21.553
+      },
+      "consumption_source": "adaptation_record",
+      "depends_on": [
+        "analyse-1"
+      ],
+      "finished_at": "2026-09-18T17:07:12+00:00",
+      "id": "engineer-1",
+      "kind": "engineering",
+      "limit_ids": [
+        "engineering-seconds"
+      ],
+      "promotion": null,
+      "purpose": "Fixture adaptation: a bounded patch to the tree, checked inside the boundary, reviewed and adopted or not.",
+      "question": "",
+      "replay_of": "",
+      "result": null,
+      "resumes": "",
+      "run_id": "fixture-smoke",
+      "run_manifest": {
+        "path": "tests/intake/adaptation-record.json",
+        "sha256": "663a36236b1991832d4d3fbb8403f4ac739159bfec02b7aeb39e06e962f2102b"
+      },
+      "started_at": "2026-09-18T17:06:51+00:00",
+      "state": "completed"
+    }
+  ],
+  "id": "pasta-adaptation-session",
+  "limits": [
+    {
+      "amount": 600,
+      "authorization": {
+        "ref": "",
+        "source": "existing_authorization",
+        "text": "Offline analysis over committed records; no acquisition."
+      },
+      "deadline": "",
+      "id": "research-seconds",
+      "kind": "research",
+      "measurement": "observed",
+      "mode": "stops_new_work",
+      "note": "Declared analysis time.",
+      "scope": "Synthetic R15 fixture: the analysis that found the gap, over the committed pasta cases.",
+      "unit": "seconds"
+    },
+    {
+      "amount": 3600,
+      "authorization": {
+        "ref": "",
+        "source": "operator",
+        "text": "Maintainer's decision of 2026-09-18: one hour of runner time for the fixture adaptation."
+      },
+      "deadline": "",
+      "id": "engineering-seconds",
+      "kind": "engineering",
+      "measurement": "observed",
+      "mode": "stops_new_work",
+      "note": "Seconds are the runner's own clock, recorded from the adaptation record; attempts are the record's budget.",
+      "scope": "Synthetic R15 fixture: one adaptation, checked inside the boundary.",
+      "unit": "seconds"
+    }
+  ],
+  "plan": null,
+  "revision": 2,
+  "session_version": 2,
+  "supersedes": "0e9a040cad7f844f372cf685bf25631afcaa578ba564d563c967fe4554bffa64"
+}

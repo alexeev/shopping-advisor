@@ -27,10 +27,20 @@ predecessor's consumption is counted once, on the predecessor.
 
 **A stop preserves what was done and names what it prevents.** Exhaustion
 refuses the next action; it deletes no record. Interrupted work is listed as
-interrupted, never assumed complete. Engineering is retained as a proposal
-against its own allowance and is never authorised here -- controlled
-execution is R15's, and willingness to investigate products does not fund
-development.
+interrupted, never assumed complete. Engineering is accounted against its own
+allowance, never a research one: willingness to investigate products does not
+fund development.
+
+**Version 2 (R15) lets engineering run.** A v1 ledger retained engineering as
+a proposal -- ``planned`` or ``abandoned``, never authorised -- because no
+controlled execution existed. Under v2 an engineering action is authorised,
+runs, completes or is interrupted like any other, against an ``engineering``
+limit in ``seconds`` -- attempts are the adaptation record's own budget, and
+acquisition units stay research's -- and what it did is recorded from its
+*adaptation record* (:mod:`adaptation`) rather than from a crawl manifest: the record is linked by path and digest as ``run_manifest``,
+its id as ``run_id``, and the consumption source is ``adaptation_record``. A
+v1 ledger is still read, and still refuses to execute engineering: the file
+says what its author was entitled to, and a newer reader grants nothing more.
 
 Resumption reads the bundle and the ledger and writes nothing. It verifies the
 retained artifacts, the active plan revision, consumed and reserved resources,
@@ -49,7 +59,9 @@ from ..provenance import sha256_file, sha256_text
 from . import delivery
 
 #: The shape of a session ledger and of the bundle snapshot. Tracked by the gate.
-SESSION_VERSION = 1
+SESSION_VERSION = 2
+#: Versions this build reads. A v1 ledger keeps v1's rules (engineering is a proposal).
+SUPPORTED_VERSIONS = (1, 2)
 SNAPSHOT = 'session.json'
 DEFAULT_SESSION_ROOT = 'data/sessions'
 
@@ -61,7 +73,8 @@ DONE = ('completed', 'interrupted')
 LIMIT_KINDS = ('research', 'engineering')
 MODES = ('stops_new_work', 'strict_ceiling')
 AUTHORITY = ('user_message', 'existing_authorization', 'operator')
-CONSUMPTION_SOURCES = ('run_manifest', 'declared', 'assumed_allocation', 'unknown')
+CONSUMPTION_SOURCES = ('run_manifest', 'adaptation_record', 'declared', 'assumed_allocation',
+                       'unknown')
 
 #: Units a run manifest reports, and where. ``runs`` is one per manifest.
 OBSERVED = {
@@ -144,8 +157,9 @@ def digest(data):
 def check(data):
     """Validate a ledger. Reads no manifest, no clock and no bundle."""
     _object(data, 'session_version id revision supersedes plan limits actions', 'ledger')
-    if type(data['session_version']) is not int or data['session_version'] != SESSION_VERSION:
-        _fail('session_version', f'unsupported version; expected {SESSION_VERSION}')
+    if type(data['session_version']) is not int or data['session_version'] not in SUPPORTED_VERSIONS:
+        _fail('session_version', 'unsupported version; expected one of '
+                                 + ', '.join(str(v) for v in SUPPORTED_VERSIONS))
     if not isinstance(data['id'], str) or not SLUG.fullmatch(data['id']):
         _fail('id', 'expected a slug')
     if type(data['revision']) is not int or data['revision'] < 1:
@@ -235,8 +249,9 @@ def _action(action, limits, actions, ledger):
     _enum(state, STATES, name + '.state')
     _text(action['purpose'], name + '.purpose')
     _text(action['question'], name + '.question', empty=kind != 'probe')
-    if kind == 'engineering' and state not in ('planned', 'abandoned'):
-        _fail(name, 'engineering is retained as a proposal; controlled execution is R15')
+    if kind == 'engineering' and state not in ('planned', 'abandoned') and not executes(ledger):
+        _fail(name, 'engineering is retained as a proposal under session ledger v1; controlled '
+                    'execution needs a v2 ledger (R15)')
     if kind == 'collection' and ledger['plan'] is None:
         _fail(name, 'collection is only what a brief declares: the ledger names its plan')
 
@@ -263,8 +278,10 @@ def _action(action, limits, actions, ledger):
                     f'amount in an acquisition unit')
     if kind not in LIVE and any(unit in ACQUISITION for unit in allocation):
         _fail(name, f'{kind} touches nothing live and may not allocate acquisition units')
-    if kind not in LIVE and (action['run_id'] or action['run_manifest'] is not None):
+    if kind not in LIVE and kind != 'engineering' and (action['run_id'] or action['run_manifest'] is not None):
         _fail(name, f'{kind} has no crawl run to link')
+    if kind == 'engineering' and action['run_manifest'] is not None and state not in DONE:
+        _fail(name, 'an adaptation record is linked when the attempt finished, not before')
 
     for field in ('resumes', 'replay_of'):
         _text(action[field], name + '.' + field, empty=True)
@@ -289,6 +306,10 @@ def _action(action, limits, actions, ledger):
         if not re.fullmatch('[a-f0-9]{64}', str(action['run_manifest']['sha256'])):
             _fail(name, 'run_manifest.sha256 must be a SHA-256 digest')
     _enum(action['consumption_source'], CONSUMPTION_SOURCES, name + '.consumption_source')
+    if action['consumption_source'] == 'adaptation_record' and kind != 'engineering':
+        _fail(name, 'an adaptation record accounts for engineering, nothing else')
+    if action['consumption_source'] == 'run_manifest' and kind == 'engineering':
+        _fail(name, 'engineering is recorded from its adaptation record, not a crawl manifest')
     consumption = action['consumption']
     if not isinstance(consumption, dict):
         _fail(name, 'consumption is a table of unit -> amount or null')
@@ -336,6 +357,11 @@ def _action(action, limits, actions, ledger):
                         'whether seeing it changed the criteria or supplied candidates')
     if kind != 'probe' and action['promotion'] is not None:
         _fail(name, 'promotion is a probe record')
+
+
+def executes(ledger):
+    """May engineering run under this ledger? v1 says no, and its author meant no."""
+    return ledger.get('session_version', 1) >= 2
 
 
 def load(path):
@@ -414,7 +440,7 @@ def enforced_caps(manifest):
 
 def record(ledger, action_id, run_directory=None, *, state='', consumption=None,
            assume_allocation=False, started_at='', finished_at='', result=None,
-           promotion=None):
+           promotion=None, adaptation_record=None):
     """Record what ``action_id`` did. Mutates and re-validates the ledger.
 
     From a run directory the state, timestamps and consumption are read from
@@ -431,10 +457,34 @@ def record(ledger, action_id, run_directory=None, *, state='', consumption=None,
     if action['state'] in DONE or action['state'] == 'abandoned':
         _fail(action_id, f'already {action["state"]}; a second record would count it twice. '
                          f'Resume it as a new action instead')
-    if action['kind'] == 'engineering':
-        _fail(action_id, 'engineering is a retained proposal; nothing here executes or records it')
+    if action['kind'] == 'engineering' and not executes(ledger):
+        _fail(action_id, 'engineering is a retained proposal under session ledger v1; nothing here '
+                         'executes or records it')
+    if action['kind'] != 'engineering' and adaptation_record is not None:
+        _fail(action_id, 'an adaptation record accounts for engineering, nothing else')
     units = list(action['allocation'])
-    if run_directory is not None:
+    if adaptation_record is not None:
+        from . import adaptation
+        path = Path(adaptation_record)
+        record_data = adaptation.load(path)
+        if record_data['origin']['session_id'] != ledger['id'] \
+                or record_data['origin']['action_id'] != action_id:
+            _fail(action_id, f'the adaptation record {record_data["id"]} accounts against '
+                             f'{record_data["origin"]["session_id"]}/{record_data["origin"]["action_id"]}, '
+                             f'not this action')
+        checks = record_data['checks']
+        action['run_id'] = record_data['id']
+        action['run_manifest'] = {'path': str(path), 'sha256': sha256_file(path)}
+        action['state'] = ('interrupted' if record_data['adoption']['decision'] in ('interrupted',)
+                           or (checks and checks[-1]['timed_out'] and
+                               record_data['adoption']['decision'] == 'pending')
+                           else 'completed')
+        action['started_at'] = (checks[0]['started_at'] if checks else '') or started_at or action['started_at']
+        action['finished_at'] = (checks[-1]['finished_at'] if checks else '') or finished_at or ''
+        measured = {'seconds': record_data['consumption']['seconds']}
+        action['consumption'] = {unit: measured.get(unit) for unit in units}
+        action['consumption_source'] = 'adaptation_record'
+    elif run_directory is not None:
         from ..run import load_manifest, run_state
         if action['kind'] not in LIVE:
             _fail(action_id, f'{action["kind"]} has no crawl run to record from')
@@ -525,10 +575,10 @@ def authorise(ledger, action_id, reference=None):
     reasons = []
     if action['state'] != 'planned':
         reasons.append(f'already {action["state"]}; only a planned action is authorised')
-    if action['kind'] == 'engineering':
-        reasons.append('engineering is retained as a proposal against its allowance; '
-                       'controlled execution and its gates are R15, and planning it '
-                       'authorises none of it')
+    if action['kind'] == 'engineering' and not executes(ledger):
+        reasons.append('engineering is retained as a proposal against its allowance under '
+                       'session ledger v1; controlled execution and its gates are R15 and need '
+                       'a v2 ledger, and planning it authorises none of it')
     for name in action['depends_on']:
         predecessor = next(a for a in ledger['actions'] if a['id'] == name)
         if predecessor['state'] != 'completed':
@@ -564,7 +614,7 @@ def reconcile(ledger, reference=None):
     limits = _limits(ledger, reference)
     prevented, permitted, proposals = [], [], []
     for action in ledger['actions']:
-        if action['kind'] == 'engineering' and action['state'] == 'planned':
+        if action['kind'] == 'engineering' and action['state'] == 'planned' and not executes(ledger):
             proposals.append(action['id'])
             continue
         if action['state'] != 'planned':

@@ -15,7 +15,12 @@ vendor's word for a fact, knows no shelf until it has looked, and says what it
 did not see. [PURPOSE.md](PURPOSE.md) owns that statement — the buyer's
 problem, the role and its limits, and what a finished outcome owes the buyer.
 Read it before the rules below, because the rules are derived from it, and
-when two of them pull in different directions these settle the matter:
+when two of them pull in different directions these settle the matter. The
+buyer is also the operator — every user today is an IT professional driving
+this harness, whose permission system and immediate engineer review stand in
+front of every change ([PURPOSE.md](PURPOSE.md#who-operates-it)); the
+repository's guards make that review mechanical and replayable rather than
+stand in for it. The rules:
 
 - The buyer's decision over the completeness of the research: stop when more
   work cannot change what the buyer should do.
@@ -72,11 +77,15 @@ when two of them pull in different directions these settle the matter:
   intake/gap planning; R15 controls adaptation; R16 governs reuse and
   architectural review — its capability index, lifecycle records and executable
   promotion gate shipped on 2026-09-18, and the entry of task-born capabilities
-  as experiments waits for R15; R14 tests the complete loop. **The rest are
-  planned capabilities, not runtime
-  authority.** Until R11 and R15 gates ship, follow the unsupported-category
-  rule below; a category written mid-study remains reviewed maintenance, and
-  its lifecycle record says it is a task experiment.
+  as experiments waits for R15; R14 tests the complete loop. R15's procedure
+  shipped its first half on 2026-09-18 — the adaptation record, the session
+  ledger that funds engineering, the runner and the study binding, under
+  [adapt inside a study](RESEARCH.md#adapt-inside-a-study) — and no category
+  has been written through it yet. **The rest are planned capabilities, not
+  runtime authority.** Until a category has passed through R15 (R11's first
+  case), follow the unsupported-category rule below; a category written
+  mid-study as reviewed maintenance remains that, and its lifecycle record
+  says it is a task experiment.
 - The same conversation is the entry point for engineering and maintenance
   requests, and their intake belongs to the harness, not to this repository:
   the coding interface records the request, authorises each action and keeps

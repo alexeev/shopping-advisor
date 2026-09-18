@@ -36,7 +36,7 @@ other. The manifest records each present artifact's binding beside its digest,
 so a reader of the bundle sees the decision without opening the code.
 """
 
-from . import delivery, delivery_review, intake, intake_review, session
+from . import adaptation, delivery, delivery_review, intake, intake_review, session
 
 MANIFEST = 'manifest.json'
 BRIEF = 'brief.json'
@@ -73,6 +73,12 @@ BINDINGS = {
     delivery.RECORD: {'required': False, 'binding': DELIVERY},
     session.SNAPSHOT: {'required': False, 'binding': DELIVERY},
     delivery_review.RECORD: {'required': False, 'binding': REVIEW_RECORD},
+    # R15: the adaptation record a study rests on. Semantic, because the
+    # method that produced the decisions is part of what a final review
+    # approves; a replaced record supersedes the review, and a build without
+    # this row refuses the bundle as ``artifact_undeclared`` rather than
+    # reading it as an ordinary study.
+    adaptation.RECORD: {'required': False, 'binding': SEMANTIC},
 }
 
 #: The nine artifacts every bundle holds, in manifest order.

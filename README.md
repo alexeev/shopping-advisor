@@ -81,9 +81,11 @@ What all of that is for, and what the product is not, is stated once in
 
 The [product vision and roadmap assessment](ROADMAP.md#product-vision--the-shopping-conversation)
 define the minimum operating model, architectural safeguards and delivery order.
-The local maintenance gate, R13's intake machinery and R16's capability index
-with its lifecycle records have shipped; R13's conversational trials come next,
-then R15 controlled adaptation, R11 category synthesis, R12 coverage, R16's
+The local maintenance gate, R13's intake machinery and conversational trials,
+R16's capability index with its lifecycle records, and the first half of R15 —
+the adaptation record, the funded engineering ledger, the execution boundary
+and the study binding — have shipped; the first category written through that
+procedure comes next, then R11 category synthesis, R12 coverage, R16's
 task-experiment entry for task-born capabilities and R14 unseen-problem trials.
 The supported scope above remains the operational limit until those gates ship. Cross-platform and provider-interchangeability
 trials are [deferred to R17](ROADMAP.md#r17--portability-evidence) and block
@@ -272,6 +274,14 @@ still covers one marketplace: feeds spanning several stop the command until
 | `python -m shopping_advisor.study plan-review PLAN REVIEW.json` | Check an intake review against its plan and print what it records; exits 1 on a recorded failure |
 | `python -m shopping_advisor.study review-intake BUNDLE REVIEW.json` | Attach a separate intake review to a plan-backed bundle; a recorded failure fails `validate-report` |
 | `python -m shopping_advisor.study run BRIEF` | Analyses the feeds the brief names and writes a study bundle; collects nothing |
+| `python -m shopping_advisor.study adaptation-template ID --session LEDGER --action ACTION --layer LAYER --hypothesis TEXT --seconds N --attempts N -o RECORD.json` | R15: open an adaptation record against a funded engineering action of a v2 session ledger; captures and runs nothing |
+| `python -m shopping_advisor.study adaptation-capture RECORD --base BASE --worktree TRIAL` | Archive the patch between the base tree and the trial worktree with full content, digest both trees, inspect the changed code statically; refuses a patch that touches the evaluator set |
+| `python -m shopping_advisor.study adaptation-probe --worktree TRIAL --scratch DIR --outside DIR` | Demonstrate the execution boundary with failure cases; exits 1 unless every refused probe was refused |
+| `python -m shopping_advisor.study adaptation-run RECORD --worktree TRIAL --scratch DIR -- COMMAND` | Run one check on the patched worktree inside the boundary and record it as an attempt; refuses once the budget is spent |
+| `python -m shopping_advisor.study adaptation-review RECORD --reviewer ROLE --verdict pass\|fail\|limited --finding TEXT` | Record a reviewer's verdict bound to the patch and checks as they stand |
+| `python -m shopping_advisor.study adaptation-adopt RECORD --decision accepted\|rejected\|... --by ROLE --reason TEXT` | Record the adoption decision, once; `accepted` needs a passing review, a frozen evaluator and a finished passing check |
+| `python -m shopping_advisor.study adaptation-rollback RECORD --base BASE` | Prove the base still stands: tree and evaluator digests match the record and the gate passes there |
+| `python -m shopping_advisor.study run BRIEF --adaptation RECORD` | Bind the adopted method into the study: the record travels in the bundle and its descriptor is in the study id; `--trial` measures an unadopted patch and delivers nothing |
 | `python -m shopping_advisor.study deliver BUNDLE` | Freeze the delivery instant and record whether current advice is permitted, blocked or not in scope |
 | `python -m shopping_advisor.study delivery-review-template BUNDLE -o REVIEW.json` | Write a pending delivery review bound to the latest delivery event, with its three questions and the attestation |
 | `python -m shopping_advisor.study review-delivery BUNDLE REVIEW.json` | Attach a delivery review to the event it binds; a recorded failure fails `validate-report` |

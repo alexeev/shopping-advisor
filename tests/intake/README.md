@@ -113,6 +113,35 @@ name what moved, `validate-report` owing a passing review only for a permitted
 current-advice event delivered as audited, a later event as a new review while
 the semantic review stands, and `verify` on a review that no longer binds.
 
+**R15 adaptation coverage (2026-09-18).** `adaptation-session.json` is a
+**session ledger v2**: the same shape as the v1 fixture above with an
+engineering allowance the maintainer funded, so its `engineer-1` is
+authorisable rather than a retained proposal. `adaptation-record.json` is the
+committed **adaptation record** of a synthetic method patch — one new test
+module and one README line against the base revision `1626b49` — captured
+whole, inspected statically, checked once inside the kernel boundary (the full
+offline suite, 815 tests, 21.6 s), reviewed, adopted and demonstrated
+reversible. `adaptation-session-r2.json` is the ledger revision that names the
+first one's digest and records what the attempt spent, from the record. The
+three replay together as the gate's `pasta-adaptation` example: the bronze-die
+brief over the same case feed, whose study id is `pasta-bronze-die-306e33f25417`
+where the unadapted study is `pasta-bronze-die-bde2b027b117`, with the same
+decisions — the method moved the id and nothing else did.
+[test_adaptation.py](../test_adaptation.py) covers the record's closed fields
+and bindings (a patch or check after the review supersedes it; acceptance needs
+a passing review, a frozen evaluator and a finished passing check), tree
+capture and static inspection, the boundary profile and — where `sandbox-exec`
+runs, skipped and said so where it does not — the six refused probes and the
+timeout that kills a hung check with its child, ledger v2 beside a v1 that still
+refuses, and the study binding: a bound study's id, a tampered or renamed
+record, an id without the method, and a reader without the inventory row.
+
+```text
+uv run --offline --locked python -m shopping_advisor.study adaptation-check tests/intake/adaptation-record.json
+uv run --offline --locked python -m shopping_advisor.study session-check tests/intake/adaptation-session-r2.json --reference 2026-09-18T12:00:00+00:00
+uv run --offline --locked python -m shopping_advisor.study run tests/studies/pasta-bronze-die.toml --adaptation tests/intake/adaptation-record.json --session tests/intake/adaptation-session-r2.json -o data/adaptation-example-study
+```
+
 The [runbook](../../RESEARCH.md#retain-an-intake-plan-before-the-executable-brief)
 contains the full bind/run/verify sequence. The test suite exercises those CLIs,
 checks the expected original decisions, and replays after deleting the originating
