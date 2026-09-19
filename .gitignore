@@ -74,3 +74,9 @@ reports/*
 
 # Sanitized R13 intent/provenance fixtures, never private working conversations.
 !tests/intake/*.json
+
+# Retained run fixtures: a real crawl's manifest, discovery log and page index,
+# without its pages (tests/runs/README.md).
+!tests/runs/*/manifest.json
+!tests/runs/*/discovery.jsonl
+!tests/runs/*/pages.jsonl

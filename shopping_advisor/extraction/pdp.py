@@ -40,7 +40,28 @@ from .text import clean, decode_entities, first_text, node_text, parse_quantity
 # first `.a-offscreen` in it and published 5,63 EUR as the price of a tin that
 # actually costs 9,98. Both ends are now kept and `amount` is absent, which is
 # what the page means: this listing has no price until a variant is chosen.
+# 6, additive (2026-09-19): `seller` falls back to the merchant feature block,
+# and `sponsored` is a lineage field. Amazon-sold pages carry neither
+# `#sellerProfileTriggerId` nor `#merchant-info`; they name "Amazon" only in
+# `#merchantInfoFeature_feature_div`, so two of 58 powerbank listings sold by
+# Amazon were reported with no seller at all. The neighbouring fulfiller block
+# is never read (see `_seller`). `sponsored` is what the discovery sighting
+# said about the search slot that queued the fetch -- `None` for a seeded ASIN
+# and for a page with no discovery lineage. Both are within-version under
+# CONTRACT §6: an empty value becoming filled, and a new key.
 SCHEMA_VERSION = 6
+
+#: Who sells: a third-party merchant renders as a profile link or as the
+#: ``#merchant-info`` line. Kept first; they are what every record before
+#: 2026-09-19 was read with.
+SELLER_CSS = ('#sellerProfileTriggerId', '#merchant-info a', '#merchant-info')
+#: The buy-box feature block that names the merchant when Amazon itself sells
+#: -- the page then has none of the selectors above and reads "Verkäufer:
+#: Amazon" here. Its neighbour ``#fulfillerInfoFeature_feature_div`` names who
+#: *ships* ("Versand: Amazon" on a third-party listing fulfilled by Amazon) and
+#: is deliberately absent from this list: a wrong seller is worse than none.
+MERCHANT_FEATURE_CSS = (
+    '#merchantInfoFeature_feature_div .offer-display-feature-text-message',)
 
 # Free-text nutrition is only trustworthy when a per-100 basis is stated
 # nearby; otherwise the number may be per serving or per pack.
@@ -128,6 +149,11 @@ class PdpExtractor:
             'schema_version': SCHEMA_VERSION,
             'fetched_at': _dt.datetime.now(_dt.timezone.utc)
                              .replace(microsecond=0).isoformat(),
+            # Lineage, not a page fact: whether the search slot that queued
+            # this fetch was a sponsored placement. The spider and a replay
+            # with a discovery log fill it; a page with no discovery lineage
+            # -- a seeded ASIN, a corpus page -- leaves it unknown.
+            'sponsored': None,
         }
         record.update(lineage or {})
         record.update({
@@ -140,8 +166,7 @@ class PdpExtractor:
             'rating': rating,
             'availability': clean(first_text(
                 sel, '#availability span', '#availability')),
-            'seller': clean(first_text(
-                sel, '#sellerProfileTriggerId', '#merchant-info a', '#merchant-info')),
+            'seller': self._seller(sel),
             'breadcrumbs': log.run('breadcrumbs', lambda: blocks.bullet_list(
                 sel, '#wayfinding-breadcrumbs_feature_div ul li a'), []),
             'package': package,
@@ -167,6 +192,25 @@ class PdpExtractor:
             'extraction': log.as_dict(),
         })
         return record
+
+    # -- seller --------------------------------------------------------------
+
+    def _seller(self, sel):
+        """Who sells this offer, as the buy box names them; ``''`` if unnamed.
+
+        The profile link and ``#merchant-info`` are read first, exactly as
+        before. A page Amazon sells itself has neither: measured on the 64
+        retained pages of the 2026-09-19 powerbank runs, 12 pages named a
+        seller nowhere the extractor looked and all 12 read "Amazon" in the
+        merchant feature block. That block is the fallback. The fulfiller
+        block beside it is not read, because on a third-party listing
+        shipped by Amazon it says "Amazon" too, and the extractor would then
+        promote the courier to the seller.
+        """
+        seller = clean(first_text(sel, *SELLER_CSS))
+        if seller:
+            return seller
+        return clean(first_text(sel, *MERCHANT_FEATURE_CSS))
 
     # -- key/value attributes ---------------------------------------------
 

@@ -253,7 +253,7 @@ Scope, acceptance conditions and what was measured on completion: [HISTORY.md](H
 
 A crawl is reproducible and auditable, and extraction work no longer requires a re-crawl: pages are retained with their digests and can be re-read by a later extractor.
 
-**Open (2026-09-19):** the manifest does not count seeds requested against fetched or discovered listings against fetched, and `run_state` reads any closed manifest as complete even when `finish_reason` is `shutdown`; both are bucket B in [HISTORY.md](HISTORY.md#postmortem-of-the-iphone-15-qi2-powerbank-review--2026-09-19).
+**Closed 2026-09-19 (bucket B of the [powerbank postmortem](HISTORY.md#postmortem-of-the-iphone-15-qi2-powerbank-review--2026-09-19)):** `run_state` now reads the finish reason — `shutdown` is interrupted, `finished` and `closespider_*` complete under the named cap — and the manifest counts seeds requested/fetched and discovered unique/fetched, recomputable for older manifests ([CONTRACT §16](CONTRACT.md#16-the-finish-reason-the-coverage-counts-and-session-ledger-v3-2026-09-19)). The stopped powerbank crawl reads interrupted, 5 of 7 seeds and 8 of 40 discovered fetched.
 
 Scope, acceptance conditions and what was measured on completion: [HISTORY.md](HISTORY.md#r1--crawl-provenance-and-evidence-preservation).
 
@@ -483,7 +483,8 @@ run directories (bucket E: named ASIN or model → fetched, discovered-unfetched
 with query/position/sponsored, or absent; a near-miss list against the plan's
 brands and models; named candidates carry a recorded source; search-only
 crawling is an option, never the default); manifest counts for seeds
-requested/fetched and discovered fetched/unfetched (bucket B, with R1); and two
+requested/fetched and discovered fetched/unfetched (bucket B, shipped
+2026-09-19 with R1); and two
 evidence-ledger source kinds, certificate and safety notice, with a **declared**
 model mapping the tool checks for consistency and never infers (bucket F). A
 generic fold-and-sort shelf table and automatic model-number matching were
@@ -573,16 +574,24 @@ A passing gate protects the tested machinery and nothing more.
 **Open after close (2026-09-19).** The powerbank review, the fourth
 unsupported-category conversation, found two gaps in this milestone's
 machinery, recorded in [HISTORY.md](HISTORY.md#postmortem-of-the-iphone-15-qi2-powerbank-review--2026-09-19): the session ledger wrote `completed`
-for a crawl the user stopped, because `run_state` maps any closed manifest to
-complete (bucket B: map `finish_reason`, add `collections` as a limit unit, and
-let a dependent cite an interrupted predecessor when it declares it builds on
-partial evidence — without that companion the honest state blocks work); and
-the unsupported-category procedure has no report template, so one review folded
+for a crawl the user stopped, because `run_state` mapped any closed manifest to
+complete (bucket B, **shipped 2026-09-19** as session ledger v3 with
+[CONTRACT §16](CONTRACT.md#16-the-finish-reason-the-coverage-counts-and-session-ledger-v3-2026-09-19):
+`finish_reason` mapped, `collections` a limit unit, and a dependent may cite an
+interrupted predecessor when it declares `builds_on_partial` and the
+predecessor's consumption is recorded — without that companion the honest state
+blocks work; the retained stopped crawl now records interrupted and its
+follow-up analysis authorises); and
+the unsupported-category procedure had no report template, so one review folded
 safety, warranty, thickness and fit into one light, read missing evidence as
-red, inferred fit from an image and buried the shortlist (bucket C: a
-bounded-review template and checklist in RESEARCH.md, with the rewritten
-powerbank report as the worked example). Neither reopens the Done-when list;
-both are maintenance under it.
+red, inferred fit from an image and buried the shortlist (bucket C, **shipped
+2026-09-19** as prose in RESEARCH.md — the
+[procedure](RESEARCH.md#a-bounded-review-of-an-unsupported-category) and the
+[template](RESEARCH.md#the-bounded-review-report-template) — with the rewritten
+powerbank report as the worked example in the operator's gitignored `reports/`;
+the semantic checklist was not extended, because a bounded review runs no study
+and generates none). Neither reopened the Done-when list; both were maintenance
+under it.
 
 ### Scope
 

@@ -1,0 +1,147 @@
+{
+  "arguments": {
+    "asin": [
+      "B0D7DKJ75M",
+      "B0GP13MJTJ",
+      "B0F6NC41DZ",
+      "B0GH7FTHFL",
+      "B0GVYMQ3GT",
+      "B0DPQP8L9S",
+      "B0F37QVBNM"
+    ],
+    "domain": "www.amazon.de",
+    "keep_pages": true,
+    "keep_search_pages": true,
+    "keyword": [
+      "INIU P43",
+      "Vonmählen Evergreen Mag"
+    ],
+    "max_pages": 1,
+    "max_products_per_query": 4
+  },
+  "code": {
+    "extraction_schema_version": 6,
+    "git_dirty": false,
+    "git_revision": "6432a3c28d44ba8cf5c286f939727c3770df96ad",
+    "lock_sha256": "e24bc67da2dba6c49538700bc8bce61658748c715e9103603f537c15694a32cd",
+    "python": "3.14.6",
+    "scrapy": "2.19.0",
+    "validated_contract_version": 2
+  },
+  "counts": {
+    "discovery_occurrences": 47,
+    "failure_samples_over_cap": 0,
+    "failure_samples_saved": 0,
+    "page_write_errors": 0,
+    "pages_quarantined": 0,
+    "pages_saved": 13,
+    "redaction_failures": 0,
+    "search_pages_saved": 2
+  },
+  "feeds": [
+    {
+      "format": "jsonl",
+      "overwrite": true,
+      "uri": "data/iphone15-qi2-powerbank-targeted-r2.jsonl"
+    }
+  ],
+  "finish_reason": "shutdown",
+  "finished_at": "2026-09-19T11:18:44+00:00",
+  "locale": {
+    "accept_language": "de-DE,de;q=0.9,en;q=0.8",
+    "expected_language": "de",
+    "language": "de",
+    "status": "matches"
+  },
+  "manifest_version": 2,
+  "marketplace": "www.amazon.de",
+  "pages_retained": true,
+  "run_id": "20260919T111600Z-www.amazon.de-eb1e5c7f",
+  "search_pages_retained": true,
+  "settings": {
+    "ADDONS": [
+      "shopping_advisor.addons.BundledPublicSuffixList"
+    ],
+    "AUTOTHROTTLE_ENABLED": true,
+    "AUTOTHROTTLE_MAX_DELAY": 30,
+    "AUTOTHROTTLE_START_DELAY": 9,
+    "AUTOTHROTTLE_TARGET_CONCURRENCY": 0.3,
+    "BOT_NAME": "shopping_advisor",
+    "CLOSESPIDER_ITEMCOUNT": "25",
+    "CLOSESPIDER_PAGECOUNT": "35",
+    "CLOSESPIDER_TIMEOUT": "500",
+    "CONCURRENT_REQUESTS": 1,
+    "CONCURRENT_REQUESTS_PER_DOMAIN": 1,
+    "DEFAULT_REQUEST_HEADERS": {
+      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+      "Accept-Language": "de-DE,de;q=0.9,en;q=0.8",
+      "Upgrade-Insecure-Requests": "1"
+    },
+    "DEPTH_LIMIT": 0,
+    "DOWNLOADER_MIDDLEWARES": [
+      "scrapy.downloadermiddlewares.retry.RetryMiddleware"
+    ],
+    "DOWNLOAD_DELAY": 9.0,
+    "DOWNLOAD_DELAY_JITTER": 0.5,
+    "DOWNLOAD_TIMEOUT": 30,
+    "EXTENSIONS": [],
+    "HTTPCACHE_ENABLED": false,
+    "RANDOMIZE_DOWNLOAD_DELAY": true,
+    "RETRY_ENABLED": true,
+    "RETRY_TIMES": 2,
+    "ROBOTSTXT_OBEY": false,
+    "SETTINGS_PROFILE": "baseline",
+    "USER_AGENT": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+    "proxy_middleware": false
+  },
+  "spider": "amazon_product",
+  "started_at": "2026-09-19T11:16:00+00:00",
+  "state": "closed",
+  "stats": {
+    "amazon/discovery/occurrences": 47,
+    "amazon/discovery/repeat_sighting": 3,
+    "amazon/discovery/sponsored": 15,
+    "amazon/field/aplus": 12,
+    "amazon/field/brand": 13,
+    "amazon/field/breadcrumbs": 13,
+    "amazon/field/country_of_origin": 10,
+    "amazon/field/description": 1,
+    "amazon/field/feature_bullets": 13,
+    "amazon/field/images": 13,
+    "amazon/field/price": 12,
+    "amazon/field/rating": 13,
+    "amazon/field/rating_count": 13,
+    "amazon/field/raw_tables": 13,
+    "amazon/field/review_histogram": 13,
+    "amazon/field/review_sample": 12,
+    "amazon/field/title": 13,
+    "amazon/field/total_quantity": 7,
+    "amazon/field/variation": 10,
+    "amazon/pdp_items": 13,
+    "amazon/product_urls_discovered": 47,
+    "amazon/search_pages_parsed": 2,
+    "downloader/request_bytes": 29601,
+    "downloader/request_count": 16,
+    "downloader/request_method_count/GET": 16,
+    "downloader/response_bytes": 7025499,
+    "downloader/response_count": 16,
+    "downloader/response_status_count/200": 16,
+    "elapsed_time_seconds": 163.21330750000197,
+    "feedexport/success_count/FileFeedStorage": 1,
+    "finish_reason": "shutdown",
+    "httpcompression/response_bytes": 38593335,
+    "httpcompression/response_count": 16,
+    "item_scraped_count": 13,
+    "items_per_minute": 4.785276073619632,
+    "log_count/INFO": 7,
+    "memusage/max": 387366912,
+    "memusage/startup": 92864512,
+    "request_depth_max": 2,
+    "response_received_count": 15,
+    "responses_per_minute": 5.521472392638037,
+    "scheduler/dequeued": 16,
+    "scheduler/dequeued/memory": 16,
+    "scheduler/enqueued": 18,
+    "scheduler/enqueued/memory": 18
+  }
+}

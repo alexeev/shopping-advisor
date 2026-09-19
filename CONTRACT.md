@@ -58,7 +58,7 @@ disappearing, so consumers can index without guards.
 | Group | Keys |
 |---|---|
 | envelope | `schema_version`, `fetched_at` |
-| lineage | `marketplace`, `asin`, `product_url`, `canonical_url`, `search_query`, `search_page`, `search_position`, `run_id`, `locale`, `accept_language` |
+| lineage | `marketplace`, `asin`, `product_url`, `canonical_url`, `search_query`, `search_page`, `search_position`, `sponsored`, `run_id`, `locale`, `accept_language`; `sponsored` is whether the search slot that queued the fetch was a sponsored placement, as the discovery log recorded it — `null` for a seeded ASIN and for a page with no discovery lineage, never `false` by default |
 | core | `title`, `brand`, `byline_text`, `brand_url`, `price{amount,currency,text,range?}`, `unit_price{amount,unit,text}`, `rating{value,count,text,count_text}`, `availability`, `seller`, `breadcrumbs[]` |
 | package | `item_weight_*`, `package_weight_*`, `unit_count_*`, `volume_*`, `item_count`, `size_name`, `dimensions`, `total_quantity_base`, `total_quantity_unit`, `total_quantity_source`; `item_weight_origin` = `dimensions` when no Artikelgewicht row exists and the weight was read from the tail of the dimensions row ("22 x 30 x 45 cm; 1,1 Kilogramm"), absent otherwise |
 | content | `feature_bullets[]`, `description`, `important_information[{heading,text}]`, `aplus{module_types,headings,text,text_length,prose,images,tables,comparison}`; `prose` is the A+ copy without table cells, and `comparison[]` each A+ comparison table as `{columns[{label,asin}], rows[[label,cell…]], self_column}` — `asin` the product a column's header links, `self_column` the index of the column that links this page's own ASIN or `null` (the page's product is not always a column, nor the first one), never inferred from position |
@@ -447,6 +447,7 @@ May change without a bump, because no correct consumer can depend on it:
 | **schema v5** | added `reviews`: the complete ratings histogram and the sample of cards the PDP renders (R5). **Purely additive** — every schema-4 field keeps its name and meaning, and the corpus regression diff touched only `reviews.*` and `extraction.blocks_present` |
 | **schema v6** | `price.range`, and `price.amount` is no longer filled from one end of a price range. A variation parent with no size selected renders "5,63€ - 26,15€" in its own price container; the extractor published 5,63 EUR as the price of a listing that cost 9,98. Additive for every record that has a price; the 7 records in the mounting-paste sets that had a *fabricated* one now correctly have none |
 | schema v6, additive (2026-09-18, R15's third adaptation) | `content.aplus.prose` and `content.aplus.comparison`. An A+ comparison table compares this product with others, and its cells were flattened into `content.aplus.text`, which the vendor-text search reads as this product's statement: on a retained Instinct 3 50 mm page the card showed a 40 h GPS runtime belonging to the 45 mm in a table that does not contain the 50 mm at all. `text` is unchanged; the search now reads `prose` where a record has it and the own column's rows, labelled, where the header links the page's ASIN. Records without the keys read exactly as before, so the six committed studies and the 39-page corpus values are untouched |
+| schema v6, additive (2026-09-19, bucket A of the [powerbank postmortem](HISTORY.md#postmortem-of-the-iphone-15-qi2-powerbank-review--2026-09-19)) | `seller` falls back to the merchant feature block (`#merchantInfoFeature_feature_div`) when the profile link and `#merchant-info` are absent, which is how a page Amazon sells itself names its seller; the fulfiller block beside it says who *ships* and is never read, or a third-party listing shipped by Amazon would be sold by "Amazon". `sponsored` joins the lineage group. Both within-version under §6: a value that was empty is filled, and a key is added. Measured: 10 of the 40 existing corpus pages move `seller` from `''` to `Amazon` and no other field moves; over the 64 retained powerbank records 8 (7 listings) move to `Amazon`, none moves anywhere else, and all 64 carry `sponsored` (33 true, 26 false, 5 seeds `null`). Three corpus pages added: `B0G599PS4N` sold by Amazon, `B0BJQ7F16T` sold by a third party and shipped by Amazon, `B0BBR91FTX` sold and shipped by a third party |
 | **contract v1** | first published validated record (R2); extended in R5 with `review_rating`, `review_negative_share` and `review_sample`, which add fields without changing any existing one. A `price.range` reads as `unknown` with the range as its evidence — it adds no field to the validated record, because "we do not know" was already expressible |
 | **contract v2** | `offer` is scoped by marketplace (T1). The field keeps its shape — a family identity and a variant signature — but the identity is no longer a bare parent ASIN, which is only unique within one Amazon site. That is a change in what a published value *means*, so it is a bump rather than an addition. The corpus regression diff touched exactly two fields on the 39 saved pages: `contract_version` on all of them, and `offer[0]` on the 27 that carry a family, which gain the (empty, because the corpus records no marketplace) host prefix. No status, value, source or note moved |
 
@@ -839,7 +840,7 @@ id, revision and digest. The sanitized example is
 | Limit field | Contract |
 |---|---|
 | `kind` | `research` or `engineering`. A research allowance does not fund engineering and an engineering allowance does not fund research; an action may reference limits of its own kind only. A purchase budget is a different quantity and is not a limit |
-| `unit`, `measurement` | An **observed** unit the run manifest reports — `requests` (`downloader/request_count`), `responses` (`downloader/response_count`), `items` (`item_scraped_count`), `seconds` (`elapsed_time_seconds`, or the manifest's own `finished_at` − `started_at` when a closed manifest lacks the stat), `pages_retained` (`counts.pages_saved`), `runs` (one per manifest) — or an **estimate** (`eur`, `tokens`) whose `note` says how it is estimated. Acquisition units are whole numbers |
+| `unit`, `measurement` | An **observed** unit the run manifest reports — `requests` (`downloader/request_count`), `responses` (`downloader/response_count`), `items` (`item_scraped_count`), `seconds` (`elapsed_time_seconds`, or the manifest's own `finished_at` − `started_at` when a closed manifest lacks the stat), `pages_retained` (`counts.pages_saved`), `runs` (one per manifest), `collections` (**v3**: one per collection action, consumed when it is recorded, finished or stopped; only a collection allocates it, and exactly 1) — or an **estimate** (`eur`, `tokens`) whose `note` says how it is estimated. Acquisition units are whole numbers. A unit is available from the version that introduced it: a v2 ledger declaring `collections` is refused |
 | `amount`, `mode` | Finite, non-negative. `stops_new_work` refuses the next action once the remainder is short; `strict_ceiling` is permitted only for `responses`, `items` and `seconds`, which `CLOSESPIDER_PAGECOUNT`, `CLOSESPIDER_ITEMCOUNT` and `CLOSESPIDER_TIMEOUT` can close on, and its `note` must state the known overshoot. Reconciliation names the overshoot beside the limit: a page-count closure does not cancel requests in flight, an item cap is not a request cap, a timeout may leave requests in flight. No mechanism enforces a ceiling on requests, runs, retained pages or an estimate, and none is promised |
 | `scope`, `authorization`, `deadline` | What the limit covers; `source` (`user_message` with a retained message `ref`, `existing_authorization`, `operator`) and text; an optional ISO instant with offset. A deadline is wall-clock: time elapsed during an interruption counts |
 
@@ -851,6 +852,7 @@ id, revision and digest. The sanitized example is
 | `consumption`, `consumption_source` | Recorded only when completed or interrupted, for every allocated unit, `null` where unknown; from `run_manifest`, `declared`, `assumed_allocation` (the whole allocation counted as spent — the conservative record for a run that left no readable count) or `unknown` |
 | `run_id`, `run_manifest`, timestamps | The crawl the action was, linked by manifest path and digest; a finished action records when it started |
 | `resumes`, `replay_of`, `depends_on` | A resumption is a new record continuing an `interrupted` action of the same kind; the predecessor's consumption is counted once, on the predecessor. A replay recomputes retained bytes and is analysis or inspection, never acquisition. Dependencies name retained actions |
+| `builds_on_partial` | **v3**, required (closed fields), a list. The dependencies this action declares it builds on **as partial evidence**: a stopped crawl's retained pages are evidence, and a dependent that says so may cite an `interrupted` predecessor — once that predecessor's consumption is recorded (`consumption_source` not `unknown`), so the interruption cost something the ledger knows. Names only entries of `depends_on`, once each. Absent from v1 and v2, where a dependent on interrupted work is refused as it always was |
 | `result`, `promotion` | A completed probe records the result that determines the next action, and whether its evidence was **promoted** into the declared inputs (`into = plan_inputs`, explicit), whether seeing it **changed the criteria** or **supplied candidates**, and — when any of those is true — an assessment of whether broader discovery or renewed comparison is needed. Provenance alone does not establish an unbiased comparison |
 | Engineering | Retained as a proposal against the engineering allowance: state `planned` or `abandoned` only, never authorised, recorded or executed here. Controlled execution is R15 |
 
@@ -865,13 +867,21 @@ deletes no record and completed evidence stands.
 
 **The next-action check** (`session-authorise`, `authorise()`) permits a
 `planned` action only when it is not engineering, every dependency is
-`completed`, no referenced limit is unreconciled or past its deadline at the
-given reference, and every allocated unit fits the remainder. Every refusal names
-its reason with the arithmetic. `--record` marks a fitting action `authorised`
+`completed` — or `interrupted`, named in the action's `builds_on_partial`
+and recorded with a known consumption (v3; the decision lists such
+predecessors under `partial_evidence`, and the command prints them) — no
+referenced limit is unreconciled or past its deadline at the given reference,
+and every allocated unit fits the remainder. Every refusal names its reason
+with the arithmetic. `--record` marks a fitting action `authorised`
 and `checked`; it runs nothing. `session-record` writes what an action did: from
 a run directory it reads the manifest's `run_id`, timestamps, `stats` and
 `counts`, links the manifest by digest, and sets `completed` or `interrupted`
-from the manifest's own state; without a run the operator declares consumption or
+from the manifest's own state **and finish reason**: a closed manifest whose
+`finish_reason` is `finished` or a `closespider_*` closure is completed, the
+second under the declared cap the command names; `shutdown` or any other
+reason is interrupted, because the crawl was stopped before it was done; a
+closed manifest without a reason keeps reading as complete, and an open one is
+interrupted as before (§16). Without a run the operator declares consumption or
 assumes the allocation. A finished action is never recorded twice. `seconds` is
 read from `stats.elapsed_time_seconds` and, when a closed manifest lacks it, from
 the difference of the manifest's own `finished_at` and `started_at`, with
@@ -1211,3 +1221,60 @@ safe; the static inspection reads names, not intent, and a patch can reach the
 network through a name it does not list — which is what the boundary is for.
 The review is a reviewer's judgement, the adoption a role's decision; the
 contract checks that both bind the bytes they read, not that they were right.
+
+---
+
+## 16. The finish reason, the coverage counts and session ledger v3 (2026-09-19)
+
+Bucket B of the [powerbank postmortem](HISTORY.md#postmortem-of-the-iphone-15-qi2-powerbank-review--2026-09-19),
+rows 6 and 10. The targeted crawl of that review was stopped by the operator
+after 16 responses. Its manifest was `state: closed` with `finish_reason:
+shutdown`; `run_state` read any closed manifest as complete, so
+`session-record` wrote `completed` for a run that had fetched 5 of its 7
+seeds and 8 of the 40 listings it discovered — and no manifest count said
+so. The ledger's "at most two follow-up crawls" lived in a limit's prose
+`scope`, which nothing could count against.
+
+### The run manifest: finish reason and coverage (stays v2)
+
+| Change | Contract |
+|---|---|
+| `run_state` | `legacy` without `manifest_version`; `interrupted` while the manifest is open; on a closed manifest the **finish reason decides**: `finished` and every `closespider_*` closure are `complete`, `shutdown`, `cancelled`, `unknown` and anything else are `interrupted`. A closed manifest with **no** `finish_reason` keeps reading `complete`: the spider that wrote it could not say, and the rule is not applied to a fact never recorded |
+| `run_closure()` | the same as data — `state`, `reason`, the `cap` (`CLOSESPIDER_*` setting and its value) when a closure setting ended the run, and one sentence — printed by `run inspect`, `run reextract` and `study session-record --run` |
+| `counts.seeds_requested`, `counts.seeds_fetched`, `counts.discovered_unique`, `counts.discovered_fetched` | what the crawl was asked for against what came back: the ASINs named in `arguments.asin`, the distinct ASINs in the discovery log, and how many of each had a product page fetched — fetched meaning received and parsed, retained or not; an ASIN both seeded and sighted counts in both lists. Written live; `coverage()` recomputes them from the arguments, `discovery.jsonl` and the page index for a manifest written before they existed, and says `source: recomputed` |
+
+The manifest keeps `manifest_version: 2`: four keys are added to `counts`
+and no key, unit or meaning moves (§6). The state reading did move for one
+class of manifest — closed with a non-finishing reason — from `complete` to
+`interrupted`, which is the direction §6 allows without a bump: a state
+becoming *more* conservative because a rule found something. Measured: the
+retained fixture ([tests/runs](tests/runs/README.md)) reads `interrupted`,
+`seeds 5 of 7 fetched · discovered 8 of 40 fetched`; the nine committed
+studies replay with their recorded decisions, because none of them links a
+run manifest with a non-finishing reason, and the stage-8 example's
+interrupted collection stays interrupted.
+
+### Session ledger v3
+
+| Change | Contract |
+|---|---|
+| `session_version` | `3`. This build reads `1`, `2` and `3`; each file keeps its own version's rules. A v2 file has no `collections` unit and no `builds_on_partial` field — its author could not declare them, and a newer reader grants nothing more — so a dependent on interrupted work under v1 or v2 is refused exactly as before |
+| `collections` | an observed acquisition unit (§12): one per collection action, consumed as 1 when the action is recorded from its manifest, declared or assumed; only a `collection` allocates it, and allocates exactly 1 |
+| `builds_on_partial` | the action field of §12: the dependencies this action builds on as partial evidence. `authorise` accepts an `interrupted` predecessor named there whose `consumption_source` is not `unknown`, lists it under `partial_evidence`, and refuses otherwise with the existing reason plus the hint |
+
+Why a version and not an allowance: the honest state alone backfires. With
+`shutdown` read as `interrupted`, every dependent of a stopped crawl is
+refused, the retained pages are evidence nobody may cite, and the operator
+routes around the ledger — which is what the postmortem found had happened
+with a transfer prompt. Letting a dependent cite an interrupted predecessor
+changes what the next-action check *means* (§6), and that moved the version;
+the companion and the honest state ship together, or neither should.
+
+**Limits.** The finish reason is Scrapy's word for how the engine stopped; a
+crawl that finished under a cap the operator set too low is `complete` under
+that cap, and the cap is named, not judged. The coverage counts say how many
+were never fetched, not which — `discovery.jsonl` and `arguments.asin` do.
+`builds_on_partial` is a declaration: the ledger checks that it names a
+recorded, interrupted dependency, not that the partial evidence suffices for
+what the dependent concludes; that is the report's coverage paragraph and the
+review's question.

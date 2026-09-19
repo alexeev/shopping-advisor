@@ -59,9 +59,13 @@ from ..provenance import sha256_file, sha256_text
 from . import delivery
 
 #: The shape of a session ledger and of the bundle snapshot. Tracked by the gate.
-SESSION_VERSION = 2
-#: Versions this build reads. A v1 ledger keeps v1's rules (engineering is a proposal).
-SUPPORTED_VERSIONS = (1, 2)
+SESSION_VERSION = 3
+#: Versions this build reads. A v1 ledger keeps v1's rules (engineering is a
+#: proposal); a v2 ledger has no ``collections`` unit and no
+#: ``builds_on_partial`` field, and a dependent on interrupted work under it
+#: is refused as it always was. The file says what its author was entitled
+#: to, and a newer reader grants nothing more.
+SUPPORTED_VERSIONS = (1, 2, 3)
 SNAPSHOT = 'session.json'
 DEFAULT_SESSION_ROOT = 'data/sessions'
 
@@ -84,11 +88,18 @@ OBSERVED = {
     'seconds': ('stats', 'elapsed_time_seconds'),
     'pages_retained': ('counts', 'pages_saved'),
     'runs': None,
+    'collections': None,
 }
+#: Units a ledger may declare only from the version that introduced them.
+#: ``collections`` (v3) is one per collection action, consumed when the
+#: action is recorded: the powerbank session's "maximum two follow-up crawls"
+#: lived in a limit's prose ``scope``, which nothing could count against.
+INTRODUCED = {'collections': 3}
 #: Units nobody in this environment can measure reliably. Estimates only.
 ESTIMATED = ('eur', 'tokens')
 #: Units that spend the marketplace's patience rather than this machine's.
-ACQUISITION = ('requests', 'responses', 'items', 'pages_retained', 'runs')
+ACQUISITION = ('requests', 'responses', 'items', 'pages_retained', 'runs',
+               'collections')
 #: The closure settings a crawl can enforce a unit with, and what each misses.
 ENFORCEABLE = {'responses': 'CLOSESPIDER_PAGECOUNT',
                'items': 'CLOSESPIDER_ITEMCOUNT',
@@ -180,7 +191,7 @@ def check(data):
 
     limits = _ids(data['limits'], 'limits')
     for limit in limits.values():
-        _limit(limit)
+        _limit(limit, data)
     actions = _ids(data['actions'], 'actions')
     if set(limits) & set(actions):
         _fail('ledger', 'limit and action ids must be distinct')
@@ -204,11 +215,18 @@ def _ids(rows, where):
     return found
 
 
-def _limit(limit):
+def version(ledger):
+    return ledger.get('session_version', 1)
+
+
+def _limit(limit, ledger):
     name = limit['id']
     _object(limit, 'id kind unit amount measurement mode scope authorization deadline note', name)
     _enum(limit['kind'], LIMIT_KINDS, name + '.kind')
     unit = limit['unit']
+    if unit in INTRODUCED and version(ledger) < INTRODUCED[unit]:
+        _fail(name, f'{unit} is a session ledger v{INTRODUCED[unit]} unit; this ledger is '
+                    f'v{version(ledger)}, and a newer reader grants nothing its author could not declare')
     if unit in OBSERVED:
         if limit['measurement'] != 'observed':
             _fail(name, f'{unit} is a unit the run manifest reports; measurement is observed')
@@ -239,11 +257,15 @@ def _limit(limit):
     _instant(limit['deadline'], name + '.deadline')
 
 
+ACTION_FIELDS = ('id kind purpose question limit_ids allocation state started_at '
+                 'finished_at run_id run_manifest consumption consumption_source '
+                 'depends_on resumes replay_of result promotion authorisation')
+
+
 def _action(action, limits, actions, ledger):
     name = action['id']
-    _object(action, 'id kind purpose question limit_ids allocation state started_at '
-                    'finished_at run_id run_manifest consumption consumption_source '
-                    'depends_on resumes replay_of result promotion authorisation', name)
+    fields = ACTION_FIELDS + (' builds_on_partial' if version(ledger) >= 3 else '')
+    _object(action, fields, name)
     kind, state = action['kind'], action['state']
     _enum(kind, KINDS, name + '.kind')
     _enum(state, STATES, name + '.state')
@@ -272,6 +294,9 @@ def _action(action, limits, actions, ledger):
         if unit not in funded:
             _fail(name, f'allocation in {unit} names no declared limit in that unit')
         _amount(amount, f'{name}.allocation.{unit}', unit)
+    if 'collections' in allocation and (kind != 'collection' or allocation['collections'] != 1):
+        _fail(name, 'a collection action is one collection and allocates exactly 1; '
+                    f'a {kind} allocates none')
     live = any(allocation.get(unit, 0) > 0 for unit in ACQUISITION)
     if kind in LIVE and not live:
         _fail(name, f'a {kind} spends the marketplace: allocate a finite, positive '
@@ -296,6 +321,11 @@ def _action(action, limits, actions, ledger):
     if not isinstance(action['depends_on'], list) or any(
             d not in actions or d == name for d in action['depends_on']):
         _fail(name, 'depends_on must name other retained actions')
+    partial = partial_evidence(action)
+    if not isinstance(partial, list) or len(set(partial)) != len(partial) \
+            or any(d not in action['depends_on'] for d in partial):
+        _fail(name, 'builds_on_partial names dependencies, once each: a dependent may build '
+                    'on the partial evidence of an interrupted predecessor only when it says so')
 
     for field in ('started_at', 'finished_at'):
         _instant(action[field], name + '.' + field)
@@ -361,7 +391,12 @@ def _action(action, limits, actions, ledger):
 
 def executes(ledger):
     """May engineering run under this ledger? v1 says no, and its author meant no."""
-    return ledger.get('session_version', 1) >= 2
+    return version(ledger) >= 2
+
+
+def partial_evidence(action):
+    """The interrupted predecessors this action declares it builds on (v3; else none)."""
+    return action.get('builds_on_partial', [])
 
 
 def load(path):
@@ -414,7 +449,9 @@ def consumption_from_manifest(manifest, units):
     consumption = {}
     for unit in units:
         where = OBSERVED.get(unit)
-        if unit == 'runs':
+        if unit in ('runs', 'collections'):
+            # One manifest is one run, and a collection action is one crawl,
+            # finished or stopped: it is consumed the moment it is recorded.
             consumption[unit] = 1
         elif where is None:
             consumption[unit] = None
@@ -579,11 +616,28 @@ def authorise(ledger, action_id, reference=None):
         reasons.append('engineering is retained as a proposal against its allowance under '
                        'session ledger v1; controlled execution and its gates are R15 and need '
                        'a v2 ledger, and planning it authorises none of it')
+    partial = []
     for name in action['depends_on']:
         predecessor = next(a for a in ledger['actions'] if a['id'] == name)
-        if predecessor['state'] != 'completed':
-            reasons.append(f'depends on {name}, which is {predecessor["state"]}: '
-                           f'interrupted or unfinished work is never assumed complete')
+        if predecessor['state'] == 'completed':
+            continue
+        if predecessor['state'] == 'interrupted' and name in partial_evidence(action):
+            # The companion to the honest state: a stopped crawl's retained
+            # pages are evidence, and a dependent that says it builds on
+            # partial evidence may -- once the predecessor's consumption is
+            # on record, so the interruption cost something the ledger knows.
+            if predecessor['consumption_source'] != 'unknown':
+                partial.append(name)
+                continue
+            reasons.append(f'depends on {name}, which is interrupted and declared as partial '
+                           f'evidence, but its consumption is unknown: record its run manifest '
+                           f'or assume its allocation before building on it')
+            continue
+        reasons.append(f'depends on {name}, which is {predecessor["state"]}: '
+                       f'interrupted or unfinished work is never assumed complete'
+                       + (f'. A dependent that builds on its partial evidence declares '
+                          f'{name} in builds_on_partial' if predecessor['state'] == 'interrupted'
+                          and version(ledger) >= 3 else ''))
     fits = {}
     for limit_id in action['limit_ids']:
         row = limits[limit_id]
@@ -605,7 +659,7 @@ def authorise(ledger, action_id, reference=None):
                            f'completed evidence stands')
         fits[limit_id] = row['remaining'] - wanted
     return {'action': action_id, 'kind': action['kind'], 'authorised': not reasons,
-            'reasons': reasons, 'remaining_after': fits}
+            'reasons': reasons, 'remaining_after': fits, 'partial_evidence': partial}
 
 
 def reconcile(ledger, reference=None):

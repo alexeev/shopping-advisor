@@ -373,7 +373,8 @@ class IdsMoveDecisionsDoNot(MigrationCase):
             self.assertEqual(versions[name], 1, name)
         # R15 phase 0 (2026-09-18): the ledger moved to let engineering run, and
         # the adaptation record arrived; the manifest stayed at v3 on purpose.
-        self.assertEqual((versions['session_ledger'], versions['adaptation_record']), (2, 2))
+        # session ledger v3 since 2026-09-19 (CONTRACT §16); the adaptation record stayed.
+        self.assertEqual((versions['session_ledger'], versions['adaptation_record']), (3, 2))
         self.assertEqual(maintenance.load_baseline()['contracts'], versions)
 
     def test_every_example_decides_as_it_did_before_the_migration_under_a_new_id(self):

@@ -440,7 +440,8 @@ class LedgerV2(unittest.TestCase):
     def test_the_version_is_discovered_and_pinned(self):
         from shopping_advisor import maintenance
         versions = maintenance._contract_versions()
-        self.assertEqual(versions['session_ledger'], 2)
+        # v3 since 2026-09-19 (CONTRACT §16); the v2 fixtures here keep v2's rules.
+        self.assertEqual(versions['session_ledger'], 3)
         self.assertEqual(versions['adaptation_record'], adaptation.ADAPTATION_VERSION)
         self.assertEqual(adaptation.ADAPTATION_VERSION, 2)
 

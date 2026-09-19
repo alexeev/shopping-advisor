@@ -360,7 +360,10 @@ class AmazonProductSpider(scrapy.Spider):
                 dont_filter=True,
                 meta={'search_page': 0, 'asin': asin,
                       'search_query': 'asin:' + asin,
-                      'search_position': position},
+                      'search_position': position,
+                      # Not a search result, so not a sponsored one either:
+                      # unknown rather than false.
+                      'sponsored': None},
             )
         if self.keywords:
             yield self.search_request(0, 1)
@@ -406,10 +409,12 @@ class AmazonProductSpider(scrapy.Spider):
             # legitimately appears more than once -- on one live search page
             # two ASINs appeared twice, each once organic and once sponsored --
             # and every de-duplication below this line destroys that fact.
+            markers = self.sponsored_markers(product)
             self.record_occurrence(product, asin=asin, keyword=keyword,
                                    page=page, position=position,
                                    grid_position=grid_rank.get(
-                                       tree.getpath(product.root)))
+                                       tree.getpath(product.root)),
+                                   markers=markers)
 
             if asin in self._seen_asins:
                 stats.inc_value('amazon/discovery/repeat_sighting')
@@ -424,7 +429,11 @@ class AmazonProductSpider(scrapy.Spider):
                 callback=self.parse_product_data,
                 errback=self.handle_error,
                 meta={'search_page': page, 'asin': asin,
-                      'search_query': keyword, 'search_position': position},
+                      'search_query': keyword, 'search_position': position,
+                      # The sighting that queued this fetch; the record
+                      # carries it so a sponsored slot is visible beside the
+                      # query and position that found the product.
+                      'sponsored': bool(markers)},
             )
 
         stats.inc_value('amazon/search_pages_parsed')
@@ -461,11 +470,12 @@ class AmazonProductSpider(scrapy.Spider):
         return [name for name, test in SPONSORED_MARKERS if test(product)]
 
     def record_occurrence(self, product, asin, keyword, page, position,
-                          grid_position):
+                          grid_position, markers=None):
         """Write one sighting to the run's discovery log."""
         if self.run is None:
             return
-        markers = self.sponsored_markers(product)
+        if markers is None:
+            markers = self.sponsored_markers(product)
         price_text = decode_entities(clean(
             first_of(product, SEARCH_PRICE_CSS)))
         self.run.record_discovery({
@@ -568,6 +578,7 @@ class AmazonProductSpider(scrapy.Spider):
             'search_query': response.meta['search_query'],
             'search_page': response.meta['search_page'],
             'search_position': response.meta['search_position'],
+            'sponsored': response.meta.get('sponsored'),
         }
         if self.run is not None:
             # The run's identity and the locale that answered. A record whose

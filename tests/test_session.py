@@ -32,6 +32,7 @@ from shopping_advisor.study.__main__ import main
 HERE = Path(__file__).resolve().parent
 INTAKE = HERE / 'intake'
 STUDIES = HERE / 'studies'
+STOPPED_RUN = HERE / 'runs' / '20260919T111600Z-www.amazon.de-eb1e5c7f'
 BRONZE = STUDIES / 'pasta-bronze-die.toml'
 LEDGER = INTAKE / 'session-ledger.json'
 PLAN, BRIEF = INTAKE / 'delivered-cost-plan.json', INTAKE / 'delivered-cost-brief.json'
@@ -99,7 +100,7 @@ class SessionCase(unittest.TestCase):
 
 class Contract(SessionCase):
     def test_closed_fields_and_vocabularies(self):
-        for change in (lambda l: l.update(session_version=3),
+        for change in (lambda l: l.update(session_version=session.SESSION_VERSION + 1),
                        lambda l: l.update(scheduler='cron'),
                        lambda l: l.update(revision=2),
                        lambda l: l['limits'][0].update(unit='megabytes'),
@@ -642,6 +643,148 @@ class CommandLine(SessionCase):
         status, text = self.cli('resume', output, '--session', LEDGER, '--reference', AT)
         self.assertIn('[resumable]', text)
         self.assertIn('plan          pasta-delivered-intake revision 1 (the ledger agrees)', text)
+
+
+class PartialEvidence(SessionCase):
+    """Session ledger v3: an interrupted run is interrupted, a collection is a
+    unit, and a dependent may build on partial evidence when it says so.
+
+    The case is the 2026-09-19 targeted powerbank crawl: stopped by the
+    operator after 16 responses, ``finish_reason: shutdown`` on a closed
+    manifest, recorded ``completed`` because ``run_state`` read any closed
+    manifest as complete. Refusing every dependent of the honest state would
+    have blocked the analysis that the 13 retained pages support -- and got
+    routed around -- so the companion lets a dependent cite the interrupted
+    predecessor when it declares ``builds_on_partial`` and the predecessor's
+    consumption is on record.
+    """
+
+    def v3(self):
+        ledger = copy.deepcopy(self.ledger)
+        ledger['session_version'] = 3
+        for action in ledger['actions']:
+            action['builds_on_partial'] = []
+        ledger['limits'].append(dict(
+            ledger['limits'][0], id='research-collections', unit='collections', amount=2,
+            measurement='observed', mode='stops_new_work',
+            scope='At most two follow-up crawls after the broad one.',
+            note='One per collection action, consumed when the action is recorded.'))
+        blank = dict(question='', started_at='', finished_at='', run_id='', run_manifest=None,
+                     consumption={}, consumption_source='unknown', resumes='', replay_of='',
+                     result=None, promotion=None)
+        ledger['actions'].append(dict(
+            blank, id='collect-targeted', kind='collection',
+            purpose='Fetch the named candidates and two brand queries.',
+            limit_ids=['research-responses', 'research-seconds', 'research-collections'],
+            allocation={'responses': 35, 'seconds': 500, 'collections': 1},
+            state='authorised', authorisation='checked', depends_on=[], builds_on_partial=[]))
+        ledger['actions'].append(dict(
+            blank, id='analyse-targeted', kind='analysis',
+            purpose='Read the retained pages of the targeted crawl.',
+            limit_ids=['research-seconds'], allocation={'seconds': 60},
+            state='planned', authorisation='', depends_on=['collect-targeted'],
+            builds_on_partial=['collect-targeted']))
+        return session.check(ledger)
+
+    def test_the_stopped_crawl_records_interrupted_with_its_consumption_and_one_collection(self):
+        ledger = self.v3()
+        session.record(ledger, 'collect-targeted', STOPPED_RUN)
+        action = self.action('collect-targeted', ledger)
+        self.assertEqual(action['state'], 'interrupted')
+        self.assertEqual(action['consumption_source'], 'run_manifest')
+        self.assertEqual(action['consumption']['responses'], 16)
+        self.assertEqual(action['consumption']['collections'], 1)
+        self.assertAlmostEqual(action['consumption']['seconds'], 163.21, places=1)
+        self.assertEqual(action['run_id'], '20260919T111600Z-www.amazon.de-eb1e5c7f')
+        result = session.reconcile(ledger, AT)
+        self.assertTrue(result['reconciled'])
+        self.assertEqual(result['interrupted'], ['collect-1', 'collect-targeted'])
+        row = self.limit('research-collections', ledger)
+        self.assertEqual((row['consumed'], row['remaining']), (1, 1))
+
+    def test_a_dependent_that_declares_partial_evidence_is_authorised_and_says_so(self):
+        ledger = self.v3()
+        session.record(ledger, 'collect-targeted', STOPPED_RUN)
+        decision = session.authorise(ledger, 'analyse-targeted', AT)
+        self.assertTrue(decision['authorised'], decision['reasons'])
+        self.assertEqual(decision['partial_evidence'], ['collect-targeted'])
+        path = self.write('ledger.json', ledger)
+        status, text = self.cli('session-authorise', path, 'analyse-targeted', '--reference', AT)
+        self.assertEqual(status, 0, text)
+        self.assertIn('partial       builds on collect-targeted, which is interrupted', text)
+
+    def test_a_dependent_that_does_not_declare_it_is_refused_as_before(self):
+        ledger = self.v3()
+        session.record(ledger, 'collect-targeted', STOPPED_RUN)
+        self.action('analyse-targeted', ledger)['builds_on_partial'] = []
+        decision = session.authorise(ledger, 'analyse-targeted', AT)
+        self.assertFalse(decision['authorised'])
+        self.assertIn('depends on collect-targeted, which is interrupted', decision['reasons'][0])
+        self.assertIn('never assumed complete', decision['reasons'][0])
+        self.assertIn('builds_on_partial', decision['reasons'][0])
+        self.assertEqual(decision['partial_evidence'], [])
+
+    def test_partial_evidence_needs_the_predecessor_consumption_on_record(self):
+        ledger = self.v3()
+        session.record(ledger, 'collect-targeted', state='interrupted', started_at=AT)
+        self.assertEqual(self.action('collect-targeted', ledger)['consumption_source'], 'unknown')
+        decision = session.authorise(ledger, 'analyse-targeted', AT)
+        self.assertFalse(decision['authorised'])
+        self.assertTrue(any('consumption is unknown' in r for r in decision['reasons']), decision['reasons'])
+        self.assertEqual(decision['partial_evidence'], [])
+
+    def test_the_declaration_names_dependencies_and_nothing_else(self):
+        ledger = self.v3()
+        self.action('analyse-targeted', ledger)['builds_on_partial'] = ['probe-1']
+        with self.assertRaisesRegex(session.SessionError, 'builds_on_partial names dependencies'):
+            session.check(ledger)
+        self.action('analyse-targeted', ledger)['builds_on_partial'] = ['collect-targeted', 'collect-targeted']
+        with self.assertRaisesRegex(session.SessionError, 'once each'):
+            session.check(ledger)
+
+    def test_a_v2_ledger_has_neither_the_unit_nor_the_field(self):
+        ledger = copy.deepcopy(self.ledger)
+        ledger['session_version'] = 2
+        session.check(ledger)
+        with_unit = copy.deepcopy(ledger)
+        with_unit['limits'].append(dict(ledger['limits'][0], id='c', unit='collections', amount=2,
+                                        measurement='observed', mode='stops_new_work'))
+        with self.assertRaisesRegex(session.SessionError, 'collections is a session ledger v3 unit'):
+            session.check(with_unit)
+        with_field = copy.deepcopy(ledger)
+        with_field['actions'][0]['builds_on_partial'] = []
+        with self.assertRaisesRegex(session.SessionError, 'exactly these fields'):
+            session.check(with_field)
+        # And under v2 the refusal reads as it always did, without the hint.
+        self.action('collect-2', ledger).update(depends_on=['collect-1'], allocation={'responses': 10, 'seconds': 10})
+        decision = session.authorise(ledger, 'collect-2', AT)
+        self.assertFalse(decision['authorised'])
+        self.assertNotIn('builds_on_partial', decision['reasons'][0])
+
+    def test_a_collection_is_one_collection_and_a_probe_is_none(self):
+        ledger = self.v3()
+        self.action('collect-targeted', ledger)['allocation']['collections'] = 2
+        with self.assertRaisesRegex(session.SessionError, 'allocates exactly 1'):
+            session.check(ledger)
+        ledger = self.v3()
+        probe = self.action('probe-1', ledger)
+        probe['limit_ids'].append('research-collections')
+        probe['allocation']['collections'] = 1
+        probe['consumption']['collections'] = 1
+        with self.assertRaisesRegex(session.SessionError, 'a probe allocates none'):
+            session.check(ledger)
+
+    def test_session_record_names_how_the_run_ended(self):
+        path = self.write('ledger.json', self.v3())
+        status, text = self.cli('session-record', path, 'collect-targeted', '--run', STOPPED_RUN)
+        self.assertEqual(status, 0, text)
+        self.assertIn('collect-targeted: interrupted; consumption from run_manifest', text)
+        self.assertIn('closure       stopped before it was done (shutdown): coverage is partial', text)
+        self.assertIn('collections    1', text)
+        status, text = self.cli('session-check', path, '--reference', AT)
+        self.assertEqual(status, 0, text)
+        self.assertIn('interrupted   collect-targeted', text)
+        self.assertIn('authorisable  analyse-targeted', text)
 
 
 class Gate(unittest.TestCase):
