@@ -203,15 +203,24 @@ class CrawlRun:
         self.directory = pathlib.Path(root) / self.run_id
         self.pages_directory = self.directory / PAGES
         self.quarantine_directory = self.directory / QUARANTINE
+        self.seeds = seed_list(self.arguments)
         self.counts = {'discovery_occurrences': 0, 'pages_saved': 0,
                        'page_write_errors': 0, 'redaction_failures': 0,
                        'pages_quarantined': 0, 'search_pages_saved': 0,
                        'failure_samples_saved': 0,
-                       'failure_samples_over_cap': 0}
+                       'failure_samples_over_cap': 0,
+                       # Coverage (2026-09-19): what was asked for against
+                       # what came back. The stopped powerbank crawl left 2 of
+                       # 7 seeds and 32 of 40 discovered listings unfetched
+                       # and no count said so.
+                       'seeds_requested': len(self.seeds), 'seeds_fetched': 0,
+                       'discovered_unique': 0, 'discovered_fetched': 0}
         self.state = RUNNING
         self._discovery = None
         self._index = None
         self._failure_counts = {}
+        self._discovered = set()
+        self._fetched = set()
 
     # -- provenance carried on every record --------------------------------
 
@@ -257,6 +266,21 @@ class CrawlRun:
         self._discovery.write(json.dumps(line, ensure_ascii=False) + '\n')
         self._discovery.flush()
         self.counts['discovery_occurrences'] += 1
+        if occurrence.get('asin'):
+            self._discovered.add(occurrence['asin'])
+            self._coverage()
+
+    def _coverage(self):
+        """Seeds and discovered listings against the product pages fetched.
+
+        A listing is *fetched* when its product page came back and parsed,
+        whether or not the page was retained; an ASIN both seeded and sighted
+        counts in both lists, each list saying what it was against.
+        """
+        self.counts['discovered_unique'] = len(self._discovered)
+        self.counts['discovered_fetched'] = len(self._discovered & self._fetched)
+        self.counts['seeds_fetched'] = sum(1 for asin in self.seeds
+                                           if asin in self._fetched)
 
     def _index_entry(self, entry):
         if self._index is None:
@@ -306,6 +330,11 @@ class CrawlRun:
         Returns the index entry, whose ``fetched_at`` the caller should put on
         the record too, so the feed and the page agree to the second.
         """
+        if asin and html:
+            # Counted before the retention question: a page that came back
+            # was fetched whether or not this run keeps pages.
+            self._fetched.add(asin)
+            self._coverage()
         if not (self.keep_pages and asin and html):
             return None
         stamp = fetched_at or _utc_now().isoformat()
@@ -468,6 +497,24 @@ def page_metadata(directory):
             if entry.get('kind') == 'pdp' and entry.get('asin')}
 
 
+def seed_list(arguments):
+    """The ASINs a crawl was asked for by name, from its ``arguments``."""
+    seeds = (arguments or {}).get('asin') or []
+    if isinstance(seeds, str):
+        seeds = [seeds]
+    return [asin for asin in seeds if asin]
+
+
+def completed_reason(reason):
+    """Does this Scrapy finish reason mean the crawl did its work?
+
+    ``finished`` did; a ``closespider_*`` closure did too, under the cap the
+    operator declared. ``shutdown`` (the operator stopped it), ``cancelled``
+    and the spider's own ``unknown`` did not.
+    """
+    return reason == 'finished' or str(reason).startswith('closespider_')
+
+
 def run_state(manifest):
     """``complete``, ``interrupted`` or ``legacy`` -- what this run left behind.
 
@@ -475,12 +522,81 @@ def run_state(manifest):
     signal or a lost machine leaves a manifest that was written when it
     started; before it carried its own state, such a run was indistinguishable
     from one that simply had not been asked to close.
+
+    A closed manifest is not enough either. The spider writes it on
+    ``engine_stopped`` whether the crawl finished or was stopped, and the
+    2026-09-19 targeted powerbank crawl -- ``finish_reason: shutdown`` after
+    16 responses, 2 of 7 seeds and 32 of 40 discovered listings never fetched
+    -- read as complete and was recorded so in its session ledger. The finish
+    reason decides (:func:`completed_reason`); a closed manifest that carries
+    none keeps reading as complete, because the rule cannot be applied to a
+    fact the spider never wrote down.
     """
     if not manifest.get('manifest_version'):
         return 'legacy'
-    if manifest.get('state') == CLOSED:
+    if manifest.get('state') != CLOSED:
+        return 'interrupted'
+    reason = manifest.get('finish_reason')
+    if reason is None or completed_reason(reason):
         return 'complete'
     return 'interrupted'
+
+
+def run_closure(manifest):
+    """How this run ended, as data: its state, the finish reason, the cap
+    that closed it when one did, and one sentence a reader can print."""
+    state = run_state(manifest)
+    reason = manifest.get('finish_reason')
+    cap = None
+    if isinstance(reason, str) and reason.startswith('closespider_'):
+        setting = reason.upper()
+        cap = {'setting': setting,
+               'value': (manifest.get('settings') or {}).get(setting)}
+    if state == 'legacy':
+        note = 'written before run provenance existed'
+    elif manifest.get('state') != CLOSED:
+        note = 'never closed its manifest: coverage is partial'
+    elif reason is None:
+        note = 'closed without a recorded finish reason; read as complete'
+    elif cap is not None:
+        note = (f'completed under {cap["setting"]}'
+                + (f' = {cap["value"]}' if cap['value'] is not None else '')
+                + f' ({reason})')
+    elif reason == 'finished':
+        note = 'finished'
+    else:
+        note = f'stopped before it was done ({reason}): coverage is partial'
+    return {'state': state, 'reason': reason, 'cap': cap, 'note': note}
+
+
+#: The manifest counts that say what was asked for against what came back.
+COVERAGE = ('seeds_requested', 'seeds_fetched',
+            'discovered_unique', 'discovered_fetched')
+
+
+def coverage(directory, manifest=None):
+    """Seeds requested and fetched, listings discovered and fetched.
+
+    From the manifest's own counts when it carries them (``source:
+    manifest``); recomputed from the arguments, the discovery log and the
+    page index for a manifest written before the counts existed (``source:
+    recomputed``). The recomputation can only see pages the run retained or
+    indexed, and says which it is.
+    """
+    manifest = manifest or load_manifest(directory)
+    counts = manifest.get('counts') or {}
+    if all(key in counts for key in COVERAGE):
+        return {**{key: counts[key] for key in COVERAGE}, 'source': 'manifest'}
+    seeds = seed_list(manifest.get('arguments'))
+    discovered = {occurrence['asin'] for occurrence in load_discovery(directory)
+                  if occurrence.get('asin')}
+    fetched = set(page_metadata(directory)) or (
+        set(stored_pages(directory)) | set(quarantined_pages(directory)))
+    return {'seeds_requested': len(seeds),
+            'seeds_fetched': sum(1 for asin in seeds if asin in fetched),
+            'discovered_unique': len(discovered),
+            'discovered_fetched': len(discovered & fetched),
+            'source': 'recomputed'}
 
 
 def stored_pages(directory):
@@ -758,12 +874,13 @@ def reextract(directory, feed=None, verify=True, include_quarantined=True):
 def reextract_command(args):
     """``reextract <run_dir> -o new.jsonl [--feed old.jsonl]``."""
     manifest = load_manifest(args.run_dir)
-    state = run_state(manifest)
+    closure = run_closure(manifest)
+    state = closure['state']
     if state != 'complete':
         print(f'  {args.run_dir}: this run is {state}'
               + (' — it has no recorded page metadata, so replayed records '
                  'carry unknown fetch times' if state == 'legacy' else
-                 ' — it never closed its manifest, so its coverage is partial'))
+                 f' — it {closure["note"]}'))
 
     feed = read_jsonl(args.feed) if args.feed else []
     known = {record['asin'] for record in feed if record.get('asin')}
@@ -818,7 +935,8 @@ def reextract_command(args):
 def inspect_command(args):
     """``inspect <run_dir>`` -- what this run did, and what it left unfinished."""
     manifest = load_manifest(args.run_dir)
-    state = run_state(manifest)
+    closure = run_closure(manifest)
+    state = closure['state']
     code = manifest.get('code') or {}
     print(f'{manifest.get("run_id")}  [{state}]')
     print(f'  spider        {manifest.get("spider")} on '
@@ -835,9 +953,19 @@ def inspect_command(args):
           f' · {(manifest.get("locale") or {}).get("accept_language") or "unset"}')
     for binding in manifest.get('feeds') or []:
         print(f'  feed          {binding.get("uri")}')
+    if manifest.get('finished_at'):
+        print(f'  closure       {closure["note"]}')
     counts = manifest.get('counts') or {}
     print('  counts        ' + ', '.join(f'{key} {value}' for key, value
-                                         in sorted(counts.items())))
+                                         in sorted(counts.items())
+                                         if key not in COVERAGE))
+    reach = coverage(args.run_dir, manifest)
+    print(f'  coverage      seeds {reach["seeds_fetched"]} of '
+          f'{reach["seeds_requested"]} fetched · discovered '
+          f'{reach["discovered_fetched"]} of {reach["discovered_unique"]} fetched'
+          + (' (recomputed from the discovery log and page index; the '
+             'manifest predates these counts)'
+             if reach['source'] == 'recomputed' else ''))
     stats = manifest.get('stats') or {}
     challenges = {key: value for key, value in stats.items()
                   if key.startswith('amazon/challenge')
@@ -858,9 +986,14 @@ def inspect_command(args):
     if state == 'legacy':
         print('  NOTE          written before run provenance existed: no page '
               'digests, no recorded fetch times, no feed bindings.')
-    elif state == 'interrupted':
+    elif state == 'interrupted' and manifest.get('state') != CLOSED:
         print('  NOTE          the manifest was never closed. Treat coverage '
               'as partial and read discovery.jsonl for what was sighted.')
+    elif state == 'interrupted':
+        print(f'  NOTE          the crawl was stopped before it was done '
+              f'({closure["reason"]}). Treat coverage as partial: the '
+              f'coverage line says what was never fetched, and '
+              f'discovery.jsonl says what was sighted.')
     return 0
 
 

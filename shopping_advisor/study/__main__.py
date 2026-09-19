@@ -342,6 +342,9 @@ def session_authorise_command(args):
         print(f'  refused       {reason}')
     for limit_id, remaining in (decision['remaining_after'].items() if decision['authorised'] else ()):
         print(f'  after         {limit_id}: {remaining:g} remaining')
+    for name in decision.get('partial_evidence', ()):
+        print(f'  partial       builds on {name}, which is interrupted: its evidence is partial '
+              f'and its recorded consumption stands')
     if decision['authorised'] and args.record:
         action = next(a for a in ledger['actions'] if a['id'] == args.action)
         action.update(state='authorised', authorisation='checked')
@@ -365,6 +368,9 @@ def session_record_command(args):
     action = next(a for a in ledger['actions'] if a['id'] == args.action)
     print(f'{args.action}: {action["state"]}; consumption from {action["consumption_source"]}'
           f'{" (authorisation unchecked)" if action["authorisation"] == "unchecked" else ""}')
+    if args.run:
+        from ..run import load_manifest, run_closure
+        print(f'  closure       {run_closure(load_manifest(args.run))["note"]}')
     for unit, amount in action['consumption'].items():
         print(f'  {unit:<15}{"unknown" if amount is None else f"{amount:g}"}')
     if action['run_manifest']:

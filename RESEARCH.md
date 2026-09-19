@@ -396,8 +396,10 @@ says what the session was allowed, what it has spent across inspections, probes,
 collections and interrupted runs, and what it may still do. Keep the working
 ledger under `data/sessions/` or an explicit private path, and snapshot it into
 every study it funds with `run --session`. Declare limits in the units the run
-manifest reports — responses, requests, items, seconds, retained pages, runs —
-and keep research and engineering allowances apart: willingness to investigate
+manifest reports — responses, requests, items, seconds, retained pages, runs,
+and (ledger v3) collections, one per collection action, so that "at most two
+follow-up crawls" is a unit the check counts against and not a sentence in a
+limit's scope — and keep research and engineering allowances apart: willingness to investigate
 products does not fund development, and an engineering proposal is recorded
 against its own allowance and never authorised here. Say whether a limit stops
 new work or is a strict ceiling, and for a ceiling name the closure setting and
@@ -415,6 +417,13 @@ uv run --offline --locked python -m shopping_advisor.study session-check data/se
 
 Give a completed probe its `--result` and `--promotion` record in the same step;
 the contract refuses a completed probe without them.
+A crawl you stopped is recorded as **interrupted** from its manifest's finish
+reason (`shutdown`), with the consumption the manifest reports; the command
+prints how the run ended, and `run inspect` says how many seeds and
+discovered listings were never fetched. A dependent that reads the pages a
+stopped crawl retained declares it in `builds_on_partial` — the analysis is
+then authorised on partial evidence and says so, instead of being refused and
+routed around; a dependent that does not declare it is refused as before.
 A crawl that never closed is recorded as interrupted with unknown consumption,
 and unknown is not zero: the limit stays unreconciled and nothing new is
 authorised until you record the manifest or, conservatively, count the whole

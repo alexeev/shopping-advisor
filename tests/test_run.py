@@ -907,6 +907,105 @@ class Inspect(unittest.TestCase):
         self.assertIn(f'schema {SCHEMA_VERSION}', text)
 
 
+STOPPED_RUN = (pathlib.Path(__file__).resolve().parent / 'runs'
+               / '20260919T111600Z-www.amazon.de-eb1e5c7f')
+
+
+class StoppedRun(unittest.TestCase):
+    """A crawl the operator stopped is interrupted, and its manifest says
+    what it never fetched.
+
+    The fixture is the targeted powerbank crawl of 2026-09-19 (manifest,
+    discovery log and page index; no pages): closed, ``finish_reason:
+    shutdown`` after 16 responses. ``run_state`` read it as complete and the
+    session ledger recorded ``completed``; 2 of 7 seeds and 32 of 40
+    discovered listings were never fetched and no count said so.
+    """
+
+    def test_a_crawl_the_operator_stopped_is_interrupted_not_complete(self):
+        manifest = run_module.load_manifest(STOPPED_RUN)
+        self.assertEqual((manifest['state'], manifest['finish_reason']), ('closed', 'shutdown'))
+        self.assertEqual(run_module.run_state(manifest), 'interrupted')
+        closure = run_module.run_closure(manifest)
+        self.assertEqual(closure['state'], 'interrupted')
+        self.assertIsNone(closure['cap'])
+        self.assertIn('stopped before it was done (shutdown)', closure['note'])
+
+    def test_the_finish_reason_decides_and_a_legacy_manifest_keeps_its_reading(self):
+        closed = {'manifest_version': 2, 'state': 'closed',
+                  'settings': {'CLOSESPIDER_PAGECOUNT': '35'}}
+        for reason, state in (('finished', 'complete'),
+                              ('closespider_pagecount', 'complete'),
+                              ('closespider_timeout', 'complete'),
+                              ('closespider_itemcount', 'complete'),
+                              ('shutdown', 'interrupted'),
+                              ('cancelled', 'interrupted'),
+                              ('unknown', 'interrupted')):
+            with self.subTest(reason=reason):
+                self.assertEqual(run_module.run_state(dict(closed, finish_reason=reason)), state)
+        capped = run_module.run_closure(dict(closed, finish_reason='closespider_pagecount'))
+        self.assertEqual(capped['cap'], {'setting': 'CLOSESPIDER_PAGECOUNT', 'value': '35'})
+        self.assertIn('completed under CLOSESPIDER_PAGECOUNT = 35', capped['note'])
+        # A closed manifest without a reason was written by a spider that
+        # could not say; the rule cannot be applied to a fact never recorded.
+        self.assertEqual(run_module.run_state(closed), 'complete')
+        self.assertIn('without a recorded finish reason', run_module.run_closure(closed)['note'])
+        self.assertEqual(run_module.run_state({'run_id': 'x'}), 'legacy')
+        self.assertEqual(run_module.run_state(dict(closed, state='running')), 'interrupted')
+
+    def test_coverage_is_recomputed_for_a_manifest_that_predates_the_counts(self):
+        self.assertEqual(run_module.coverage(STOPPED_RUN), {
+            'seeds_requested': 7, 'seeds_fetched': 5,
+            'discovered_unique': 40, 'discovered_fetched': 8,
+            'source': 'recomputed'})
+
+    def test_inspect_says_it_was_stopped_and_what_was_never_fetched(self):
+        printed = io.StringIO()
+        with contextlib.redirect_stdout(printed):
+            run_module.main(['inspect', str(STOPPED_RUN)])
+        text = printed.getvalue()
+        self.assertIn('[interrupted]', text)
+        self.assertIn('(shutdown)', text)
+        self.assertIn('seeds 5 of 7 fetched · discovered 8 of 40 fetched', text)
+        self.assertIn('recomputed', text)
+        self.assertIn('stopped before it was done', text)
+        self.assertNotIn('never closed', text)
+
+    def test_a_live_run_counts_seeds_and_discovered_listings_as_it_goes(self):
+        tmp = self.enterContext(tempfile.TemporaryDirectory())
+        run = CrawlRun(
+            root=tmp, spider='amazon_product', marketplace='www.amazon.de',
+            locale={'language': 'de', 'accept_language': 'de-DE,de;q=0.9', 'status': 'matches'},
+            arguments={'keyword': ['qi2'], 'asin': ['B0SEED00001', 'B0SEED00002']}).open()
+        self.assertEqual(run.counts['seeds_requested'], 2)
+        for asin in ('B0DISC00001', 'B0DISC00002', 'B0DISC00001'):   # one repeat sighting
+            run.record_discovery({'asin': asin, 'query': 'qi2', 'search_page': 1,
+                                  'position': 1, 'sponsored': False})
+        run.save_page('B0SEED00001', '<html><body>seed</body></html>')
+        run.save_page('B0DISC00001', '<html><body>found</body></html>')
+        run.close(finish_reason='finished')
+        manifest = run_module.load_manifest(run.directory)
+        expected = {'seeds_requested': 2, 'seeds_fetched': 1,
+                    'discovered_unique': 2, 'discovered_fetched': 1}
+        self.assertEqual({k: manifest['counts'][k] for k in expected}, expected)
+        self.assertEqual(run_module.coverage(run.directory), dict(expected, source='manifest'))
+        stripped = dict(manifest, counts={k: v for k, v in manifest['counts'].items()
+                                          if k not in run_module.COVERAGE})
+        self.assertEqual(run_module.coverage(run.directory, stripped),
+                         dict(expected, source='recomputed'),
+                         'the recomputation agrees with the live count')
+
+    def test_a_run_that_keeps_no_pages_still_counts_what_it_fetched(self):
+        tmp = self.enterContext(tempfile.TemporaryDirectory())
+        run = CrawlRun(
+            root=tmp, spider='amazon_product', marketplace='www.amazon.de',
+            locale={'language': 'de', 'accept_language': 'de-DE,de;q=0.9', 'status': 'matches'},
+            arguments={'asin': ['B0SEED00001']}, keep_pages=False).open()
+        self.assertIsNone(run.save_page('B0SEED00001', '<html/>'))
+        self.assertEqual(run.counts['seeds_fetched'], 1)
+        self.assertEqual(run.counts['pages_saved'], 0)
+
+
 class Variation(unittest.TestCase):
 
     def test_the_twister_matrix_is_decoded_but_not_interpreted(self):

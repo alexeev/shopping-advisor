@@ -840,7 +840,7 @@ id, revision and digest. The sanitized example is
 | Limit field | Contract |
 |---|---|
 | `kind` | `research` or `engineering`. A research allowance does not fund engineering and an engineering allowance does not fund research; an action may reference limits of its own kind only. A purchase budget is a different quantity and is not a limit |
-| `unit`, `measurement` | An **observed** unit the run manifest reports — `requests` (`downloader/request_count`), `responses` (`downloader/response_count`), `items` (`item_scraped_count`), `seconds` (`elapsed_time_seconds`, or the manifest's own `finished_at` − `started_at` when a closed manifest lacks the stat), `pages_retained` (`counts.pages_saved`), `runs` (one per manifest) — or an **estimate** (`eur`, `tokens`) whose `note` says how it is estimated. Acquisition units are whole numbers |
+| `unit`, `measurement` | An **observed** unit the run manifest reports — `requests` (`downloader/request_count`), `responses` (`downloader/response_count`), `items` (`item_scraped_count`), `seconds` (`elapsed_time_seconds`, or the manifest's own `finished_at` − `started_at` when a closed manifest lacks the stat), `pages_retained` (`counts.pages_saved`), `runs` (one per manifest), `collections` (**v3**: one per collection action, consumed when it is recorded, finished or stopped; only a collection allocates it, and exactly 1) — or an **estimate** (`eur`, `tokens`) whose `note` says how it is estimated. Acquisition units are whole numbers. A unit is available from the version that introduced it: a v2 ledger declaring `collections` is refused |
 | `amount`, `mode` | Finite, non-negative. `stops_new_work` refuses the next action once the remainder is short; `strict_ceiling` is permitted only for `responses`, `items` and `seconds`, which `CLOSESPIDER_PAGECOUNT`, `CLOSESPIDER_ITEMCOUNT` and `CLOSESPIDER_TIMEOUT` can close on, and its `note` must state the known overshoot. Reconciliation names the overshoot beside the limit: a page-count closure does not cancel requests in flight, an item cap is not a request cap, a timeout may leave requests in flight. No mechanism enforces a ceiling on requests, runs, retained pages or an estimate, and none is promised |
 | `scope`, `authorization`, `deadline` | What the limit covers; `source` (`user_message` with a retained message `ref`, `existing_authorization`, `operator`) and text; an optional ISO instant with offset. A deadline is wall-clock: time elapsed during an interruption counts |
 
@@ -852,6 +852,7 @@ id, revision and digest. The sanitized example is
 | `consumption`, `consumption_source` | Recorded only when completed or interrupted, for every allocated unit, `null` where unknown; from `run_manifest`, `declared`, `assumed_allocation` (the whole allocation counted as spent — the conservative record for a run that left no readable count) or `unknown` |
 | `run_id`, `run_manifest`, timestamps | The crawl the action was, linked by manifest path and digest; a finished action records when it started |
 | `resumes`, `replay_of`, `depends_on` | A resumption is a new record continuing an `interrupted` action of the same kind; the predecessor's consumption is counted once, on the predecessor. A replay recomputes retained bytes and is analysis or inspection, never acquisition. Dependencies name retained actions |
+| `builds_on_partial` | **v3**, required (closed fields), a list. The dependencies this action declares it builds on **as partial evidence**: a stopped crawl's retained pages are evidence, and a dependent that says so may cite an `interrupted` predecessor — once that predecessor's consumption is recorded (`consumption_source` not `unknown`), so the interruption cost something the ledger knows. Names only entries of `depends_on`, once each. Absent from v1 and v2, where a dependent on interrupted work is refused as it always was |
 | `result`, `promotion` | A completed probe records the result that determines the next action, and whether its evidence was **promoted** into the declared inputs (`into = plan_inputs`, explicit), whether seeing it **changed the criteria** or **supplied candidates**, and — when any of those is true — an assessment of whether broader discovery or renewed comparison is needed. Provenance alone does not establish an unbiased comparison |
 | Engineering | Retained as a proposal against the engineering allowance: state `planned` or `abandoned` only, never authorised, recorded or executed here. Controlled execution is R15 |
 
@@ -866,13 +867,21 @@ deletes no record and completed evidence stands.
 
 **The next-action check** (`session-authorise`, `authorise()`) permits a
 `planned` action only when it is not engineering, every dependency is
-`completed`, no referenced limit is unreconciled or past its deadline at the
-given reference, and every allocated unit fits the remainder. Every refusal names
-its reason with the arithmetic. `--record` marks a fitting action `authorised`
+`completed` — or `interrupted`, named in the action's `builds_on_partial`
+and recorded with a known consumption (v3; the decision lists such
+predecessors under `partial_evidence`, and the command prints them) — no
+referenced limit is unreconciled or past its deadline at the given reference,
+and every allocated unit fits the remainder. Every refusal names its reason
+with the arithmetic. `--record` marks a fitting action `authorised`
 and `checked`; it runs nothing. `session-record` writes what an action did: from
 a run directory it reads the manifest's `run_id`, timestamps, `stats` and
 `counts`, links the manifest by digest, and sets `completed` or `interrupted`
-from the manifest's own state; without a run the operator declares consumption or
+from the manifest's own state **and finish reason**: a closed manifest whose
+`finish_reason` is `finished` or a `closespider_*` closure is completed, the
+second under the declared cap the command names; `shutdown` or any other
+reason is interrupted, because the crawl was stopped before it was done; a
+closed manifest without a reason keeps reading as complete, and an open one is
+interrupted as before (§16). Without a run the operator declares consumption or
 assumes the allocation. A finished action is never recorded twice. `seconds` is
 read from `stats.elapsed_time_seconds` and, when a closed manifest lacks it, from
 the difference of the manifest's own `finished_at` and `started_at`, with
@@ -1212,3 +1221,60 @@ safe; the static inspection reads names, not intent, and a patch can reach the
 network through a name it does not list — which is what the boundary is for.
 The review is a reviewer's judgement, the adoption a role's decision; the
 contract checks that both bind the bytes they read, not that they were right.
+
+---
+
+## 16. The finish reason, the coverage counts and session ledger v3 (2026-09-19)
+
+Bucket B of the [powerbank postmortem](HISTORY.md#postmortem-of-the-iphone-15-qi2-powerbank-review--2026-09-19),
+rows 6 and 10. The targeted crawl of that review was stopped by the operator
+after 16 responses. Its manifest was `state: closed` with `finish_reason:
+shutdown`; `run_state` read any closed manifest as complete, so
+`session-record` wrote `completed` for a run that had fetched 5 of its 7
+seeds and 8 of the 40 listings it discovered — and no manifest count said
+so. The ledger's "at most two follow-up crawls" lived in a limit's prose
+`scope`, which nothing could count against.
+
+### The run manifest: finish reason and coverage (stays v2)
+
+| Change | Contract |
+|---|---|
+| `run_state` | `legacy` without `manifest_version`; `interrupted` while the manifest is open; on a closed manifest the **finish reason decides**: `finished` and every `closespider_*` closure are `complete`, `shutdown`, `cancelled`, `unknown` and anything else are `interrupted`. A closed manifest with **no** `finish_reason` keeps reading `complete`: the spider that wrote it could not say, and the rule is not applied to a fact never recorded |
+| `run_closure()` | the same as data — `state`, `reason`, the `cap` (`CLOSESPIDER_*` setting and its value) when a closure setting ended the run, and one sentence — printed by `run inspect`, `run reextract` and `study session-record --run` |
+| `counts.seeds_requested`, `counts.seeds_fetched`, `counts.discovered_unique`, `counts.discovered_fetched` | what the crawl was asked for against what came back: the ASINs named in `arguments.asin`, the distinct ASINs in the discovery log, and how many of each had a product page fetched — fetched meaning received and parsed, retained or not; an ASIN both seeded and sighted counts in both lists. Written live; `coverage()` recomputes them from the arguments, `discovery.jsonl` and the page index for a manifest written before they existed, and says `source: recomputed` |
+
+The manifest keeps `manifest_version: 2`: four keys are added to `counts`
+and no key, unit or meaning moves (§6). The state reading did move for one
+class of manifest — closed with a non-finishing reason — from `complete` to
+`interrupted`, which is the direction §6 allows without a bump: a state
+becoming *more* conservative because a rule found something. Measured: the
+retained fixture ([tests/runs](tests/runs/README.md)) reads `interrupted`,
+`seeds 5 of 7 fetched · discovered 8 of 40 fetched`; the nine committed
+studies replay with their recorded decisions, because none of them links a
+run manifest with a non-finishing reason, and the stage-8 example's
+interrupted collection stays interrupted.
+
+### Session ledger v3
+
+| Change | Contract |
+|---|---|
+| `session_version` | `3`. This build reads `1`, `2` and `3`; each file keeps its own version's rules. A v2 file has no `collections` unit and no `builds_on_partial` field — its author could not declare them, and a newer reader grants nothing more — so a dependent on interrupted work under v1 or v2 is refused exactly as before |
+| `collections` | an observed acquisition unit (§12): one per collection action, consumed as 1 when the action is recorded from its manifest, declared or assumed; only a `collection` allocates it, and allocates exactly 1 |
+| `builds_on_partial` | the action field of §12: the dependencies this action builds on as partial evidence. `authorise` accepts an `interrupted` predecessor named there whose `consumption_source` is not `unknown`, lists it under `partial_evidence`, and refuses otherwise with the existing reason plus the hint |
+
+Why a version and not an allowance: the honest state alone backfires. With
+`shutdown` read as `interrupted`, every dependent of a stopped crawl is
+refused, the retained pages are evidence nobody may cite, and the operator
+routes around the ledger — which is what the postmortem found had happened
+with a transfer prompt. Letting a dependent cite an interrupted predecessor
+changes what the next-action check *means* (§6), and that moved the version;
+the companion and the honest state ship together, or neither should.
+
+**Limits.** The finish reason is Scrapy's word for how the engine stopped; a
+crawl that finished under a cap the operator set too low is `complete` under
+that cap, and the cap is named, not judged. The coverage counts say how many
+were never fetched, not which — `discovery.jsonl` and `arguments.asin` do.
+`builds_on_partial` is a declaration: the ledger checks that it names a
+recorded, interrupted dependency, not that the partial evidence suffices for
+what the dependent concludes; that is the report's coverage paragraph and the
+review's question.

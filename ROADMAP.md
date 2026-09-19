@@ -253,7 +253,7 @@ Scope, acceptance conditions and what was measured on completion: [HISTORY.md](H
 
 A crawl is reproducible and auditable, and extraction work no longer requires a re-crawl: pages are retained with their digests and can be re-read by a later extractor.
 
-**Open (2026-09-19):** the manifest does not count seeds requested against fetched or discovered listings against fetched, and `run_state` reads any closed manifest as complete even when `finish_reason` is `shutdown`; both are bucket B in [HISTORY.md](HISTORY.md#postmortem-of-the-iphone-15-qi2-powerbank-review--2026-09-19).
+**Closed 2026-09-19 (bucket B of the [powerbank postmortem](HISTORY.md#postmortem-of-the-iphone-15-qi2-powerbank-review--2026-09-19)):** `run_state` now reads the finish reason — `shutdown` is interrupted, `finished` and `closespider_*` complete under the named cap — and the manifest counts seeds requested/fetched and discovered unique/fetched, recomputable for older manifests ([CONTRACT §16](CONTRACT.md#16-the-finish-reason-the-coverage-counts-and-session-ledger-v3-2026-09-19)). The stopped powerbank crawl reads interrupted, 5 of 7 seeds and 8 of 40 discovered fetched.
 
 Scope, acceptance conditions and what was measured on completion: [HISTORY.md](HISTORY.md#r1--crawl-provenance-and-evidence-preservation).
 
@@ -573,10 +573,14 @@ A passing gate protects the tested machinery and nothing more.
 **Open after close (2026-09-19).** The powerbank review, the fourth
 unsupported-category conversation, found two gaps in this milestone's
 machinery, recorded in [HISTORY.md](HISTORY.md#postmortem-of-the-iphone-15-qi2-powerbank-review--2026-09-19): the session ledger wrote `completed`
-for a crawl the user stopped, because `run_state` maps any closed manifest to
-complete (bucket B: map `finish_reason`, add `collections` as a limit unit, and
-let a dependent cite an interrupted predecessor when it declares it builds on
-partial evidence — without that companion the honest state blocks work); and
+for a crawl the user stopped, because `run_state` mapped any closed manifest to
+complete (bucket B, **shipped 2026-09-19** as session ledger v3 with
+[CONTRACT §16](CONTRACT.md#16-the-finish-reason-the-coverage-counts-and-session-ledger-v3-2026-09-19):
+`finish_reason` mapped, `collections` a limit unit, and a dependent may cite an
+interrupted predecessor when it declares `builds_on_partial` and the
+predecessor's consumption is recorded — without that companion the honest state
+blocks work; the retained stopped crawl now records interrupted and its
+follow-up analysis authorises); and
 the unsupported-category procedure has no report template, so one review folded
 safety, warranty, thickness and fit into one light, read missing evidence as
 red, inferred fit from an image and buried the shortlist (bucket C: a
