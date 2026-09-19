@@ -713,11 +713,11 @@ was settled differently by the two buyers and stays a question.
 
 #### Say so when the category is not supported
 
-Four categories ship: `dry_pasta`, `tyre_mounting_paste`, `basmati_rice` and
-`school_backpack`; [README's supported scope](README.md#supported-scope) is the
-canonical written list, and `study capabilities` says what each has earned:
-`school_backpack` is a task experiment with one study behind it, and a report
-that rests on it says so in its limits. For
+Five categories ship: `dry_pasta`, `tyre_mounting_paste`, `basmati_rice`,
+`school_backpack` and `smartwatch`; [README's supported scope](README.md#supported-scope)
+is the canonical written list, and `study capabilities` says what each has
+earned: `school_backpack` and `smartwatch` are task experiments with one study
+each behind them, and a report that rests on one says so in its limits. For
 anything else — a vacuum cleaner, a display — the generic layer still works
 (price, pack quantity, contradictions between the vendor's own statements) but
 nothing in the repository knows what makes one *good*.
@@ -758,6 +758,62 @@ The two ways that goes wrong are not equally visible.
   `trusted` → `disputed`, with notes like *"252 EUR/kg is outside the 0.8-40
   range dry pasta sells in"*. The values were right; the bands were the wrong
   product's.
+
+#### A bounded review of an unsupported category
+
+When the buyer wants an answer anyway, the answer is a **bounded manual
+evidence review**: a report over records the repository acquired and external
+evidence someone checked, with no category, no ranking and no score. It is not
+a `study run` — there is no bundle, no generated semantic checklist and no
+delivery attestation — and its first lines say so. The
+[powerbank review of 2026-09-19](HISTORY.md#postmortem-of-the-iphone-15-qi2-powerbank-review--2026-09-19)
+is the case this procedure was written from; each rule below names the row of
+that entry it answers, and the rewritten powerbank report is the worked example
+of the [report template](#the-bounded-review-report-template).
+
+1. **Plan before collection, rubric included.** Retain the intake plan
+   (`plan-check`) with every requirement in the buyer's words, its role and its
+   author. If the report will show a traffic light, write its rubric into the
+   plan's `assumptions` or notes **before** collection: which **one** evidence
+   axis it covers (a safety notice, a certificate identity), what green, yellow
+   and red each require, and that **unknown is never red** — red needs a notice
+   naming the model or an identity contradiction on the page. A light that
+   folded warranty, thickness, fit and safety (row 3), and a missing certificate
+   read as red (row 4), are what this rule refuses.
+2. **Every named candidate carries a recorded source** — the buyer's words, a
+   prior discovery log, an external document (a test, a certifier's database, a
+   press article) — in the plan, with the reference; never the agent's memory
+   alone. A candidate without one is a lead, and the report calls it that.
+3. **A threshold constraint produces an attribute-neutral query.** A minimum
+   (≥ 10,000 mAh) is a filter on the records, not a search term: `10000mAh` in
+   every query hid the 20,000 mAh shelf and the model the corrected report
+   leads with (row 1). Record every query in the plan with the reason for its
+   wording; a query that names a brand or a model is a targeted probe and says
+   so.
+4. **Account for the session in a v3 ledger** with a `collections` limit,
+   authorise each crawl and record it from its manifest. A crawl you stop
+   records `interrupted`; the analysis that reads its retained pages declares
+   `builds_on_partial` and is authorised on partial evidence, which the report
+   then states ([the ledger](#keep-the-sessions-resource-ledger-and-resume-from-the-files)).
+5. **Re-extract offline after any parser change** and read the re-extracted
+   records, not the feed as crawled ([re-extract and analyze](#re-extract-and-analyze));
+   the seller of an Amazon-sold page (row 14) is the case.
+6. **External evidence is recorded, not matched.** Certificates, recall
+   notices, manufacturer pages and independent tests enter the report with URL,
+   publisher, access date, the exact location and the **model string each
+   names**. A certificate that names a revision (`PB763 v2`) does not cover a
+   listing that names none; a recall that names other serial ranges is brand
+   history, not a model signal (row 7). Until the evidence ledger has
+   certificate and safety-notice source kinds (bucket F), the listing ↔ source
+   mapping is the operator's declared assertion, in a table, labelled as such.
+7. **Write the report against the template, then the handoff.** A bounded
+   review has no bundle, so `verify` and `resume` have nothing to read. The
+   **correction-notes file** beside the report (`reports/<slug>-correction-notes.md`)
+   is the handoff until a category-free bundle exists
+   ([bucket G, deferred](ROADMAP.md#deferred-and-rejected-work)): what was
+   decided before collection, the commands run with their run ids, what changed
+   between report versions and why, and what the next agent must not redo. It
+   is the only account outside the chat; do not leave one only there.
 
 #### Read it back before spending
 
@@ -1004,6 +1060,83 @@ not used for rates, and conclusions say “among sources/products inspected”
 where coverage is limited. Record the checks and remaining uncertainty.
 Automated report validation does not establish semantic truth. An honest
 insufficient-evidence answer is a valid result.
+
+#### The bounded-review report template
+
+For a [bounded review of an unsupported category](#a-bounded-review-of-an-unsupported-category).
+It is a template the operator follows, not a rendering feature: nothing
+generates it, `validate-report` does not read it, and the semantic checklist —
+which only `study run` produces — is not extended for it. The shape was decided
+in the [powerbank postmortem](HISTORY.md#postmortem-of-the-iphone-15-qi2-powerbank-review--2026-09-19)
+(bucket C), where the withdrawn report had its shortlist in section 6 of four
+thousand words, one light for four questions, and a fetch timestamp in every
+price cell. In order:
+
+1. **A summary in the buyer's language, first.** The plan question's language
+   is the buyer's: a German request gets a German summary — the result, its
+   conditions, what to check by hand — before the body, which may be in the
+   operator's working language. One **"as of"** line (`as of 2026-09-18/19 UTC`)
+   covers every price, seller and availability in the document instead of a
+   timestamp per cell; Amazon is dynamic, and the line says so once.
+2. **What this document is.** A bounded manual evidence review with no
+   category, no `study run`, no validation and no attestation; the plan id and
+   revision, the ledger revision, the run ids, and where the handoff lives.
+3. **The shortlist, before anything else.** One row per **listing**, a link on
+   every row (`product_url` is on every record), never a row folded across
+   model numbers; where a variation parent mixes models, the siblings are
+   listed with their model numbers (the Baseus AM52 parent holds E0028Z and
+   E00290, two certificates). **One column per plan requirement, in the plan's
+   words**, its header carrying the role and the author (hard constraint ·
+   buyer; preference · buyer; assumption · agent); then the ratings, the
+   seller and return terms, the warranty, the light or lights, and the
+   disposition.
+4. **Ratings as the marketplace displays them.** Average, count and one-star
+   share from `reviews.histogram_percent`, labelled *unverified,
+   marketplace-displayed, pooled across the variants Amazon merges*. Below a
+   stated count they are reported as **too thin**, not as a value. A high
+   one-star share is a flag to read beside the row, written out (4.0 × 138 with
+   19 % one-star). Never a sort or ranking key, and never a rate computed from
+   the sample.
+5. **Lights.** Each light covers **one** evidence axis, with its rubric copied
+   from the plan, where it was written before collection. **Unknown is never
+   red**: red needs a notice naming the model or an identity contradiction, and
+   a missing certificate or an unrelated recall is yellow with its reason.
+6. **Fit and compatibility.** No claim from listing media — an image of another
+   phone is not a fit. `unknown` unless model-specific evidence names the
+   buyer's device; the dimensions are shown for the buyer to check and are not
+   a pass.
+7. **Review evidence, quoted, not counted.** A sampled review is one person's
+   experience, quoted with its star, its date, the verified badge and the
+   device it names, never a verdict; the sample is Amazon's widget selection
+   (`reviews.sample_source`), so absence is unknown. A class-wide caveat —
+   heat, usable capacity — appears only with attributed sources: the reviews
+   by star and listing, and the independent test that says the same, named.
+8. **Seller and return terms as extracted.** The record's `seller` (an
+   Amazon-sold page reads `Amazon` since bucket A) and the return window the
+   page shows; an empty seller means the page named none, not that Amazon
+   sells it.
+9. **Warranty as additional to statutory rights.** Statutory rights exist
+   regardless of any warranty; a manufacturer warranty is additional to them
+   and differs in scope, so a 24-month warranty is not a plus over them. The
+   wording is checked, not interpreted: a table cell reading `2` or `1Jay` is
+   quoted as it stands. Only offers longer than the statutory term
+   differentiate, and the summary says which those are.
+10. **Discovery and coverage.** One paragraph: the queries with the reason for
+    each wording, pages per query, the caps, discovered against fetched, the
+    seeds never fetched by ASIN, and every stopped run stated as **partial**
+    with its finish reason (`run inspect` prints the counts); the sponsored
+    share of discovery; and what was not covered. "No listing says" is written
+    "no listing I saw says".
+11. **External checks and provenance.** One table: source, URL, access date,
+    the model string it names, and what it establishes and does not; recall
+    checks per brand with the models each notice names; the plan, ledger, feed
+    and run paths; the merge and the commands run.
+12. **Handoff.** The correction-notes file, named, with what a later agent
+    must not redo.
+
+The template does not rank, score or decide. A conditional result — "the
+strongest thin option in the evidence, conditional on a fit check nothing here
+establishes" — is a result, and the summary states it as one.
 
 ### Close and capture improvements
 

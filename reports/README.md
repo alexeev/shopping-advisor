@@ -40,6 +40,7 @@ silently overwritten.
 | State the crawl date at the top | prices are a snapshot and must be labelled as one |
 | Cite per claim | every figure traceable to a record, a quote or an external source |
 | Say "unknown" | absence of data is not an adverse finding, and must not be dressed as one |
+| A bounded review of an unsupported category | follows [the template](../RESEARCH.md#the-bounded-review-report-template): summary in the buyer's language, shortlist first with a link per listing, one column per plan requirement, ratings as displayed and never a sort key, one "as of" line; its correction-notes file beside it is the handoff |
 
 ## Historical reports (not included in this checkout)
 

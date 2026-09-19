@@ -483,7 +483,8 @@ run directories (bucket E: named ASIN or model → fetched, discovered-unfetched
 with query/position/sponsored, or absent; a near-miss list against the plan's
 brands and models; named candidates carry a recorded source; search-only
 crawling is an option, never the default); manifest counts for seeds
-requested/fetched and discovered fetched/unfetched (bucket B, with R1); and two
+requested/fetched and discovered fetched/unfetched (bucket B, shipped
+2026-09-19 with R1); and two
 evidence-ledger source kinds, certificate and safety notice, with a **declared**
 model mapping the tool checks for consistency and never infers (bucket F). A
 generic fold-and-sort shelf table and automatic model-number matching were
@@ -581,12 +582,16 @@ interrupted predecessor when it declares `builds_on_partial` and the
 predecessor's consumption is recorded — without that companion the honest state
 blocks work; the retained stopped crawl now records interrupted and its
 follow-up analysis authorises); and
-the unsupported-category procedure has no report template, so one review folded
+the unsupported-category procedure had no report template, so one review folded
 safety, warranty, thickness and fit into one light, read missing evidence as
-red, inferred fit from an image and buried the shortlist (bucket C: a
-bounded-review template and checklist in RESEARCH.md, with the rewritten
-powerbank report as the worked example). Neither reopens the Done-when list;
-both are maintenance under it.
+red, inferred fit from an image and buried the shortlist (bucket C, **shipped
+2026-09-19** as prose in RESEARCH.md — the
+[procedure](RESEARCH.md#a-bounded-review-of-an-unsupported-category) and the
+[template](RESEARCH.md#the-bounded-review-report-template) — with the rewritten
+powerbank report as the worked example in the operator's gitignored `reports/`;
+the semantic checklist was not extended, because a bounded review runs no study
+and generates none). Neither reopened the Done-when list; both were maintenance
+under it.
 
 ### Scope
 
