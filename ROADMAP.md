@@ -253,6 +253,8 @@ Scope, acceptance conditions and what was measured on completion: [HISTORY.md](H
 
 A crawl is reproducible and auditable, and extraction work no longer requires a re-crawl: pages are retained with their digests and can be re-read by a later extractor.
 
+**Open (2026-09-19):** the manifest does not count seeds requested against fetched or discovered listings against fetched, and `run_state` reads any closed manifest as complete even when `finish_reason` is `shutdown`; both are bucket B in [HISTORY.md](HISTORY.md#postmortem-of-the-iphone-15-qi2-powerbank-review--2026-09-19).
+
 Scope, acceptance conditions and what was measured on completion: [HISTORY.md](HISTORY.md#r1--crawl-provenance-and-evidence-preservation).
 
 ---
@@ -274,6 +276,8 @@ Scope, acceptance conditions and what was measured on completion: [HISTORY.md](H
 **Status: DONE**, with one of its two completion criteria **not met** and retired rather than worked around: a variation conflict that the source does not state cannot be detected by adding software.
 
 Pack-size variants of one product are compared as a single offer family, and the "same pasta, sixteen ASINs" distortion disappears from rankings. The discovery/product *join* stays unbuilt until something reads it.
+
+**Rule confirmed 2026-09-19:** Amazon variation parents mix distinct products — one held two Baseus models with two Qi certificates as "colours", another 15,000 and 20,000 mAh — so a generic fold by parent was rejected ([HISTORY.md](HISTORY.md#postmortem-of-the-iphone-15-qi2-powerbank-review--2026-09-19)); the record view lists siblings with their model numbers instead.
 
 Scope, acceptance conditions and what was measured on completion: [HISTORY.md](HISTORY.md#r3--variation-aware-product-families).
 
@@ -308,6 +312,8 @@ nutrition either converts correctly or returns `unknown`.
 **Status: DONE.** The decision test passed at 57% against a 30% bar, and the milestone cost roughly a tenth of its estimate: the review data is in the retained PDP HTML, and the larger version behind `/product-reviews/` needs an account. Shipped as `shopping_advisor/extraction/reviews.py` and `shopping_advisor/validation/reviews.py`, schema v5.
 
 Review-only properties — does the rice smell of basmati, does it arrive with moths — enter the evidence as sampled, attributed statements with their population limits, never as facts about the product.
+
+**2026-09-19:** a record view (bucket D in [HISTORY.md](HISTORY.md#postmortem-of-the-iphone-15-qi2-powerbank-review--2026-09-19)) shows a listing's whole sampled review set with its size and source, so the operator reads all of it or none; a keyword search over the sample was rejected because it invites cherry-picking and counting a widget sample as a rate.
 
 Scope, acceptance conditions and what was measured on completion: [HISTORY.md](HISTORY.md#r5--reviews-as-an-evidence-source).
 
@@ -424,7 +430,10 @@ the old categories pass their gates; R16 records the capability as an
 experiment, retained. **Open:** the fourth — a changed buyer preference changes
 the brief or the declared method and the decision difference replays. One test
 over two briefs on the committed smartwatch cases would close it; then the
-runbook makes synthesis the default step.
+runbook makes synthesis the default step. A candidate second case waits in the
+powerbank review of 2026-09-19 ([HISTORY.md](HISTORY.md#postmortem-of-the-iphone-15-qi2-powerbank-review--2026-09-19), bucket H): 58 retained
+Amazon.de records whose tables say "kabellos: Nein" on certified Qi2 banks and
+swap dimension axes — knowledge that belongs in a category, not in generic code.
 
 ### Scope
 
@@ -462,6 +471,24 @@ change trust without a classifier error.
 **Status: PLANNED.** Builds on R13 evidence planning and T1/T3 provenance.
 Promoted from [E3](#e3--discovery-coverage-of-the-category) for its demonstrated
 discovery blind spots, not a proven completeness threshold.
+
+**A third blind spot, measured 2026-09-19.** In the iPhone 15 Qi2 powerbank
+review the recommended model was discovered four times and never fetched,
+because every query carried the buyer's minimum capacity as a literal and five
+products per query were taken; the two 20,000 mAh leads came from press and the
+certifier's database, not from the marketplace search. The postmortem and the
+consolidated plan are in [HISTORY.md](HISTORY.md#postmortem-of-the-iphone-15-qi2-powerbank-review--2026-09-19).
+**Consequences for this milestone:** a read-only discovery reconciliation over
+run directories (bucket E: named ASIN or model → fetched, discovered-unfetched
+with query/position/sponsored, or absent; a near-miss list against the plan's
+brands and models; named candidates carry a recorded source; search-only
+crawling is an option, never the default); manifest counts for seeds
+requested/fetched and discovered fetched/unfetched (bucket B, with R1); and two
+evidence-ledger source kinds, certificate and safety notice, with a **declared**
+model mapping the tool checks for consistency and never infers (bucket F). A
+generic fold-and-sort shelf table and automatic model-number matching were
+rejected against counterexamples from the same run — see
+[deferred and rejected work](#deferred-and-rejected-work).
 
 ### Scope
 
@@ -505,6 +532,13 @@ expansion with depth using decision-relevant yield, not raw result count.
   original 20% shortlist threshold. **2 of 3 externally tested products** is a
   different denominator. The priority is the demonstrated decision-relevant
   blind spot; record that revised rationale rather than claiming the old test passed.
+- Every candidate the plan names has a recorded source and a disposition from
+  the discovery log alone — fetched, discovered but not fetched, or absent —
+  before any report is written; the manifest states how many seeds and
+  discovered listings were fetched and how many were not.
+- An external certificate or safety notice enters the evidence ledger with a
+  declared model mapping and renders per candidate as declared, checked or not
+  looked up; a certificate that applies is never rendered as safety.
 
 ---
 
@@ -535,6 +569,20 @@ requests, a second provider or platform ([R17](#r17--portability-evidence)),
 or any control for the smartwatch requirements — that category is a retained,
 unfunded proposal for [R15](#r15--controlled-task-driven-capability-adaptation).
 A passing gate protects the tested machinery and nothing more.
+
+**Open after close (2026-09-19).** The powerbank review, the fourth
+unsupported-category conversation, found two gaps in this milestone's
+machinery, recorded in [HISTORY.md](HISTORY.md#postmortem-of-the-iphone-15-qi2-powerbank-review--2026-09-19): the session ledger wrote `completed`
+for a crawl the user stopped, because `run_state` maps any closed manifest to
+complete (bucket B: map `finish_reason`, add `collections` as a limit unit, and
+let a dependent cite an interrupted predecessor when it declares it builds on
+partial evidence — without that companion the honest state blocks work); and
+the unsupported-category procedure has no report template, so one review folded
+safety, warranty, thickness and fit into one light, read missing evidence as
+red, inferred fit from an image and buried the shortlist (bucket C: a
+bounded-review template and checklist in RESEARCH.md, with the rewritten
+powerbank report as the worked example). Neither reopens the Done-when list;
+both are maintenance under it.
 
 ### Scope
 
@@ -919,6 +967,11 @@ it, within budget and authorization. Revisit the evidence, not just the label.
 | `amazon_search.py` | **REMOVED in T0** | No supported code/test consumer found in the tracked-reference inventory. Use `amazon_product`; see the [migration note](README.md#legacy-search-spider-migration) for its different feed shape and acquisition scope. |
 | Nutrition coverage beyond validation | **DEFERRED** | Never as a coverage goal. 44% is Amazon's ceiling, not the parser's. |
 | Engineering intake record, symmetric to the R13 plan | **REJECTED (2026-09-17)** | Proposed after R13 stage 6 as a retained artifact for maintenance requests: request kind, interpreted scope, acceptance criteria written before the change, authorisation scope, retention decision. Rejected because the harness, git and the maintenance gate already hold each of those, and a repository copy would be the parallel memory store R16 forbids; see [two kinds of request, one interface](#two-kinds-of-request-one-interface). Reconsider only for engineering spawned inside a study, which is R15's binding problem, not an intake problem. |
+| Generic fold-and-sort shelf table over feeds | **REJECTED (2026-09-19)** | Folding by variation parent merged two Baseus models with two Qi certificates and a 15K with a 20K bank; sorting on table dimensions ranks swapped axes; sortable rating columns are the shared scoring R10 defers. Replaced by a per-record view with no fold, sort or category ([HISTORY.md](HISTORY.md#postmortem-of-the-iphone-15-qi2-powerbank-review--2026-09-19)). Reconsider when a category declares which fields fold and sort. |
+| Review-sample keyword search | **REJECTED (2026-09-19)** | The 13 sampled reviews are Amazon's widget selection; a search invites cherry-picking, counting the sample as a rate and reading absence as evidence — the review's own over-read of one iPhone 15 Pro remark is the case. The record view shows the whole sample instead. |
+| Automatic model-number matching of certificates and recalls to listings | **REJECTED (2026-09-19)** | Exact matching yields false negatives (`PB763` vs `PB763 v2`, `BPD014hqBK` vs `BPD014`); fuzzy matching conflates E0028Z with E0028V, two certificates; recalls by serial range over-flag by model. Replaced by a declared mapping the tool checks for consistency (bucket F). |
+| Search-only two-phase crawl as the default | **DEFERRED; kept as an option** | Doubles search requests and hands the buyer the shelf to read. Use when a buyer wants to steer; read back near-misses, never the shelf. |
+| Category-free bundle for bounded reviews (`verify`/`resume` without a category) | **DEFERRED (bucket G)** | A second bounded review that has to survive a handoff. Until then the correction-notes file is the handoff and the procedure says so. |
 
 ---
 
