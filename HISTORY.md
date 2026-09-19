@@ -1337,6 +1337,90 @@ and promotion to a maintained capability waits for a distinct subsequent use.
 
 ---
 
+## R12 — Discovery that states its own coverage
+
+### Postmortem of the iPhone 15 Qi2 powerbank review — 2026-09-19
+
+**Context.** A buyer asked for a magnetic Qi2 powerbank for an iPhone 15 on
+Amazon.de: at least 10,000 mAh, genuine Qi2 MPP 15 W, USB-C PD around
+20–30 W, flat against the phone without covering the camera, safety and
+manufacturer quality rated green/yellow/red, three-year warranty a plus. No
+powerbank category exists, so the work was a **bounded manual evidence
+review** over repository-acquired records, not a study run: plan
+`iphone15-qi2-powerbank-amazon-de` (revision 2), session ledger revision 3,
+three crawls (`20260918T235832Z-www.amazon.de-07f5ac00`,
+`20260919T110843Z-www.amazon.de-e004a42d`,
+`20260919T111600Z-www.amazon.de-eb1e5c7f`), 64 records merged to 58
+listings. The first report was withdrawn the same day and a corrected one
+delivered. All artifacts are gitignored working files in the operator's tree
+(`data/plans/`, `data/sessions/`, `data/runs/`, `reports/`); what follows is
+the measured part, which is what this file keeps.
+
+**What went wrong, with the measurement behind each.** The disposition column
+names the bucket in the decision below.
+
+| # | Observation | Measured on this run | Layer | Disposition |
+|---|---|---|---|---|
+| 1 | Every discovery query carried the buyer's *minimum* as a literal (`10000mAh`), and only 5 products per query were fetched | Anker A1664, the model the corrected report leads with, appears 4 times in the original run's `discovery.jsonl` and never reached the feed or the report | Procedure, discovery | C, E |
+| 2 | Nothing reconciled the plan's named candidates against discovered, fetched and absent ASINs | 44 ASINs discovered, 26 fetched, 18 unfetched in the original run; the omission was found by a human re-reading the log | Discovery | E |
+| 3 | One traffic light folded safety, warranty, thickness and camera fit | The withdrawn report's "green" required a 3-year warranty and a "plausible fit image" | Procedure | C |
+| 4 | A missing certificate record and an unrelated brand recall were read as red | INIU P43 marked red on the brand's BI-B41 recall, which names other serial ranges | Procedure | C |
+| 5 | Camera clearance was inferred from a marketing image of another phone | The image showed a triple-camera model; the buyer's phone has two | Procedure | C |
+| 6 | A crawl the user stopped was recorded `completed` | Manifest `finish_reason: shutdown` after 16 responses; `run_state` maps any closed manifest to `complete`, so `session-record` wrote `completed`. 2 of 7 ASIN seeds and 32 of 40 discovered ASINs were never fetched, and no manifest count says so | Ledger, manifest | B |
+| 7 | Marketplace keyword search did not surface the niche; external sources did | `Qi2 Powerbank 20000` returned no Qi2 20K bank in the fetched top 12; the two 20K leads (UGREEN PB567, PB775) came from press and the WPC database and were mapped to ASINs afterwards. The identity key is the model number, which Amazon's field carries noisily: `PB763` vs certificate `PB763 v2`, `BPD014hqBK` vs `BPD014`, a Modellname of `55135`, no model number at all on one Vonmählen page | Discovery, evidence | C, F |
+| 8 | Electronics tables are malformed in ways the generic layer cannot know | "Ist das Produkt kabellos: Nein" on a certified Qi2 bank; dimension axes swapped (`10,2 L × 1,6 B × 6,7 D cm`); `Batteriegewicht 62 g` beside `Gewicht 215,9 g`; warranty fields `2`, `24.00`, `1Jay` | Category knowledge | H |
+| 9 | The read-back gate sits before collection; the decisive selection happens between search pages and product pages | 94 discovered titles, 15 fetched; the buyer never saw the 79 | Procedure | C, E |
+| 10 | Resumption relied on a transfer prompt; a category-free review has no bundle for `resume`; the "two follow-up crawls" limit was prose | Ledger scope text, not a limit unit | Ledger, bundle | B, G |
+| 11 | Ratings, counts, star histograms and category rank were on the records and unused as a screen | Present on 35 of 36 broad-run records. Baseus AM61: 4.0 × 138 with **19 % one-star**, listed as eligible; INIU P43: 5 ratings; A1664's 9,559 pooled over four colours | Procedure, rendering | C, D |
+| 12 | No product, certificate or recall URL in the report | `product_url` is on every record | Rendering | C, D |
+| 13 | The sampled reviews were never read | 13 per page, Amazon's widget selection. They held a 3-star remark that the EcoFlow EF-MB-005 "passt nicht gut zum iPhone 15 Pro, da es ein Stück zu lang ist" and a cross-brand heat pattern (Anker, Baseus, EcoFlow). The operator then over-read the first as "direct fit evidence" for a different phone model | Procedure, rendering | C, D |
+| 14 | Seller empty on Amazon-sold pages | `pdp.py` reads `#sellerProfileTriggerId` and `#merchant-info`; Amazon-sold pages carry "Amazon" in `#merchantInfoFeature_feature_div`. INIU P781 and Belkin BPD014 were reported as "seller not exposed"; the retained pages say Amazon | Extraction | A |
+| 15 | Variation families mix distinct products | Parent `B0HHCWLBNG` holds Baseus E0028Z and E00290, two models with two WPC certificates, as "Schwarz" and "Tiefschwarz"; a VARTA parent mixes 15,000 and 20,000 mAh; the Vonmählen parent mixes 3,000, 5,000, 10,000 mAh and a kickstand variant | Families (R3) | Rejected fold; D shows siblings |
+| 16 | Report shape | The shortlist appeared in section 6 of ~4,000 words; 24 months presented as a warranty plus against a two-year statutory baseline; heat not framed as class-wide; English report for a German request; fetch timestamps in every price cell | Procedure | C |
+
+**Decision — the consolidated plan.** Sizes are T-shirt estimates; each code
+bucket goes through the [maintenance workflow](AGENTS.md#maintenance-workflow)
+with a reproducible case, and a floor that moves is re-recorded with its
+reason. The one-line consequences sit under R1, R3, R5, R11, R12, R13 and the
+deferred/rejected table in ROADMAP.
+
+| Id | Size | Change | Guard rail | Measured effect that closes it |
+|---|---|---|---|---|
+| A | XS | Seller read from the merchant feature block; discovery `sponsored` flag copied onto the record | Never the fulfiller block, or a third-party seller shipping via Amazon becomes "Amazon"; corpus cases for Amazon-sold, third-party via Amazon, third-party direct | Two merged records flip from empty to `Amazon`; every record carries `sponsored` |
+| B | S | `run_state`/`session-record` map `finish_reason`: `finished` and `closespider_*` completed under a cap, `shutdown` interrupted; manifest counts for seeds requested/fetched and discovered fetched/unfetched; `collections` as a ledger limit unit | Legacy manifests keep their state; a dependent may cite an interrupted predecessor when it declares it builds on partial evidence and the predecessor's consumption is recorded — without this the honest state blocks work and gets routed around; CONTRACT version rules | The targeted action reads `interrupted`; its manifest reports 5/7 seeds and 8/40 discovered fetched; the follow-up still authorises |
+| C | S | Bounded-review procedure and report template in RESEARCH.md and the semantic checklist: shortlist first with links, one column per plan requirement, ratings as marketplace-displayed unverified values with count and one-star share and never a sort key, rubric for any light written into the plan before collection, unknown never red, no fit claim from media, a quoted review is an experience, warranty stated as additional to statutory rights, class caveats only with a source, one "as of" line, summary in the buyer's language, neutral queries for threshold constraints, a recorded source for every named candidate | Documentation only; the powerbank report rewritten against it is the worked example | Link check passes; the rewritten report shows the difference row by row |
+| D | S | A record view over a feed for named ASINs: displayed values with fetch time, seller, sponsored, rating, count, histogram, rank, link, quoted dimension and weight fields, siblings with their model numbers and capacities, and every sampled review's title/star/date/verified with sample size and source | No folding, no sorting, no pattern filter, no category, no bands | The AM52 family shows two model numbers on one screen; the EcoFlow review is visible without a script |
+| E | S | Read-only discovery reconciliation over run directories: per named ASIN or model, fetched / discovered-unfetched (query, position, price text, sponsored) / absent; a near-miss list of discovered-unfetched titles matching the plan's brands or models | Named candidates need a recorded source; search-only crawling stays an option with its doubled request cost stated, never the default; the full shelf is never read back | Against the original run it reports A1664 discovered ×4, unfetched |
+| F | M | Two evidence-ledger source kinds — certificate and safety notice — with a **declared** model mapping: the operator asserts record ↔ source and quotes the model string; the tool checks the quote occurs in the record and renders `declared / checked / not looked up` | Never infers a match; a certificate applying is never rendered as "safe" | The 18 WPC records and 5 recall checks of this run become ledger entries; PB570's yellow derives from `not looked up` |
+| G | L | A category-free bundle so `verify` and `resume` work for bounded reviews | Deferred; the correction-notes file is the handoff until then, and C says so | — |
+| H | L | Powerbank as an R11 case over the 58 retained records; table contradictions and fit heuristics live there | Deferred to R11 | — |
+
+**Rejected, each against a counterexample from this run.**
+
+- *A generic fold-and-sort shelf table.* Folding by variation parent merges
+  E0028Z with E00290 and 15K with 20K (row 15); sorting on table dimensions
+  puts swapped axes first (row 8); sortable rating columns are the shared
+  scoring R10 defers. Replaced by D.
+- *Review-sample keyword search.* Invites cherry-picking, counting a widget
+  sample as a rate and reading absence as evidence; the operator's own
+  over-read (row 13) is the case. Replaced by D showing the whole sample.
+- *Automatic model-number matching of certificates and recalls.* Exact
+  matching yields false yellows (`PB763 v2`, `BPD014hqBK`); fuzzy matching
+  conflates E0028Z with E0028V, two certificates; recalls by serial range
+  over-flag by model. Replaced by F's declared mapping.
+- *Two-phase crawl as the default.* Doubles search requests and hands the
+  buyer the shelf to read, which is the problem the product removes. Kept as
+  an option in E.
+
+**Not established.** That the template changes buyer outcomes (one review, no
+grading against a prior intent record); that the near-miss read-back costs
+less than it saves; that a declared certificate mapping is right — F checks
+consistency, not truth. Prices, sellers and ratings quoted above are the
+retained values at their fetch times on 2026-09-18/19 and are not buying
+advice.
+
+---
+
 ## R13 — The conversation as the entry point
 
 **2026-09-17 — INTAKE §16 stages 1–10 shipped.** Six dated entries recorded the
