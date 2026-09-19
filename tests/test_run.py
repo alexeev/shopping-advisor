@@ -738,6 +738,43 @@ class Reextraction(unittest.TestCase):
                                     marketplace='amazon.de'))
         self.assertEqual(record['search_query'], 'spaghetti hartweizen')
 
+    def test_sponsored_comes_from_the_sighting_that_queued_the_fetch(self):
+        """A feed written before 2026-09-19 has no ``sponsored``; the crawl's
+        own discovery log says which slot queued the fetch, and a replay reads
+        it from there. A seed was named by a person, not a search: unknown."""
+        run = CrawlRun(
+            root=str(pathlib.Path(self.tmp.name) / 'sighted'), spider='amazon_product',
+            marketplace='www.amazon.de',
+            locale={'language': 'de', 'accept_language': 'de-DE,de;q=0.9',
+                    'status': 'matches'},
+            arguments={'keyword': ['spaghetti hartweizen'], 'asin': ['B0SEEDED01']}).open()
+        run.record_discovery({'asin': 'B088419TTP', 'query': 'spaghetti hartweizen',
+                              'search_page': 2, 'position': 17, 'sponsored': True})
+        run.record_discovery({'asin': 'B088419TTP', 'query': 'spaghetti hartweizen',
+                              'search_page': 2, 'position': 30, 'sponsored': False})
+        run.save_page('B088419TTP', read_fixture(A_PDP), fetched_at=self.FETCHED_AT)
+        run.close(finish_reason='finished')
+
+        def one(feed=None):
+            [(_, record, error)] = run_module.reextract(run.directory, feed)
+            self.assertIsNone(error)
+            return record['sponsored']
+
+        self.assertIs(one(self.feed(run_id=run.run_id)), True)
+        self.assertIs(one(self.feed(run_id=run.run_id, search_position=30)), False)
+        self.assertIs(one(self.feed(run_id=run.run_id, search_position=99)), True,
+                      'no exact sighting: the first one is what queued the request')
+        self.assertIs(one(self.feed(run_id=run.run_id, sponsored=False)), False,
+                      'a feed that carries the field is believed over the log')
+        self.assertIsNone(one(self.feed(run_id=run.run_id, search_query='asin:B088419TTP',
+                                        search_page=0)),
+                          'a seed came from the person who named it, not a search')
+        self.assertIs(one(), True, 'without a feed the log still explains the page')
+        self.assertIsNone(run_module.sighting_sponsored(
+            'B0SEEDED01', None, [], seeds=['B0SEEDED01']))
+        self.assertIsNone(run_module.sighting_sponsored('B0OTHER', None, []),
+                          'a page no sighting explains is unknown, not false')
+
     def test_a_feed_that_names_no_run_is_read_with_its_lineage_named(self):
         """A feed written before provenance existed is readable, and its
         lineage is unknown rather than wrong. The command says which."""

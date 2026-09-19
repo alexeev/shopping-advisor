@@ -610,8 +610,38 @@ def check_feed_binding(manifest, records, feed):
 # it ranked, when it was fetched. Those come from the feed the crawl wrote,
 # and are copied across verbatim rather than guessed at.
 CRAWL_FIELDS = ('marketplace', 'asin', 'product_url', 'canonical_url',
-                'search_query', 'search_page', 'search_position',
+                'search_query', 'search_page', 'search_position', 'sponsored',
                 'run_id', 'locale', 'accept_language')
+
+
+def sighting_sponsored(asin, crawled, discovery, seeds=()):
+    """Was the search slot that queued this page's fetch a sponsored one?
+
+    ``None`` -- unknown, not false -- for a seeded ASIN, which came from the
+    person who named it and not from a search, and for a page no sighting in
+    the discovery log explains. Otherwise the sighting that matches the
+    record's own query, page and position; failing that, the first sighting
+    of the ASIN, which is the one that queued the request. A feed written
+    before 2026-09-19 has no ``sponsored`` field, and this is how a replay
+    of those runs gets it from the crawl's own log rather than leaving it
+    blank.
+    """
+    crawled = crawled or {}
+    seeded = str(crawled.get('search_query') or '').startswith('asin:') \
+        or crawled.get('search_page') == 0
+    if seeded or (not crawled and asin in seeds):
+        return None
+    sightings = [o for o in discovery or () if o.get('asin') == asin]
+    if crawled:
+        exact = [o for o in sightings
+                 if (o.get('query'), o.get('search_page'), o.get('position'))
+                 == (crawled.get('search_query'), crawled.get('search_page'),
+                     crawled.get('search_position'))]
+        if exact:
+            return bool(exact[0].get('sponsored'))
+    if sightings:
+        return bool(sightings[0].get('sponsored'))
+    return None
 
 
 def observation_time(entry, crawled):
@@ -635,7 +665,7 @@ def observation_time(entry, crawled):
     return None, 'unknown'
 
 
-def _lineage(asin, manifest, crawled, canonical_url, entry):
+def _lineage(asin, manifest, crawled, canonical_url, entry, discovery=()):
     """The provenance a re-extracted record carries, best available first."""
     marketplace = manifest.get('marketplace') or ''
     locale = manifest.get('locale') or {}
@@ -653,6 +683,10 @@ def _lineage(asin, manifest, crawled, canonical_url, entry):
     # only witness to the search that found this page.
     lineage.update({key: crawled[key] for key in CRAWL_FIELDS
                     if key in (crawled or {})})
+    if 'sponsored' not in lineage:
+        lineage['sponsored'] = sighting_sponsored(
+            asin, crawled, discovery,
+            seeds=(manifest.get('arguments') or {}).get('asin') or ())
     lineage['fetched_at'] = fetched_at
     lineage['fetched_at_source'] = source
     # A new reading of old bytes is not a new observation of the product, and
@@ -692,6 +726,7 @@ def reextract(directory, feed=None, verify=True, include_quarantined=True):
                if record.get('asin')}
 
     index = page_metadata(directory)
+    discovery = load_discovery(directory)
     pages = dict(stored_pages(directory))
     if include_quarantined:
         pages.update(quarantined_pages(directory))
@@ -711,7 +746,8 @@ def reextract(directory, feed=None, verify=True, include_quarantined=True):
             selector = Selector(html)
             lineage = _lineage(
                 asin, manifest, crawled.get(asin),
-                selector.css('link[rel=canonical]::attr(href)').get(), entry)
+                selector.css('link[rel=canonical]::attr(href)').get(), entry,
+                discovery)
             record = extractor.extract(selector, html, lineage)
         except Exception as exc:  # one unreadable page must not end the pass
             yield asin, None, f'{type(exc).__name__}: {exc}'

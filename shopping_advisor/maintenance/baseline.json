@@ -253,14 +253,14 @@
     }
   ],
   "note": "What the maintenance gate is entitled to find. Tracked on purpose: a task-local change that lowers a floor, drops a check, promotes or retires a capability or moves an example's decision has to say so here, in a reviewable diff. Re-record with `maintenance baseline --update` from a tree that passes; a capability's lifecycle moves only after ROADMAP records the decision.",
-  "recorded_at": "2026-09-18T22:02:58+00:00",
+  "recorded_at": "2026-09-19T13:00:44+00:00",
   "runtime": {
     "lock_sha256": "e24bc67da2dba6c49538700bc8bce61658748c715e9103603f537c15694a32cd",
     "python": "3.14",
     "scrapy": "2.19"
   },
   "tests": {
-    "minimum": 910,
+    "minimum": 915,
     "modules": [
       "test_adaptation",
       "test_analysis",

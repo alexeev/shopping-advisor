@@ -1,13 +1,13 @@
 # Extraction corpus
 
-41 real Amazon product detail pages, saved to disk, with two snapshots each:
+44 real Amazon product detail pages, saved to disk, with two snapshots each:
 the record the page is expected to extract to, and the **validated record**
 that record is expected to produce under the published contract.
 `../test_corpus.py` re-runs both on every test run and fails if any field
 changes.
 
 ```
-amazon_de/    40 pages + expected.jsonl.gz + validated.jsonl.gz
+amazon_de/    43 pages + expected.jsonl.gz + validated.jsonl.gz
 amazon_com/    1 page  + expected.jsonl.gz + validated.jsonl.gz
 redact.py                                    run before adding a page
 ```
@@ -73,6 +73,17 @@ the ASIN its header links and not by the `active` class the first column
 carries. They were added because the cells of a table that compares products
 are the one kind of vendor text that is *about someone else*, and no page in
 the corpus had one with the product in it before.
+
+Three are powerbanks from the 2026-09-19 review (bucket A of its
+[postmortem](../../HISTORY.md#postmortem-of-the-iphone-15-qi2-powerbank-review--2026-09-19)),
+chosen for the three ways a buy box names a seller: `B0G599PS4N` is **sold by
+Amazon** and has neither the seller profile link nor `#merchant-info`, only
+"Verkäufer: Amazon" in the merchant feature block — the shape that left
+`seller` empty on every Amazon-sold page before, ten of them in this corpus;
+`B0BJQ7F16T` is sold by UGREEN GROUP LIMITED UK and **shipped by Amazon**, so
+its fulfiller block says "Amazon" and the extractor must not read it;
+`B0BBR91FTX` is sold and shipped by ANABASIS. Their `sponsored` is `null`
+here, because a corpus page has no discovery sighting.
 
 One caution the repository has already paid for: these pages are picked for
 diversity, which makes them a **bad basis for a frequency claim**. The

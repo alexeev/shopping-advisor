@@ -319,6 +319,58 @@ class PdpComposition(unittest.TestCase):
         self.assertEqual(package['total_quantity_unit'], 'ml')
 
 
+class Seller(unittest.TestCase):
+    """Who sells, read from the buy box -- and never from who ships.
+
+    Amazon-sold pages have neither the seller profile link nor
+    ``#merchant-info``; they name "Amazon" in the merchant feature block. On
+    the 2026-09-19 powerbank runs two listings sold by Amazon were reported
+    with no seller because of that. The fulfiller block beside it says who
+    ships, which on a third-party listing fulfilled by Amazon is also
+    "Amazon" -- reading it would promote the courier to the seller.
+    """
+    TITLE = '<div id="productTitle">Powerbank</div>'
+    MERCHANT = ('<div id="merchantInfoFeature_feature_div">'
+                '<span class="offer-display-feature-label">Verkäufer</span>'
+                '<span class="offer-display-feature-text-message">{}</span></div>')
+    FULFILLER = ('<div id="fulfillerInfoFeature_feature_div">'
+                 '<span class="offer-display-feature-label">Versand</span>'
+                 '<span class="offer-display-feature-text-message">{}</span></div>')
+    PROFILE = '<a id="sellerProfileTriggerId" href="/sp?seller=X">{}</a>'
+
+    def extract(self, html, lineage=None):
+        html = self.TITLE + html
+        return PdpExtractor(DE).extract(Selector(html), html,
+                                        lineage or {'asin': 'B000000001'})
+
+    def test_an_amazon_sold_page_names_amazon_from_the_merchant_block(self):
+        record = self.extract(self.MERCHANT.format('Amazon'))
+        self.assertEqual(record['seller'], 'Amazon')
+
+    def test_the_fulfiller_block_is_never_read(self):
+        """Third party sells, Amazon ships, and the page has no profile link
+        or merchant-info line: the fallback must still say the third party."""
+        record = self.extract(self.MERCHANT.format('Drittanbieter GmbH')
+                              + self.FULFILLER.format('Amazon'))
+        self.assertEqual(record['seller'], 'Drittanbieter GmbH')
+        record = self.extract(self.FULFILLER.format('Amazon'))
+        self.assertEqual(record['seller'], '',
+                         'a page naming only who ships names no seller')
+
+    def test_the_profile_link_still_wins(self):
+        record = self.extract(self.PROFILE.format('Marke Store')
+                              + self.MERCHANT.format('Marke Store')
+                              + self.FULFILLER.format('Amazon'))
+        self.assertEqual(record['seller'], 'Marke Store')
+
+    def test_sponsored_is_lineage_and_unknown_without_it(self):
+        self.assertIsNone(self.extract('')['sponsored'],
+                          'a corpus page has no discovery sighting: unknown, not false')
+        for value in (True, False, None):
+            record = self.extract('', {'asin': 'B000000001', 'sponsored': value})
+            self.assertIs(record['sponsored'], value)
+
+
 class PackageWeightFromDimensions(unittest.TestCase):
     """Amazon.de appends a non-food item's weight to its dimensions row.
 
