@@ -715,6 +715,91 @@ Three findings worth carrying forward:
   kind of fact that changes what "what does Amazon show for this query" means,
   and it was previously unrecordable.
 
+### The crawler's delivery location — 2026-10-18
+
+Found while making the delivery promise an extracted field
+([`delivery.location_text`](CONTRACT.md#delivery--one-offers-promise-to-one-place-at-one-moment)).
+Every Amazon.de page names the delivery location Amazon assigned the anonymous
+session ("Liefern nach Österreich", "Lieferung an ‹Ort› ‹PLZ›"), and nothing in
+the crawl chooses it: no address, no location cookie, no proxy — every manifest
+that records its settings says `proxy_middleware: false`. Amazon takes the
+location from where the request comes from, and it moved with the network the
+crawl ran from. R1 recorded the acquisition *language*; it never recorded the
+delivery location, which decides more.
+
+**One location per run, four changes in five weeks.** Over 1,762 retained
+pages in 26 runs, re-read offline:
+
+| Runs (UTC) | Location | Pages |
+|---|---|---|
+| 2026-09-14 22:04 – 2026-09-15 09:10 (6) | Austria | 819 |
+| 2026-09-15 13:40 – 15:43 (5) | Spain | 493 |
+| 2026-09-15 16:36 – 2026-09-17 20:50 (5) | Austria | 98 |
+| 2026-09-17 22:02 – 2026-09-19 11:16 (9) | a German city | 319 + 3 unnamed |
+| 2026-10-18 21:56 (1, and a second run at 22:20 with 33 pages) | Austria | 30 + 33 |
+
+**What moved with it.** The same ASIN fetched under two locations on the same
+day (at most six hours apart, the closest pair per ASIN), against the same
+ASIN fetched twice under one location:
+
+| | Austria – Germany | Austria – Spain | same location |
+|---|---|---|---|
+| pairs | 32 | 16 | 288 |
+| buy-box seller changed | 11 | 3 | 0 |
+| a buy-box offer on one side only | 6 | 0 | 0 |
+| price changed, same seller | 15 of 21 | 5 of 10 | 1 of 217 |
+| first delivery option changed | 28 | 13 | 6 |
+
+The six one-sided offers all go one way: no offer to Austria, a German
+seller's offer to Germany, 29.71–119.00 €. The price changes have a shape.
+Over the closest pair per ASIN at any distance, 15 of 26 Austria → Germany
+prices are exactly 0.992 of the Austrian one (50.41 € → 49.99 €, 1.19/1.20);
+of 59 Austria → Spain pairs, 15 tyre-repair listings give 0.991–0.992 and 19
+pasta listings sold by Amazon +1.3 to +2.3 % (1.95 € → 1.99 €). Several
+third-party sellers price identically everywhere. That is the pattern of a
+price shown with the destination country's VAT; this repository does not
+establish the rates. No Spain–Germany pair exists, so that the Spain-located
+prices equal the German ones is inferred from both being 0.992 of the
+Austrian, not measured.
+
+**What it touched.**
+
+- *Committed fixtures.* `tests/cases/school_backpack_v1` is 43 Austria-located
+  records, and 5 of its 23 school backpacks carry no price — `B0DWXLM44P`,
+  `B09MCT66NR`, `B0GGV5ZNFC`, `B0DVTDG2G2`, `B07V3FR8V3` — because nobody
+  offered them to Austria; each had a German seller's offer within two hours
+  (79.99–119.00 €). The
+  set pins verdicts, not prices, so no test moves. `mounting_paste_v1` mixes 20
+  Austria- and 14 Spain-located records in one set. Of the evidence feeds, the
+  2026-09-14 discovery, the 2026-09-15 validation v3 and mounting-paste v4 and
+  v7 are Austria-located, mounting-paste v5 and v6 Spain-located, the
+  smartwatch probes German; the 2026-09-14 validation feed predates run
+  lineage, and its price matches the Spain-located one on 15 of the 17 ASINs
+  whose Austria and Spain prices differ.
+- *The gate's nine examples.* Five read `pasta_v1` (no run lineage; both of its
+  ASINs that tell the locations apart carry the Spain-located price), two
+  read three basmati records with no run lineage, two the German-located smartwatch
+  probes. None rests on an Austria-located page.
+- *The school-backpack trials* (bundles gitignored). Both read two
+  Austria-located probes and three German-located collections, merged
+  freshest-first, so 5 rows came from Austrian pages. In the 2026-09-18 bundle
+  two of them fell outside its 100 EUR ceiling at 108.32 € and 119.00 €, and
+  both stay outside at 1.19/1.20 (107.42 €, 118.01 €), so neither verdict
+  moves. **No recorded
+  decision moved**, but that ranking compared prices from two VAT regimes and
+  did not say so, under a read-back the buyer confirmed as "delivery in
+  Germany".
+
+**The consequence.** The default every buyer has confirmed — Amazon.de with
+delivery in Germany — was not what the crawler saw on 1,440 of the 1,759
+retained pages that name a location (82 %), and is not what it sees today. Every
+brief carries `delivery_region`; nothing compares it with the records. The
+proposal, decided under [R1 in the roadmap](ROADMAP.md#r1--crawl-provenance-and-evidence-preservation):
+record the location the page names on the page index and the manifest, and
+let `study check`/`run` compare it with the brief, withholding price-, seller-
+and availability-dependent findings where they differ. Setting the location
+at acquisition is a separate question for a bounded probe.
+
 ---
 
 ## R2 — Generic validation layer + published extraction contract
