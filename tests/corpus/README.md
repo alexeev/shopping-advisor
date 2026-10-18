@@ -1,13 +1,13 @@
 # Extraction corpus
 
-45 real Amazon product detail pages, saved to disk, with two snapshots each:
+50 real Amazon product detail pages, saved to disk, with two snapshots each:
 the record the page is expected to extract to, and the **validated record**
 that record is expected to produce under the published contract.
 `../test_corpus.py` re-runs both on every test run and fails if any field
 changes.
 
 ```
-amazon_de/    44 pages + expected.jsonl.gz + validated.jsonl.gz
+amazon_de/    49 pages + expected.jsonl.gz + validated.jsonl.gz
 amazon_com/    1 page  + expected.jsonl.gz + validated.jsonl.gz
 redact.py                                    run before adding a page
 ```
@@ -92,6 +92,18 @@ another offer, 170,99 €, arriving "Morgen" — and a used offer, each with its
 own delivery block. Only the first is this record's promise, as only the first
 is its price; 28 retained pages have the second row, and no corpus page had
 it before.
+
+Five are dental floss from the 2026-10-18 bounded review, added on 2026-10-19
+for the length a listing sells, which no field could state before: the review
+worked out the price per metre by hand. `B0H71G6PJ6` is a 50 m spool filed as
+"Anzahl der Einheiten: 50.0 meter" and priced "0,05 € pro Meter", confirmed by
+its size label; `B0C2DG1GMN` a 40 m spool whose title names no length at all;
+`B0FQV77NR5` a four-pack filed as 200 m and confirmed only by "4 x 50m" in its
+title; `B0FS5TTWYM` files "Stückzahl: 60.0 meter", which the extractor read as
+sixty pieces and multiplied by the 40 g spool weight into 2,4 kg of floss.
+`B0H62SDCK2` is the counterexample, 75 floss sticks filed and priced per
+piece: it has no length, and every one of the five states its box in
+centimetres, which is not one either.
 
 One caution the repository has already paid for: these pages are picked for
 diversity, which makes them a **bad basis for a frequency claim**. The

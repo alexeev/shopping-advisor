@@ -28,6 +28,12 @@ by the second category rather than designed for it -- dry pasta is sold by
 weight and every pack in the validation set reconciled to EUR/kg, while tyre
 mounting paste and its neighbours on the same search page are sold in tubs,
 tubes, bottles and aerosols, and Amazon prices a third of them per litre.
+
+What is sold by length is priced per metre, and kept apart: a floss spool's
+length is reconciled by :func:`quantity.reconcile_length` and priced by
+:func:`per_length`, beside a price per kilogram that still follows the pack's
+weight. Amazon.de quotes floss "0,05 € pro Meter", and until 2026-10-19 this
+module could read that figure only as a unit it did not know.
 """
 
 import re
@@ -39,11 +45,13 @@ from .quantity import relative_gap
 # Amazon's own price-per-unit versus one derived from price and pack size.
 PRICE_COHERENCE_TOLERANCE = 0.12
 
-# The base unit a pack measured in `g` / `ml` is priced in. Everything the
-# platform compares on is per kilogram or per litre; nothing is compared per
-# gram, because no marketplace quotes it that way.
-BASE_UNIT = {'g': 'kg', 'ml': 'l'}
-BASE_DIVISOR = {'g': 1000.0, 'ml': 1000.0}
+# The base unit a pack measured in `g` / `ml` / `m` is priced in. Everything
+# the platform compares on is per kilogram, per litre or per metre; nothing is
+# compared per gram, because no marketplace quotes it that way.
+BASE_UNIT = {'g': 'kg', 'ml': 'l', 'm': 'm'}
+BASE_DIVISOR = {'g': 1000.0, 'ml': 1000.0, 'm': 1.0}
+# What a pack priced in each base unit is measured in, for saying so.
+_MEASURED_IN = {'kg': 'grams', 'l': 'millilitres', 'm': 'metres'}
 
 # How to read the unit Amazon appends to its own published per-unit price.
 # Each entry maps the unit text to (dimension, factor onto the base unit):
@@ -56,6 +64,8 @@ _PUBLISHED_UNITS = {
     'l': ('l', 1.0), 'liter': ('l', 1.0), 'litre': ('l', 1.0),
     'ml': ('l', 1000.0), 'milliliter': ('l', 1000.0),
     '100 ml': ('l', 10.0), '100 milliliter': ('l', 10.0),
+    # "0,05 € pro Meter": 22 of the 69 dental-floss records of 2026-10-18.
+    'm': ('m', 1.0), 'meter': ('m', 1.0), 'metre': ('m', 1.0),
 }
 
 # Units that measure something other than content. A price "pro Stück" on a
@@ -95,9 +105,11 @@ def published_per_base(unit_price, base_unit):
                       f'this layer does not know how to convert')
     dimension, factor = known
     if dimension != base_unit:
+        missing = ('a density' if {dimension, base_unit} == {'kg', 'l'} else
+                   'a weight or volume per metre')
         return None, (f'Amazon quotes its own unit price per {unit} while the '
-                      f'pack is measured in {"grams" if base_unit == "kg" else "millilitres"}; '
-                      f'converting between the two needs a density nobody '
+                      f'pack is measured in {_MEASURED_IN[base_unit]}; '
+                      f'converting between the two needs {missing} nobody '
                       f'published')
     return amount * factor, ''
 
@@ -145,18 +157,22 @@ def price(record):
                  source=PUBLISHED)
 
 
-def per_base_unit(record, quantity):
-    """Price per kilogram or per litre, cross-checked against Amazon's own.
+def per_base_unit(record, quantity, pack_unit=None):
+    """Price per kilogram, litre or metre, cross-checked against Amazon's own.
 
     The unit follows the pack: a pack measured in grams yields a price per
-    kilogram, one measured in millilitres a price per litre.
+    kilogram, one measured in millilitres a price per litre, a length in
+    metres a price per metre. `pack_unit` fixes the unit when `quantity` is
+    a length rather than the pack's content, so that an unknown length still
+    reads Amazon's own figure per metre and never per kilogram.
     """
     amount = (record.get('price') or {}).get('amount')
     currency = (record.get('price') or {}).get('currency') or ''
     unit_price = record.get('unit_price') or {}
 
-    pack_unit = quantity.unit if quantity.known else (
-        (record.get('package') or {}).get('total_quantity_unit') or '')
+    if pack_unit is None:
+        pack_unit = quantity.unit if quantity.known else (
+            (record.get('package') or {}).get('total_quantity_unit') or '')
     base_unit = BASE_UNIT.get(pack_unit, '')
     published, conversion_note = published_per_base(unit_price, base_unit)
 
@@ -174,8 +190,10 @@ def per_base_unit(record, quantity):
         evidence.append(Evidence('unit_price', unit_price.get('text') or
                                  f'{published:g} {currency}/{base_unit}'))
     if derived is not None:
+        total = ('package.total_length_base' if pack_unit == 'm' else
+                 'package.total_quantity_base')
         evidence.append(Evidence(
-            'price ÷ package.total_quantity_base',
+            f'price ÷ {total}',
             f'{amount:g} {currency} ÷ {quantity.value:g} {pack_unit}'))
 
     value = Value(round(derived if derived is not None else published, 2),
@@ -218,6 +236,22 @@ def per_base_unit(record, quantity):
     return value
 
 
+def per_length(record, length):
+    """Price per metre, for what is sold by length; see :func:`per_base_unit`.
+
+    The same derivation and the same cross-check, against the length
+    :func:`quantity.reconcile_length` returned rather than the pack's weight.
+    Unknown where the page states no length and Amazon quotes no price per
+    metre -- a stick pack priced "pro Stück" has neither, and is not
+    converted into one.
+    """
+    published, _ = published_per_base(record.get('unit_price'), 'm')
+    if not length.known and published is None:
+        return Value.unknown('the listing states no length it is sold by, and '
+                             'Amazon quotes no price per metre')
+    return per_base_unit(record, length, pack_unit='m')
+
+
 def apply_band(value, band, what):
     """Dispute a per-unit price outside the range the category sells in.
 
@@ -237,7 +271,7 @@ def apply_band(value, band, what):
     return value
 
 
-def alternative_price(record, value, consensus):
+def alternative_price(record, value, consensus, pack_unit=None):
     """Attach "if the page is right, it would be X" to a disputed price.
 
     Only when the page's own pack size actually implies a *different* figure.
@@ -247,7 +281,8 @@ def alternative_price(record, value, consensus):
     would print the same number twice and read as a correction that is not one.
     """
     amount = (record.get('price') or {}).get('amount')
-    pack_unit = (record.get('package') or {}).get('total_quantity_unit') or 'g'
+    pack_unit = pack_unit or (record.get('package') or {}).get(
+        'total_quantity_unit') or 'g'
     if not (amount and consensus and value.status == DISPUTED):
         return value
     implied = amount / (consensus / BASE_DIVISOR.get(pack_unit, 1000.0))

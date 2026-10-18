@@ -13,7 +13,7 @@ from parsel import Selector
 
 from shopping_advisor.extraction import PdpExtractor, for_domain
 from shopping_advisor.extraction import blocks
-from shopping_advisor.extraction.marketplaces import UNITS
+from shopping_advisor.extraction.marketplaces import LENGTH_UNITS, UNITS
 from shopping_advisor.extraction.text import (clean, decode_entities, node_text,
                                             parse_number, parse_quantity)
 
@@ -62,6 +62,16 @@ class TextPrimitives(unittest.TestCase):
         self.assertEqual(parse_quantity('1,5 kg', UNITS), (1.5, 'kg', 1500.0))
         self.assertEqual(parse_quantity('6 x 500 g', UNITS), (3000.0, 'g', 3000.0))
         self.assertIsNone(parse_quantity('Paket', UNITS))
+
+    def test_parse_quantity_reads_metres_only_from_the_length_table(self):
+        self.assertEqual(parse_quantity('50.0 meter', LENGTH_UNITS),
+                         (50.0, 'm', 50.0))
+        self.assertEqual(parse_quantity('4 x 50 m', LENGTH_UNITS),
+                         (200.0, 'm', 200.0))
+        self.assertIsNone(parse_quantity('50.0 meter', UNITS))
+        # Dimensions, a thread's width and an area are not a length sold.
+        for text in ('12,8 x 9,6 x 1,9 cm', '2 mm', '2,5 m²', '75.0 stück'):
+            self.assertIsNone(parse_quantity(text, LENGTH_UNITS), text)
 
 
 class Marketplaces(unittest.TestCase):
@@ -232,6 +242,26 @@ class PdpComposition(unittest.TestCase):
         package = self.extract(html)['package']
         self.assertEqual(package['total_quantity_base'], 500.0)
         self.assertNotIn('item_count', package)
+
+    def test_a_length_row_and_a_price_per_metre(self):
+        # B0H71G6PJ6 as Amazon.de renders it on 2026-10-18.
+        html = ('<div id="productTitle">Oral-B Essential Floss Mint Gewachst 50M</div>'
+                '<div id="corePrice_feature_div"><span class="a-price">'
+                '<span class="a-offscreen">2,47 €</span></span>'
+                '<span class="pricePerUnit">(0,05 € pro Meter)</span></div>'
+                '<table class="a-normal a-spacing-micro">'
+                '<tr><td>Anzahl der Einheiten</td><td>50.0 meter</td></tr>'
+                '<tr><td>Produktabmessungen</td><td>11,3 x 7,1 x 2,3 cm; 10 Gramm</td></tr>'
+                '</table>')
+        record = self.extract(html)
+        self.assertEqual(record['unit_price']['unit'], 'meter')
+        self.assertEqual(record['unit_price']['amount'], 0.05)
+        package = record['package']
+        self.assertEqual((package['total_length_base'], package['total_length_unit'],
+                          package['total_length_source']), (50.0, 'm', 'unit_count'))
+        self.assertEqual(package['unit_count_text'], '50.0 meter')
+        self.assertEqual((package['total_quantity_base'], package['total_quantity_unit']),
+                         (10.0, 'g'))
 
     def test_price_is_read_only_from_a_price_container(self):
         # A page with no buy box, but carousels full of other products'
@@ -524,6 +554,92 @@ class PackageWeightFromDimensions(unittest.TestCase):
         self.assertEqual(package['item_weight_text'], '1,1 Pfund')
         self.assertNotIn('item_weight_base', package)
         self.assertNotIn('item_weight_origin', package)
+
+
+class PackageLength(unittest.TestCase):
+    """What is sold by the metre, read from the row Amazon files it under.
+
+    Amazon.de files a floss spool as "Anzahl der Einheiten: 50.0 meter" and
+    prices it "0,05 € pro Meter"; before 2026-10-19 the record stated no
+    length at all, and a bounded review worked out the price per metre by
+    hand. The length is read from the two content-count rows and from nothing
+    else, beside a weight total whose meaning does not change.
+    """
+
+    def package(self, title='Oral-B Essential Floss Mint Gewachst 50M',
+                **attributes):
+        return PdpExtractor(DE)._package(attributes, title)
+
+    def test_a_length_in_the_unit_count_row_is_the_total_length(self):
+        # B0H71G6PJ6, 2026-10-18.
+        package = self.package(unit_count='50.0 meter', item_count='1',
+                               dimensions='11,3 x 7,1 x 2,3 cm; 10 Gramm')
+        self.assertEqual(package['total_length_base'], 50.0)
+        self.assertEqual(package['total_length_unit'], 'm')
+        self.assertEqual(package['total_length_source'], 'unit_count')
+        # The pack's content total keeps its meaning: grams, from a weight.
+        self.assertEqual(package['total_quantity_base'], 10.0)
+        self.assertEqual(package['total_quantity_unit'], 'g')
+        self.assertNotIn('unit_count_base', package)
+
+    def test_a_pack_files_its_whole_length(self):
+        # B0FQV77NR5: four 50 m spools, filed as 200 m and four pieces.
+        package = self.package(
+            title='RAZOKO Flache Zahnseide, Cool Mint, 4er-Pack (4 x 50m)',
+            unit_count='200.0 meter', item_count='4',
+            dimensions='12,8 x 9,6 x 1,9 cm; 82 Gramm')
+        self.assertEqual(package['total_length_base'], 200.0)
+        self.assertEqual(package['item_count'], 4)
+
+    def test_a_length_under_a_count_label_is_not_a_piece_count(self):
+        """B0FS5TTWYM files "Stückzahl: 60.0 meter". Read as sixty pieces, it
+        was multiplied by the 40 g spool weight into 2,4 kg of floss."""
+        package = self.package(title='60M Öko Zahnseide 2 Spulen',
+                               item_count='60.0 meter',
+                               dimensions='12,6 x 10,8 x 2,4 cm; 40 Gramm')
+        self.assertNotIn('item_count', package)
+        self.assertEqual(package['total_length_base'], 60.0)
+        self.assertEqual(package['total_length_source'], 'item_count')
+        self.assertEqual(package['total_quantity_base'], 40.0)
+        self.assertEqual(package['total_quantity_source'], 'item_weight')
+
+    def test_the_unit_count_row_wins_over_the_count_row(self):
+        package = self.package(unit_count='210.0 meter', item_count='70 Meter')
+        self.assertEqual(package['total_length_base'], 210.0)
+        self.assertEqual(package['total_length_source'], 'unit_count')
+
+    def test_dimensions_are_never_a_length(self):
+        # Every floss page states its box in centimetres; a dimensions row in
+        # metres is no more a length sold than one in centimetres.
+        for dimensions in ('12,8 x 9,6 x 1,9 cm; 82 Gramm', '5 x 10 x 4 cm',
+                           '2 x 1 x 0,5 m', '20 x 15 cm; 2 Meter'):
+            package = self.package(dimensions=dimensions)
+            self.assertNotIn('total_length_base', package, dimensions)
+
+    def test_a_length_is_never_a_weight_or_a_volume(self):
+        package = self.package(item_weight='50 Meter', volume='50 m',
+                               package_weight='2 m')
+        for key in ('item_weight_base', 'volume_base', 'package_weight_base',
+                    'total_quantity_base', 'total_length_base'):
+            self.assertNotIn(key, package)
+
+    def test_a_stick_pack_has_no_length(self):
+        # B0H62SDCK2: 75 floss sticks, filed and priced per piece.
+        package = self.package(
+            title='Oral-B Essential Floss Zahnseide Sticks 75 Stück',
+            unit_count='75.0 stück', item_count='1',
+            dimensions='16,1 x 11,9 x 2,1 cm; 50 Gramm')
+        self.assertNotIn('total_length_base', package)
+        self.assertEqual(package['total_quantity_base'], 50.0)
+
+    def test_a_length_in_the_title_supplies_none(self):
+        # B00AYCU0OK states 50 m only in its title and files four pieces: a
+        # title may confirm a length downstream, never supply one.
+        package = self.package(
+            title='Oral-B Essentialfloss Ungewachst 50m (Zahnseide), 4er Pack '
+                  '(4 X 1 Stück)',
+            unit_count='4 stück', item_count='4')
+        self.assertNotIn('total_length_base', package)
 
 
 class AplusComparisonTable(unittest.TestCase):

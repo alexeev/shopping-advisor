@@ -16,7 +16,7 @@ import datetime as _dt
 import re
 
 from . import blocks, reviews as _reviews
-from .marketplaces import UNITS, VOLUME_UNITS
+from .marketplaces import LENGTH_UNITS, UNITS, VOLUME_UNITS
 from .text import clean, decode_entities, first_text, node_text, parse_quantity
 
 # 3 added `variation`: the twister matrix, decoded verbatim. Kept as raw
@@ -54,6 +54,13 @@ from .text import clean, decode_entities, first_text, node_text, parse_quantity
 # attributes with the location line the page names. Bounded reviews met
 # buyer deadlines that no field could answer, and operators read the promise
 # off retained pages by hand. A new key, so within-version under CONTRACT §6.
+# 6, additive (2026-10-19): `package.total_length_*`, the length a listing
+# sells, in metres, from the content-count row Amazon files it under ("Anzahl
+# der Einheiten: 50.0 meter"). Floss, tape and cable are priced per metre and
+# the record could state no length at all, so the per-metre price had to be
+# worked out by hand. New keys beside `total_quantity_*`, whose grams-or-
+# millilitres meaning does not change; and a "Stückzahl: 60.0 meter" row is no
+# longer read as sixty pieces. Within-version under CONTRACT §6, see §7 there.
 SCHEMA_VERSION = 6
 
 #: Who sells: a third-party merchant renders as a profile link or as the
@@ -454,6 +461,9 @@ class PdpExtractor:
     def _quantity(self, text):
         return parse_quantity(text, UNITS, self.mp.decimal_sep)
 
+    def _length(self, text):
+        return parse_quantity(text, LENGTH_UNITS, self.mp.decimal_sep)
+
     def _package(self, attributes, title):
         package = {}
         for key, attr in (('item_weight', 'item_weight'),
@@ -496,7 +506,10 @@ class PdpExtractor:
                             'unit_count_amount': round(amount, 4),
                             'unit_count_unit': unit,
                             'unit_count_base': round(base, 4)})
-        elif not as_quantity:
+        elif not as_quantity and not self._length(raw_count):
+            # A length is not a count either: "Stückzahl: 60.0 meter" is one
+            # listing of 60 m of floss, not sixty pieces, and was multiplied
+            # into a 2,4 kg pack before lengths were read.
             count = self.mp.number(raw_count)
             if count is not None and count >= 1:
                 package['item_count'] = int(count)
@@ -513,6 +526,12 @@ class PdpExtractor:
             # made Amazon's own per-litre figure unusable as a cross-check.
             package['total_quantity_unit'] = 'ml' if unit in VOLUME_UNITS else 'g'
             package['total_quantity_source'] = source
+
+        length, source = self._total_length(attributes)
+        if length is not None:
+            package['total_length_base'] = round(length, 2)
+            package['total_length_unit'] = 'm'
+            package['total_length_source'] = source
         return package
 
     def _weight_from_dimensions(self, dimensions):
@@ -539,6 +558,24 @@ class PdpExtractor:
             return None
         amount, unit, base = parsed
         return tail, amount, unit, base
+
+    def _total_length(self, attributes):
+        """Total length of what the listing sells, as ``(metres, source)``.
+
+        A separate total from :meth:`_total_quantity`, because a length is not
+        content measured by weight or volume and `total_quantity_*` promises
+        grams or millilitres. Read only from the two rows a content count is
+        filed under -- Anzahl der Einheiten, then Stückzahl -- which is where
+        Amazon.de takes its own "pro Meter" price from. Never from the
+        dimensions row, which states the box in centimetres, and never from
+        the title, where "2 x 3 m" may as well be a rug's size as two 3 m
+        rolls: a title may confirm a total downstream, never supply one.
+        """
+        for source in ('unit_count', 'item_count'):
+            parsed = self._length(attributes.get(source) or '')
+            if parsed:
+                return parsed[2], source
+        return None, ''
 
     def _total_quantity(self, package, title):
         """Total content of the listing, as ``(base amount, source, unit)``.

@@ -15,6 +15,10 @@ Nothing here knows what the product is. The rules were written against dry
 pasta and then run unchanged over tyre mounting paste, a non-food category
 with no nutrition, different pack units and a different idea of what a good
 pack size is; the second category found no rule that needed to know.
+
+What is sold by length -- floss, tape, cable -- is reconciled by the same
+rules over a family of units of its own (:data:`LENGTH`), so a length on the
+page never confirms or disputes a weight, and a weight never a length.
 """
 
 import re
@@ -38,48 +42,108 @@ _UNIT_GRAMS = {'g': 1.0, 'gr': 1.0, 'gramm': 1.0, 'kg': 1000.0,
 _UNIT_DIMENSION = {'g': 'mass', 'gr': 'mass', 'gramm': 'mass', 'kg': 'mass',
                    'ml': 'volume', 'l': 'volume'}
 _UNIT_RE = '|'.join(sorted(_UNIT_GRAMS, key=len, reverse=True))
+# Metres, for what is sold by length. "Metern" is the German dative ("mit 50
+# Metern"). Centimetres and millimetres are deliberately absent: on a floss
+# page they are the box's dimensions, never the floss in it.
+_UNIT_METRES = {'m': 1.0, 'meter': 1.0, 'meters': 1.0, 'metern': 1.0,
+                'metre': 1.0, 'metres': 1.0}
+_LENGTH_RE = '|'.join(sorted(_UNIT_METRES, key=len, reverse=True))
 # Anchoring a count: "\b" alone is not enough, because the engine happily
 # backtracks "500" down to "50" to satisfy a following lookahead, which turned
 # "Packung mit 500g" into a fifty-pack and a 25 kg listing.
 _WHOLE_COUNT = r'(\d{1,3})(?![\d,.])'
-_NOT_A_UNIT = r'(?!\s*(?:%s)\b)' % _UNIT_RE
-
-# "6 x 500 g", "3x500g", "16 x 500 g"
-_N_TIMES_W = re.compile(
-    r'%s\s*[x×]\s*(\d[\d.,]*)\s*(%s)\b' % (_WHOLE_COUNT, _UNIT_RE), re.I)
-# "500 g (16er Pack)", "125g (4er Pack)", "1000 g (Pack of 1)"
-_W_THEN_PACK = re.compile(
-    r'(\d[\d.,]*)\s*(%s)\b[^()]{0,12}\(\s*(?:%s\s*er[- ]?Pack|Pack\s+of\s+%s)'
-    r'\s*\)?'          # quoted back to the user as evidence, so close the paren
-    % (_UNIT_RE, _WHOLE_COUNT, _WHOLE_COUNT), re.I)
-# "16 Packungen mit 500 g", "6 Stück à 250 g"
-_N_PACKS_OF_W = re.compile(
-    r'%s\s*(?:packung(?:en)?|packs?|stück)\s*(?:mit|à|a|of|von)?\s*'
-    r'(\d[\d.,]*)\s*(%s)\b' % (_WHOLE_COUNT, _UNIT_RE), re.I)
 # A leading multiplier with the weight stated later: "16x Garofalo ... mit 500g"
 _LEADING_N = re.compile(r'^\s*%s\s*[x×]\s*(?=\D)' % _WHOLE_COUNT, re.I)
-# A bare pack count: "(Packung mit 5)", "6er Pack", "pack of 4"
-_PACK_COUNT = re.compile(
-    r'(?:packung\s+mit\s+%(c)s%(u)s'
-    r'|%(c)s\s*er[- ]?pack'
-    r'|pack(?:ung)?\s+of\s+%(c)s%(u)s)' % {'c': _WHOLE_COUNT, 'u': _NOT_A_UNIT},
-    re.I)
-# Any single weight in a string, used as the per-unit weight for a bare count.
-_ANY_WEIGHT = re.compile(r'(\d[\d.,]*)\s*(%s)\b' % _UNIT_RE, re.I)
+# One side of a dimension: "30 x 20 x 2 m", "2 m x 48 mm". A number and an
+# optional unit before the multiplication sign, or a number after it.
+_CHAIN_BEFORE = re.compile(r'\d\s*(?:[^\W\d_]{1,2}\s*)?[x×]\s*$', re.I)
+_CHAIN_AFTER = re.compile(r'\s*[x×]\s*\d', re.I)
+
+
+class Measure:
+    """The pack phrases of one family of units, and how to read a match.
+
+    Mass and volume are one family, as they always were: ``_UNIT_GRAMS`` maps
+    millilitres onto grams, the unit travels beside the total, and a bare
+    statement may only confirm a total in its own dimension. Length is a
+    family of its own. Its phrases are the same -- "6x 40 m", "50 m (4er
+    Pack)", "4er-Pack ... 50m" -- with one guard mass never needed: a length
+    that is one side of a dimension ("30 x 20 x 2 m") states no pack.
+    """
+
+    def __init__(self, factors, symbol, noun, word, not_a_unit,
+                 dimensions=None, chains=False):
+        unit_re = '|'.join(sorted(factors, key=len, reverse=True))
+        self.factors = factors
+        self.symbol = symbol
+        self.noun = noun
+        self.word = word
+        self.dimensions = dimensions
+        self.chains = chains
+        not_a_unit = r'(?!\s*(?:%s)\b)' % not_a_unit
+        # "6 x 500 g", "3x500g", "16 x 500 g"
+        self.n_times_w = re.compile(
+            r'%s\s*[x×]\s*(\d[\d.,]*)\s*(%s)\b' % (_WHOLE_COUNT, unit_re), re.I)
+        # "500 g (16er Pack)", "125g (4er Pack)", "1000 g (Pack of 1)"
+        self.w_then_pack = re.compile(
+            r'(\d[\d.,]*)\s*(%s)\b[^()]{0,12}\(\s*(?:%s\s*er[- ]?Pack|Pack\s+of\s+%s)'
+            r'\s*\)?'      # quoted back to the user as evidence, so close the paren
+            % (unit_re, _WHOLE_COUNT, _WHOLE_COUNT), re.I)
+        # "16 Packungen mit 500 g", "6 Stück à 250 g"
+        self.n_packs_of_w = re.compile(
+            r'%s\s*(?:packung(?:en)?|packs?|stück)\s*(?:mit|à|a|of|von)?\s*'
+            r'(\d[\d.,]*)\s*(%s)\b' % (_WHOLE_COUNT, unit_re), re.I)
+        # A bare pack count: "(Packung mit 5)", "6er Pack", "pack of 4"
+        self.pack_count = re.compile(
+            r'(?:packung\s+mit\s+%(c)s%(u)s'
+            r'|%(c)s\s*er[- ]?pack'
+            r'|pack(?:ung)?\s+of\s+%(c)s%(u)s)' % {'c': _WHOLE_COUNT, 'u': not_a_unit},
+            re.I)
+        # Any single amount in a string, the per-unit amount for a bare count.
+        self.any_amount = re.compile(r'(\d[\d.,]*)\s*(%s)\b' % unit_re, re.I)
+
+    def amount(self, amount_text, unit):
+        # Titles are written in the marketplace's number format ("1,5 kg"),
+        # which the extraction layer already knows how to read.
+        amount = parse_number(amount_text, decimal_sep=',')
+        return None if amount is None else amount * self.factors[unit.lower()]
+
+    def in_a_chain(self, text, match):
+        """True when `match` is one side of a dimension rather than a pack."""
+        return self.chains and bool(
+            _CHAIN_BEFORE.search(text[:match.start()])
+            or _CHAIN_AFTER.match(text, match.end()))
+
+    def matches(self, pattern, text):
+        return [match for match in pattern.finditer(text)
+                if not self.in_a_chain(text, match)]
+
+    def first(self, text):
+        found = self.matches(self.any_amount, text)
+        return found[0] if found else None
+
+    def wanted(self, record):
+        """The dimension a statement must measure to confirm the total."""
+        if not self.dimensions:
+            return None
+        return self.dimensions.get(
+            ((record.get('package') or {}).get('total_quantity_unit') or '').lower())
+
+
+#: What the generic layer always reconciled: grams, and millilitres beside them.
+MASS = Measure(_UNIT_GRAMS, 'g', 'pack size', 'weight', _UNIT_RE,
+               dimensions=_UNIT_DIMENSION)
+#: What is sold by the metre. "Packung mit 50 m" is not a fifty-pack, and
+#: neither is "Packung mit 50 g": a number followed by any unit is no count.
+LENGTH = Measure(_UNIT_METRES, 'm', 'length', 'length',
+                 '|'.join((_LENGTH_RE, _UNIT_RE)), chains=True)
 
 
 def relative_gap(a, b):
     return abs(a - b) / max(abs(a), abs(b), 1e-9)
 
 
-def _grams(amount_text, unit):
-    # Titles are written in the marketplace's number format ("1,5 kg"), which
-    # the extraction layer already knows how to read.
-    amount = parse_number(amount_text, decimal_sep=',')
-    return None if amount is None else amount * _UNIT_GRAMS[unit.lower()]
-
-
-def size_label_quantity(label):
+def size_label_quantity(label, measure=MASS):
     """Grams stated by a twister size label, or None.
 
     The size dimension *is* the pack content, which is what makes a bare
@@ -90,16 +154,16 @@ def size_label_quantity(label):
     """
     if not label:
         return None
-    for pattern in (_N_TIMES_W, _W_THEN_PACK, _N_PACKS_OF_W):
-        if pattern.search(label):
+    for pattern in (measure.n_times_w, measure.w_then_pack, measure.n_packs_of_w):
+        if measure.matches(pattern, label):
             return None            # a counted phrase: the general rules apply
-    match = _ANY_WEIGHT.search(label)
+    match = measure.first(label)
     if not match:
         return None                # "Roségold" is not a quantity
-    return _grams(match.group(1), match.group(2))
+    return measure.amount(match.group(1), match.group(2))
 
 
-def pack_hints(record):
+def pack_hints(record, measure=MASS):
     """Independent statements of total pack content, as (grams, Evidence).
 
     Three sources: the variation matrix's size dimension, the title, and the
@@ -112,6 +176,9 @@ def pack_hints(record):
     string. Multiplying a title's pack count by the attribute table's item
     weight looks appealing and is circular: whether that weight is per item or
     per pack is precisely the question under dispute.
+
+    `measure` selects the family of units: grams and millilitres by default,
+    or :data:`LENGTH` for a total in metres.
     """
     title = record.get('title') or ''
     size_name = (record.get('package') or {}).get('size_name') or ''
@@ -123,7 +190,7 @@ def pack_hints(record):
     # the strongest of them -- and it is present on pages where the attribute
     # table states no pack size at all.
     if variation_label:
-        grams = size_label_quantity(variation_label)
+        grams = size_label_quantity(variation_label, measure)
         if grams:
             hints.append((grams, Evidence('variation.size_name',
                                           variation_label)))
@@ -134,21 +201,21 @@ def pack_hints(record):
         if not text:
             continue
 
-        for match in _N_TIMES_W.finditer(text):
-            grams = _grams(match.group(2), match.group(3))
+        for match in measure.matches(measure.n_times_w, text):
+            grams = measure.amount(match.group(2), match.group(3))
             if grams:
                 hints.append((int(match.group(1)) * grams,
                               Evidence(source, match.group(0))))
 
-        for match in _W_THEN_PACK.finditer(text):
-            grams = _grams(match.group(1), match.group(2))
+        for match in measure.matches(measure.w_then_pack, text):
+            grams = measure.amount(match.group(1), match.group(2))
             count = match.group(3) or match.group(4)
             if grams and count:
                 hints.append((int(count) * grams,
                               Evidence(source, match.group(0))))
 
-        for match in _N_PACKS_OF_W.finditer(text):
-            grams = _grams(match.group(2), match.group(3))
+        for match in measure.matches(measure.n_packs_of_w, text):
+            grams = measure.amount(match.group(2), match.group(3))
             if grams:
                 hints.append((int(match.group(1)) * grams,
                               Evidence(source, match.group(0))))
@@ -156,23 +223,24 @@ def pack_hints(record):
         # A bare count needs a per-unit weight from the same string. A count of
         # one ("1er Pack") says the listing is a single unit, not how much is
         # in it, so it is no evidence about the total at all.
-        counts = [int(group) for match in _PACK_COUNT.finditer(text)
+        counts = [int(group) for match in measure.pack_count.finditer(text)
                   for group in match.groups() if group]
         leading = _LEADING_N.match(text)
         if leading:
             counts.append(int(leading.group(1)))
-        stated = _ANY_WEIGHT.search(text)
-        per_unit = _grams(stated.group(1), stated.group(2)) if stated else None
+        stated = measure.first(text)
+        per_unit = (measure.amount(stated.group(1), stated.group(2))
+                    if stated else None)
         if per_unit:
             for count in counts:
                 if count > 1:
                     hints.append((count * per_unit, Evidence(
-                        source, f'{count} x {per_unit:g} g')))
+                        source, f'{count} x {per_unit:g} {measure.symbol}')))
 
     return hints
 
 
-def _states_a_pack_count(record, texts):
+def _states_a_pack_count(record, texts, measure=MASS):
     """True when anything on the page says the listing holds more than one unit.
 
     The question this answers is narrow: may a bare weight in the title be
@@ -184,24 +252,24 @@ def _states_a_pack_count(record, texts):
     for text in texts:
         if not text:
             continue
-        for match in _PACK_COUNT.finditer(text):
+        for match in measure.pack_count.finditer(text):
             if any(int(group) > 1 for group in match.groups() if group):
                 return True
         leading = _LEADING_N.match(text)
         if leading and int(leading.group(1)) > 1:
             return True
-        for pattern in (_N_TIMES_W, _N_PACKS_OF_W):
-            for match in pattern.finditer(text):
+        for pattern in (measure.n_times_w, measure.n_packs_of_w):
+            for match in measure.matches(pattern, text):
                 if int(match.group(1)) > 1:
                     return True
-        for match in _W_THEN_PACK.finditer(text):
+        for match in measure.matches(measure.w_then_pack, text):
             count = match.group(3) or match.group(4)
             if count and int(count) > 1:
                 return True
     return False
 
 
-def single_unit_weights(record):
+def single_unit_weights(record, measure=MASS):
     """Bare weights the listing states about itself, as (grams, Evidence).
 
     A bare weight in a title is ambiguous *because of multipacks*: "Garofalo
@@ -258,17 +326,16 @@ def single_unit_weights(record):
     # 1.250 Gramm"), so without this line both stayed unverified with the
     # confirmation on the page.
     texts.append(('content.aplus', (content.get('aplus') or {}).get('text') or ''))
-    if _states_a_pack_count(record, [text for _, text in texts]):
+    if _states_a_pack_count(record, [text for _, text in texts], measure):
         return []
 
-    wanted = _UNIT_DIMENSION.get(
-        ((record.get('package') or {}).get('total_quantity_unit') or '').lower())
+    wanted = measure.wanted(record)
     found = []
     for source, text in texts:
-        for match in _ANY_WEIGHT.finditer(text or ''):
-            if wanted and _UNIT_DIMENSION.get(match.group(2).lower()) != wanted:
+        for match in measure.matches(measure.any_amount, text or ''):
+            if wanted and measure.dimensions.get(match.group(2).lower()) != wanted:
                 continue
-            grams = _grams(match.group(1), match.group(2))
+            grams = measure.amount(match.group(1), match.group(2))
             if grams:
                 found.append((grams, Evidence(source, match.group(0))))
     return found
@@ -313,7 +380,34 @@ def reconcile(record):
             'the pack quantity was computed from an item weight the page '
             'itself contradicts', contradiction)
 
-    hints = pack_hints(record)
+    return _against_hints(record, value, total, MASS)
+
+
+def reconcile_length(record):
+    """Total length the listing sells, in metres, reconciled like a pack size.
+
+    The rules of :func:`reconcile`, over lengths only. The total is the one
+    the extractor read from a content-count row ("Anzahl der Einheiten: 50.0
+    meter"); it is unverified until a statement elsewhere on the page agrees
+    -- "50M" in the title of a single spool, "70m, 3er Vorteilspack (3x 70m)"
+    on a 210 m pack -- disputed when every counted statement disagrees, and a
+    bare length may confirm it and never contradict it. Nothing here reads a
+    length from the dimensions row or turns a count of sticks into metres: a
+    listing whose content-count row states no length has none.
+    """
+    package = record.get('package') or {}
+    total = package.get('total_length_base')
+    if not total:
+        return Value.unknown('the listing states no length it is sold by')
+    origin = package.get('total_length_source') or 'unknown'
+    stated = Evidence(f'package.total_length_base ({origin})', f'{total:g} m')
+    value = Value(total, UNVERIFIED, 'm', [stated], source=ATTRIBUTES)
+    return _against_hints(record, value, total, LENGTH)
+
+
+def _against_hints(record, value, total, measure):
+    """Promote or dispute an attribute total on the page's own statements."""
+    hints = pack_hints(record, measure)
     agreeing = [(grams, evidence) for grams, evidence in hints
                 if relative_gap(grams, total) <= QUANTITY_TOLERANCE]
     if agreeing:
@@ -322,32 +416,32 @@ def reconcile(record):
         return value
 
     if not hints:
-        return _confirm_from_bare_weight(record, value, total)
+        return _confirm_from_bare_weight(record, value, total, measure)
 
     value.dispute(
-        'the pack size Amazon files in its attribute table disagrees with '
-        'every other statement of it on the page')
+        f'the {measure.noun} Amazon files in its attribute table disagrees '
+        f'with every other statement of it on the page')
     for grams, evidence in hints[:3]:
         value.evidence.append(
-            Evidence(evidence.field, f'{evidence.quote} -> {grams:g} {unit}'))
+            Evidence(evidence.field, f'{evidence.quote} -> {grams:g} {value.unit}'))
     return value
 
 
-def _confirm_from_bare_weight(record, value, total):
+def _confirm_from_bare_weight(record, value, total, measure=MASS):
     """Promote a total that a bare, uncounted weight on the page agrees with."""
-    for grams, evidence in single_unit_weights(record):
+    for grams, evidence in single_unit_weights(record, measure):
         if relative_gap(grams, total) <= QUANTITY_TOLERANCE:
             value.status = TRUSTED
             value.evidence.append(evidence)
             value.notes.append(
-                'the listing states this weight in its own text and claims no '
-                'more than one unit, so the two agree')
+                f'the listing states this {measure.word} in its own text and '
+                f'claims no more than one unit, so the two agree')
             return value
-    value.notes.append('no independent statement of pack size on the page')
+    value.notes.append(f'no independent statement of {measure.noun} on the page')
     return value
 
 
-def consensus_hint(record):
+def consensus_hint(record, measure=MASS):
     """The pack size the page's own text agrees on most, or None.
 
     Used to say what the price *would* be if the attribute table is the thing
@@ -355,7 +449,7 @@ def consensus_hint(record):
     silent correction: the page contradicts itself and we do not get to pick a
     winner on the user's behalf.
     """
-    hints = pack_hints(record)
+    hints = pack_hints(record, measure)
     if not hints:
         return None
     best, best_votes = None, 0
