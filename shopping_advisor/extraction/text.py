@@ -166,8 +166,9 @@ def parse_quantity(text, units, decimal_sep=','):
     """Split "500 Gramm" / "1,5 kg" / "6 x 500g" into a normalised quantity.
 
     Returns ``(amount, canonical_unit, base_amount)`` where ``base_amount`` is
-    expressed in grams (mass) or millilitres (volume), or ``None`` when the
-    string carries no recognisable unit. A leading multiplier ("6 x 500 g") is
+    expressed in the base of the unit table it was given -- grams (mass) or
+    millilitres (volume) for ``UNITS``, metres for ``LENGTH_UNITS`` -- or
+    ``None`` when the string carries no unit from that table. A leading multiplier ("6 x 500 g") is
     applied, which is how multipacks are written on both .de and .com.
     """
     if not text:

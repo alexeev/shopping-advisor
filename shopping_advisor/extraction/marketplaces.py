@@ -200,6 +200,19 @@ UNITS = {
 
 VOLUME_UNITS = {'ml', 'l'}
 
+# Length units, mapped to a canonical symbol and a factor to metres. Kept apart
+# from `UNITS` because a length is never a weight or a volume: only the rows
+# Amazon files a pack's content count under are read with this table, so an
+# Artikelgewicht or Volumen row can never yield one. Dental floss, tape and
+# cable are sold by the metre, and Amazon.de files them as "Anzahl der
+# Einheiten: 50.0 meter". Centimetres and millimetres are deliberately absent:
+# they are how Amazon writes dimensions ("12,8 x 9,6 x 1,9 cm"), and none of
+# the 2,881 records retained by 2026-10-19 files a content count in either.
+LENGTH_UNITS = {
+    'm': ('m', 1.0), 'meter': ('m', 1.0), 'meters': ('m', 1.0),
+    'metre': ('m', 1.0), 'metres': ('m', 1.0),
+}
+
 
 class Marketplace:
     """Locale-specific knowledge for one Amazon location."""

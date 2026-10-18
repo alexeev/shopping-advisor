@@ -446,6 +446,182 @@ class Pricing(unittest.TestCase):
         self.assertNotEqual(validate(data, BARE).price_per_base.status, DISPUTED)
 
 
+def floss(**overrides):
+    """A 50 m spool as Amazon.de filed and priced B0H71G6PJ6 on 2026-10-18."""
+    package = {'total_length_base': 50.0, 'total_length_unit': 'm',
+               'total_length_source': 'unit_count', 'item_count': 1,
+               'total_quantity_base': 10.0, 'total_quantity_unit': 'g',
+               'total_quantity_source': 'item_weight_x_count'}
+    package.update(overrides.pop('package', {}))
+    data = dict(title='Oral-B Essential Floss Mint Gewachst 50M',
+                price={'amount': 2.47, 'currency': 'EUR'},
+                unit_price={'amount': 0.05, 'unit': 'meter',
+                            'text': '0,05 € pro Meter'},
+                package=package)
+    data.update(overrides)
+    return record(**data)
+
+
+class PackLength(unittest.TestCase):
+    """What is sold by the metre, reconciled by the pack-size rules.
+
+    The same rules as :class:`PackQuantity`, over lengths, and never across:
+    a length on the page neither confirms nor disputes a weight.
+    """
+
+    def test_a_bare_length_confirms_a_single_spool(self):
+        value = quantity.reconcile_length(floss())
+        self.assertEqual((value.value, value.unit, value.status),
+                         (50.0, 'm', TRUSTED))
+        self.assertEqual(value.source, ATTRIBUTES)
+        self.assertEqual(value.evidence[-1].quote, '50M')
+
+    def test_a_counted_length_confirms_a_pack(self):
+        # B07H36ZRLZ: filed as 210 m, and as 210 pieces.
+        value = quantity.reconcile_length(floss(
+            title='edel+white Easy Tape Zahnband gewachst 70m, 3er '
+                  'Vorteilspack (3x 70m)',
+            package={'total_length_base': 210.0, 'item_count': 210}))
+        self.assertEqual(value.status, TRUSTED)
+        self.assertEqual(value.evidence[-1].quote, '3x 70m')
+
+    def test_a_bare_count_and_a_length_in_one_string_confirm_a_pack(self):
+        value = quantity.reconcile_length(floss(
+            title='Oral-B Essential Zahnseide, ohne Geschmack, 50 m, 6er-Packung',
+            package={'total_length_base': 300.0, 'item_count': 6}))
+        self.assertEqual(value.status, TRUSTED)
+        self.assertEqual(value.evidence[-1].quote, '6 x 50 m')
+
+    def test_a_counted_length_that_disagrees_disputes_it(self):
+        value = quantity.reconcile_length(floss(
+            title='Oral-B Zahnband Gewachst, 4x 50 m Pack'))
+        self.assertEqual(value.status, DISPUTED)
+        self.assertIn('length Amazon files', value.notes[0])
+        self.assertTrue(any('200 m' in e.quote for e in value.evidence))
+
+    def test_a_bare_length_may_confirm_but_never_contradict(self):
+        value = quantity.reconcile_length(floss(title='Zahnseide 30m',
+                                                package={'total_length_base': 60.0}))
+        self.assertEqual(value.status, UNVERIFIED)
+
+    def test_a_bare_length_says_nothing_when_more_than_one_unit_is_claimed(self):
+        # B0GZSX6CZT: "60m" in the title, two pieces in the count row.
+        value = quantity.reconcile_length(floss(
+            title='Expandierende gewebte Zahnseide 60m',
+            package={'total_length_base': 60.0, 'item_count': 2}))
+        self.assertEqual(value.status, UNVERIFIED)
+
+    def test_one_side_of_a_dimension_states_no_pack(self):
+        data = floss(title='Teichfolie 2 x 3 x 0,5 m, Rolle 2,5 m x 1,5 m')
+        self.assertEqual(quantity.pack_hints(data, quantity.LENGTH), [])
+        self.assertEqual(quantity.single_unit_weights(data, quantity.LENGTH), [])
+
+    def test_centimetres_millimetres_and_square_metres_are_not_metres(self):
+        data = floss(title='Zahnseide in der Box 11,3 x 7,1 x 2,3 cm, 2 mm Faden, '
+                           'Folie 2 m²')
+        self.assertEqual(quantity.single_unit_weights(data, quantity.LENGTH), [])
+        self.assertEqual(quantity.reconcile_length(data).status, UNVERIFIED)
+
+    def test_a_length_never_confirms_a_weight(self):
+        value = quantity.reconcile(record(
+            title='Zahnseide 50 m', package={'total_quantity_base': 50.0,
+                                             'total_quantity_unit': 'g',
+                                             'total_quantity_source': 'item_weight'}))
+        self.assertEqual(value.status, UNVERIFIED)
+
+    def test_a_weight_never_confirms_a_length(self):
+        value = quantity.reconcile_length(floss(title='Zahnseide 50 g'))
+        self.assertEqual(value.status, UNVERIFIED)
+
+    def test_a_stick_pack_has_no_length_whatever_its_text_says(self):
+        """B0H62SDCK2 files 75 pieces and is priced per piece. Its total is
+        not a length, and "3M" in prose is a brand, not three metres."""
+        data = record(title='Oral-B Essential Floss Zahnseide Sticks 75 Stück',
+                      price={'amount': 3.01, 'currency': 'EUR'},
+                      unit_price={'amount': 0.04, 'unit': 'stück',
+                                  'text': '0,04 € pro Stück'},
+                      package={'total_quantity_base': 50.0,
+                               'total_quantity_unit': 'g',
+                               'total_quantity_source': 'item_weight_x_count',
+                               'item_count': 1},
+                      content={'feature_bullets': ['Faden von 3M, 50 m Gesamtlänge'],
+                               'description': '', 'important_information': [],
+                               'aplus': {}})
+        validated = validate(data, BARE)
+        self.assertEqual(validated.length.status, UNKNOWN)
+        self.assertEqual(validated.price_per_length.status, UNKNOWN)
+        self.assertNotIn('length', validated.as_dict())
+        self.assertNotIn('price_per_length', validated.as_dict())
+
+
+class PricePerLength(unittest.TestCase):
+
+    def test_amazons_price_per_metre_is_read(self):
+        self.assertEqual(pricing.published_per_base(
+            {'amount': 0.05, 'unit': 'meter'}, 'm'), (0.05, ''))
+
+    def test_a_price_per_metre_is_derived_and_cross_checked(self):
+        value = validate(floss(), BARE).price_per_length
+        self.assertEqual((value.value, value.unit), (0.05, 'EUR/m'))
+        self.assertEqual(value.source, DERIVED)
+        self.assertEqual(value.status, TRUSTED)
+        self.assertIn("agrees with Amazon's published price per m", value.notes)
+        self.assertEqual([e.field for e in value.evidence],
+                         ['unit_price', 'price ÷ package.total_length_base'])
+
+    def test_a_price_per_metre_that_disagrees_with_amazons_is_disputed(self):
+        value = validate(floss(title='Zahnseide',
+                               unit_price={'amount': 0.10, 'unit': 'meter'}),
+                         BARE).price_per_length
+        self.assertEqual(value.status, DISPUTED)
+
+    def test_a_confirmed_length_beats_amazons_own_figure(self):
+        value = validate(floss(unit_price={'amount': 0.10, 'unit': 'meter'}),
+                         BARE).price_per_length
+        self.assertEqual(value.status, TRUSTED)
+        self.assertAlmostEqual(value.value, 0.05, places=2)
+
+    def test_a_disputed_length_offers_the_price_the_page_implies(self):
+        value = validate(floss(title='Oral-B Zahnband Gewachst, 4x 50 m Pack',
+                               price={'amount': 10.0, 'currency': 'EUR'},
+                               unit_price={'amount': 0.20, 'unit': 'meter'}),
+                         BARE).price_per_length
+        self.assertEqual(value.status, DISPUTED)
+        self.assertTrue(any('0.05 EUR/m' in note for note in value.notes),
+                        value.notes)
+
+    def test_amazons_figure_alone_is_unverified(self):
+        value = validate(floss(package={'total_length_base': None}),
+                         BARE).price_per_length
+        self.assertEqual((value.value, value.status, value.source),
+                         (0.05, UNVERIFIED, PUBLISHED))
+
+    def test_the_price_per_kilogram_still_follows_the_weight(self):
+        validated = validate(floss(), BARE)
+        self.assertEqual(validated.quantity.unit, 'g')
+        self.assertEqual(validated.price_per_base.unit, 'EUR/kg')
+        self.assertNotEqual(validated.price_per_base.status, TRUSTED)
+        self.assertIn('per metre', validated.price_per_base.notes[0])
+
+    def test_a_price_per_metre_cannot_check_a_weight(self):
+        amount, note = pricing.published_per_base(
+            {'amount': 0.05, 'unit': 'meter'}, 'kg')
+        self.assertIsNone(amount)
+        self.assertIn('measured in grams', note)
+        self.assertNotIn('density', note)
+
+    def test_a_price_per_piece_is_not_a_price_per_metre(self):
+        value = validate(record(unit_price={'amount': 0.04, 'unit': 'stück'}),
+                         BARE).price_per_length
+        self.assertEqual(value.status, UNKNOWN)
+
+    def test_no_category_band_is_held_against_a_price_per_metre(self):
+        # PASTA's band is 0.80-40.00 per kilogram; 0.05 per metre is not in it
+        # and says nothing about it.
+        self.assertEqual(validate(floss(), PASTA).price_per_length.status,
+                         TRUSTED)
+
+
 class Contract(unittest.TestCase):
 
     def test_a_record_with_no_food_block_gets_no_nutrition(self):
@@ -464,12 +640,22 @@ class Contract(unittest.TestCase):
         self.assertEqual(data['quantity']['source'], ATTRIBUTES)
         json.dumps(data)
 
+    def test_length_is_serialised_only_where_a_record_has_one(self):
+        """Absent where both are unknown, so no committed snapshot or card
+        digest moves; present on what is sold by the metre."""
+        self.assertFalse({'length', 'price_per_length'}
+                         & set(validate(record(), BARE).as_dict()))
+        data = validate(floss(), BARE).as_dict()
+        self.assertEqual(data['length']['value'], 50.0)
+        self.assertEqual(data['price_per_length']['unit'], 'EUR/m')
+
     def test_every_value_names_a_status_from_the_vocabulary(self):
         from shopping_advisor.validation import STATUSES
         validated = validate(record(food=food({'protein_g': 13.0,
                                                'fat_g': 2.0})), PASTA)
         for value in ([validated.quantity, validated.price,
-                       validated.price_per_base]
+                       validated.price_per_base, validated.length,
+                       validated.price_per_length]
                       + list(validated.nutrition.values())):
             self.assertIn(value.status, STATUSES)
 

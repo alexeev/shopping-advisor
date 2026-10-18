@@ -224,6 +224,71 @@ class DeliveryOnSavedPages(unittest.TestCase):
             self.assertIn('delivery', record['extraction']['blocks_absent'], asin)
 
 
+class LengthOnSavedPages(unittest.TestCase):
+    """What is sold by the metre, on five floss pages of 2026-10-18.
+
+    The snapshot pins every value; these say why they are the right ones. The
+    floss is the only product class here that Amazon files and prices by
+    length, and every floss page also states its box in centimetres.
+    """
+
+    SOLD_BY_LENGTH = {'B0H71G6PJ6': 50.0, 'B0C2DG1GMN': 40.0,
+                      'B0FQV77NR5': 200.0, 'B0FS5TTWYM': 60.0}
+
+    @classmethod
+    def setUpClass(cls):
+        cls.records = extract_dir('amazon_de')
+        cls.validated = {asin: validate(record)
+                         for asin, record in cls.records.items()}
+
+    def test_only_what_is_sold_by_length_has_a_length(self):
+        # Thirty of the 49 pages carry a dimensions row in centimetres, the
+        # stick pack among them; none of those rows is a length sold.
+        with_length = {asin: record['package']['total_length_base']
+                       for asin, record in self.records.items()
+                       if 'total_length_base' in record['package']}
+        self.assertEqual(with_length, self.SOLD_BY_LENGTH)
+
+    def test_a_spool_is_priced_per_metre_and_agrees_with_amazon(self):
+        for asin, euros in (('B0H71G6PJ6', 0.05), ('B0C2DG1GMN', 0.10),
+                            ('B0FQV77NR5', 0.05), ('B0FS5TTWYM', 0.15)):
+            per_metre = self.validated[asin].price_per_length
+            self.assertEqual((per_metre.value, per_metre.unit, per_metre.status),
+                             (euros, 'EUR/m', 'trusted'), asin)
+            self.assertEqual(self.records[asin]['unit_price']['unit'], 'meter')
+            self.assertEqual(self.validated[asin].length.status, 'trusted', asin)
+
+    def test_a_four_pack_is_confirmed_by_its_counted_title(self):
+        length = self.validated['B0FQV77NR5'].length
+        self.assertEqual(length.value, 200.0)
+        self.assertEqual(length.evidence[-1].quote, '4 x 50m')
+
+    def test_a_length_under_a_count_label_is_not_sixty_pieces(self):
+        # "Stückzahl: 60.0 meter" was read as sixty pieces and multiplied by
+        # the 40 g spool into a 2,4 kg pack.
+        package = self.records['B0FS5TTWYM']['package']
+        self.assertNotIn('item_count', package)
+        self.assertEqual(package['total_length_source'], 'item_count')
+        self.assertEqual((package['total_quantity_base'],
+                          package['total_quantity_source']), (40.0, 'item_weight'))
+
+    def test_a_stick_pack_is_not_read_as_metres(self):
+        validated = self.validated['B0H62SDCK2']
+        self.assertEqual(self.records['B0H62SDCK2']['unit_price']['unit'], 'stück')
+        self.assertFalse(validated.length.known)
+        self.assertFalse(validated.price_per_length.known)
+        self.assertNotIn('length', validated.as_dict())
+
+    def test_the_weight_total_keeps_its_meaning(self):
+        # Beside the length, the pack's content total is still grams, and
+        # Amazon's per-metre figure is no check on a price per kilogram.
+        for asin in self.SOLD_BY_LENGTH:
+            validated = self.validated[asin]
+            self.assertEqual(validated.quantity.unit, 'g', asin)
+            self.assertEqual(validated.price_per_base.unit, 'EUR/kg', asin)
+            self.assertNotEqual(validated.price_per_base.status, 'trusted', asin)
+
+
 if __name__ == '__main__':
     if '--update' in sys.argv:
         # ``--output DIR`` writes the snapshots under DIR instead of in place,

@@ -729,8 +729,9 @@ is the canonical written list, and `study capabilities` says what each has
 earned: `school_backpack` and `smartwatch` are task experiments with one study
 each behind them, and a report that rests on one says so in its limits. For
 anything else — a vacuum cleaner, a display — the generic layer still works
-(price, pack quantity, contradictions between the vendor's own statements) but
-nothing in the repository knows what makes one *good*.
+(price, pack quantity, a price per metre for what is sold by length,
+contradictions between the vendor's own statements) but nothing in the
+repository knows what makes one *good*.
 
 Say that, and say what it costs in time, confidence or the answer. Then produce
 the evidence and gap plan: what each decisive requirement would need, whether

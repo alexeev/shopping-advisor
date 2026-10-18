@@ -225,23 +225,40 @@ class AgainstTheCorpus(unittest.TestCase):
     # carry a size label too -- "50mm" and "51mm", a case diameter -- and a
     # length is not a pack quantity: the right reading is no hint at all.
     CASE_SIZES = {'B0DSC8GLRX': '50mm', 'B0HFP18YKP': '51mm'}
+    # Three floss spools added on 2026-10-19 are labelled by the length they
+    # sell ("50 m (1er Pack)"), which is a hint about their length and never
+    # about a weight; the stick pack's label counts pieces, a hint about
+    # neither.
+    LENGTHS = {'B0C2DG1GMN': 40.0, 'B0FS5TTWYM': 60.0, 'B0H71G6PJ6': 50.0}
+    PIECES = {'B0H62SDCK2': '75 stück (1er Pack)'}
 
     def test_every_size_label_on_the_corpus_parses(self):
-        # 24 of the 40 amazon.de pages carry a size label: 20 groceries, the
+        # 28 of the 49 amazon.de pages carry a size label: 20 groceries, the
         # two non-food pages added in R2, labelled "50 ml" and "100g" -- the
-        # first size dimension in the corpus that is a volume -- and the two
-        # watches, whose label is a length.
+        # first size dimension in the corpus that is a volume -- the two
+        # watches, whose label is a case diameter, three floss spools and a
+        # stick pack.
         labelled = {asin: rec for asin, rec in self.records.items()
                     if variation.size_label(rec)}
-        self.assertEqual(len(labelled), 24)
+        self.assertEqual(len(labelled), 28)
         for asin, rec in labelled.items():
             with self.subTest(asin=asin):
                 hints = [g for g, e in checks.pack_hints(rec) if e.field == 'variation.size_name']
+                lengths = [g for g, e in checks.pack_hints(rec, checks.LENGTH)
+                           if e.field == 'variation.size_name']
                 if asin in self.CASE_SIZES:
                     self.assertEqual(variation.size_label(rec), self.CASE_SIZES[asin])
                     self.assertEqual(hints, [], f'{asin}: a case diameter is not a quantity')
+                    self.assertEqual(lengths, [], f'{asin}: nor a length sold')
+                elif asin in self.LENGTHS:
+                    self.assertEqual(hints, [], f'{asin}: a length is not a weight')
+                    self.assertIn(self.LENGTHS[asin], lengths)
+                elif asin in self.PIECES:
+                    self.assertEqual(variation.size_label(rec), self.PIECES[asin])
+                    self.assertEqual((hints, lengths), ([], []))
                 else:
                     self.assertTrue(hints, f'{asin}: {variation.size_label(rec)!r} produced no quantity')
+                    self.assertEqual(lengths, [], f'{asin}: a weight is not a length')
 
     def test_no_size_label_contradicts_a_quantity_that_was_already_right(self):
         for asin, rec in self.records.items():
