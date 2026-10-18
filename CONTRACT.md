@@ -60,6 +60,7 @@ disappearing, so consumers can index without guards.
 | envelope | `schema_version`, `fetched_at` |
 | lineage | `marketplace`, `asin`, `product_url`, `canonical_url`, `search_query`, `search_page`, `search_position`, `sponsored`, `run_id`, `locale`, `accept_language`; `sponsored` is whether the search slot that queued the fetch was a sponsored placement, as the discovery log recorded it — `null` for a seeded ASIN and for a page with no discovery lineage, never `false` by default |
 | core | `title`, `brand`, `byline_text`, `brand_url`, `price{amount,currency,text,range?}`, `unit_price{amount,unit,text}`, `rating{value,count,text,count_text}`, `availability`, `seller`, `breadcrumbs[]` |
+| delivery | `delivery{options[{slot,text,time_text,type_text,price_text,condition_text,cutoff_text}],location_text}` — the promise the buy box makes for its selected offer, verbatim, and the location it names; `{}` when the page makes none. For the crawler's anonymous location at `fetched_at`, never the buyer's address — see [below](#delivery--one-offers-promise-to-one-place-at-one-moment) |
 | package | `item_weight_*`, `package_weight_*`, `unit_count_*`, `volume_*`, `item_count`, `size_name`, `dimensions`, `total_quantity_base`, `total_quantity_unit`, `total_quantity_source`; `item_weight_origin` = `dimensions` when no Artikelgewicht row exists and the weight was read from the tail of the dimensions row ("22 x 30 x 45 cm; 1,1 Kilogramm"), absent otherwise |
 | content | `feature_bullets[]`, `description`, `important_information[{heading,text}]`, `aplus{module_types,headings,text,text_length,prose,images,tables,comparison}`; `prose` is the A+ copy without table cells, and `comparison[]` each A+ comparison table as `{columns[{label,asin}], rows[[label,cell…]], self_column}` — `asin` the product a column's header links, `self_column` the index of the column that links this page's own ASIN or `null` (the page's product is not always a column, nor the first one), never inferred from position |
 | food | `ingredients{text,source}`, `allergens[]`, `nutrition{source,basis_text,per_100g,rows,derived}` |
@@ -115,6 +116,73 @@ redirects to sign-in. **No rate may be computed from `sample`.**
 was read from — not a volume mentioned elsewhere on the page. Before v4 it was
 inferred from any volume field present, which reported a 50 ml sponge tin as
 50 g and then priced it per kilogram.
+
+### `delivery` — one offer's promise, to one place, at one moment
+
+Added 2026-10-18, within schema v6 (§7). The buy box states when its selected
+offer would arrive: a primary option ("GRATIS Lieferung Mittwoch, 23.
+September") and often a secondary one ("Oder schnellste Lieferung Montag, 21.
+September. Bestellung innerhalb 1 Std. 58 Min."). Each option is one span
+carrying `data-csa-c-delivery-*` attributes, and every key is that span's text:
+
+* `slot` — Amazon's slot, `PRIMARY_DELIVERY_MESSAGE_LARGE` or
+  `SECONDARY_DELIVERY_MESSAGE_LARGE`. Standard and fastest are told apart by
+  it, not by the price text.
+* `time_text` — "Mittwoch, 23. September", "Morgen, 16. September", "18. -
+  22. September". **Never a date**: there is no year, a day can be relative,
+  and 1,031 of 1,306 retained records carry a range or a "Morgen" in at least
+  one option. Turning one into a date needs `fetched_at`, its time zone and
+  the location, and that decision belongs downstream.
+* `type_text` — "Lieferung" on every retained option.
+* `price_text` — "GRATIS", "6,50 €", and **"schnellste" on the secondary
+  option**, where Amazon puts a label in the price attribute. It is not a
+  price there.
+* `condition_text` — "für qualifizierte Erstbestellung" on 706 of 1,826
+  retained options: a GRATIS that only a qualifying first order gets.
+* `cutoff_text` — "Bestellung innerhalb 1 Std. 58 Min.": the option holds for
+  an order placed within that span of `fetched_at`.
+* `text` — the rendered message, with whitespace collapsed.
+
+`location_text` is the line beside the promise: "Liefern nach Österreich",
+"Lieferung an ‹Ort› ‹PLZ› – Standort aktualisieren".
+
+**What the promise is for.** The crawler is not signed in and sets no address.
+A promise is Amazon's answer for the location it gave the anonymous session —
+taken from the request, not from anybody's address — at the moment of the
+fetch. It is not a promise to the buyer's address, and not to an order placed
+later. That location moves between runs: of the 1,306 retained records that
+carry a promise, 679 name delivery to Austria, 319 to Spain and 308 a German
+city. A buyer's deadline is never answered from a promise whose
+`location_text` names another country, and a German one is still not the
+buyer's postcode.
+
+**The anchor is `fetched_at`.** A replay keeps the page's own fetch time
+(`fetched_at_source`), never its clock. A record whose fetch time is unknown
+has a promise anchored to nothing — 961 of the 1,306, from runs before the
+page index — and "Morgen" on it names no day. The saved-page corpus is
+extracted without lineage, so its records carry the extraction moment, which
+its snapshot replaces with a placeholder.
+
+**One offer.** Only the delivery container of the row the buy box opens with
+is read: the `#deliveryBlockContainer` marked
+`data-csa-c-is-in-initial-active-row="true"`, or the only one. A used offer's
+container, Subscribe & Save's row and the abbreviated copies in accordion
+heads are never read, and neither is the second `#deliveryBlockContainer`
+that 28 retained pages carry for a "Schnellere Lieferung" row — another offer
+at another price. Corpus page `B082B8WMBD` opens on 168,00 € arriving 22.–23.
+September, beside 170,99 € arriving "Morgen" and a used offer: its record
+carries the first promise only, which is the offer its `price` is.
+
+**Absent is not empty.** `{}`, with `delivery` in `extraction.blocks_absent`,
+means the page made no promise this extractor reads — a variation parent with
+no size chosen, a listing with no featured offer, a container that names only
+a location, a page whose only promise is a used offer's. It says nothing
+about whether the product can be delivered, or when; it is unknown. 426 of
+1,732 retained records and 4 of the 45 corpus pages have it.
+
+**Not validated.** No rule in contract v2 reads `delivery` and no category
+does yet. A control for a buyer's deadline is downstream work, and whatever
+it concludes, the promise stays Amazon's statement about its own logistics.
 
 ---
 
@@ -448,6 +516,7 @@ May change without a bump, because no correct consumer can depend on it:
 | **schema v6** | `price.range`, and `price.amount` is no longer filled from one end of a price range. A variation parent with no size selected renders "5,63€ - 26,15€" in its own price container; the extractor published 5,63 EUR as the price of a listing that cost 9,98. Additive for every record that has a price; the 7 records in the mounting-paste sets that had a *fabricated* one now correctly have none |
 | schema v6, additive (2026-09-18, R15's third adaptation) | `content.aplus.prose` and `content.aplus.comparison`. An A+ comparison table compares this product with others, and its cells were flattened into `content.aplus.text`, which the vendor-text search reads as this product's statement: on a retained Instinct 3 50 mm page the card showed a 40 h GPS runtime belonging to the 45 mm in a table that does not contain the 50 mm at all. `text` is unchanged; the search now reads `prose` where a record has it and the own column's rows, labelled, where the header links the page's ASIN. Records without the keys read exactly as before, so the six committed studies and the 39-page corpus values are untouched |
 | schema v6, additive (2026-09-19, bucket A of the [powerbank postmortem](HISTORY.md#postmortem-of-the-iphone-15-qi2-powerbank-review--2026-09-19)) | `seller` falls back to the merchant feature block (`#merchantInfoFeature_feature_div`) when the profile link and `#merchant-info` are absent, which is how a page Amazon sells itself names its seller; the fulfiller block beside it says who *ships* and is never read, or a third-party listing shipped by Amazon would be sold by "Amazon". `sponsored` joins the lineage group. Both within-version under §6: a value that was empty is filled, and a key is added. Measured: 10 of the 40 existing corpus pages move `seller` from `''` to `Amazon` and no other field moves; over the 64 retained powerbank records 8 (7 listings) move to `Amazon`, none moves anywhere else, and all 64 carry `sponsored` (33 true, 26 false, 5 seeds `null`). Three corpus pages added: `B0G599PS4N` sold by Amazon, `B0BJQ7F16T` sold by a third party and shipped by Amazon, `B0BBR91FTX` sold and shipped by a third party |
+| schema v6, additive (2026-10-18) | `delivery`: the buy box's promise for its selected offer, each option verbatim from its `data-csa-c-delivery-*` attributes, with the location line the page names ([§2](#delivery--one-offers-promise-to-one-place-at-one-moment)). Bounded reviews met buyer deadlines that no field could answer, and operators read the promise off retained pages by hand. A new key, and `delivery` joining `extraction.blocks_present`/`blocks_absent`, are both within the version under §6: no key, unit, status or source changes meaning, and a record without the key reads as before. Measured: on the corpus the snapshot diff is `delivery` and that block-list entry and nothing else; 40 of the 43 existing `amazon_de` pages gain a promise, the other three and the `amazon_com` page are `{}`, and no validated value moves. Over the 25 retained runs with pages, re-extracted offline, 1,306 of 1,732 records gain one (786 with one option, 520 with two), 426 are `{}`, and 7 pages are refused for a digest mismatch as before; of the run of 2026-09-19 11:16, 12 of 13. One corpus page added: `B082B8WMBD`, whose buy box shows the selected offer, a dearer "Schnellere Lieferung" offer and a used one, each with its own promise |
 | **contract v1** | first published validated record (R2); extended in R5 with `review_rating`, `review_negative_share` and `review_sample`, which add fields without changing any existing one. A `price.range` reads as `unknown` with the range as its evidence — it adds no field to the validated record, because "we do not know" was already expressible |
 | **contract v2** | `offer` is scoped by marketplace (T1). The field keeps its shape — a family identity and a variant signature — but the identity is no longer a bare parent ASIN, which is only unique within one Amazon site. That is a change in what a published value *means*, so it is a bump rather than an addition. The corpus regression diff touched exactly two fields on the 39 saved pages: `contract_version` on all of them, and `offer[0]` on the 27 that carry a family, which gain the (empty, because the corpus records no marketplace) host prefix. No status, value, source or note moved |
 

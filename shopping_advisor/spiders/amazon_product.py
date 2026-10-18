@@ -95,6 +95,7 @@ COVERAGE_CHECKS = (
     ('unit_price', lambda r: r['unit_price'].get('amount') is not None),
     ('rating', lambda r: r['rating'].get('value') is not None),
     ('rating_count', lambda r: r['rating'].get('count') is not None),
+    ('delivery', lambda r: r['delivery'].get('options')),
     ('feature_bullets', lambda r: r['content']['feature_bullets']),
     ('description', lambda r: r['content']['description']),
     ('important_information', lambda r: r['content']['important_information']),

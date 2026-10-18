@@ -1,13 +1,13 @@
 # Extraction corpus
 
-44 real Amazon product detail pages, saved to disk, with two snapshots each:
+45 real Amazon product detail pages, saved to disk, with two snapshots each:
 the record the page is expected to extract to, and the **validated record**
 that record is expected to produce under the published contract.
 `../test_corpus.py` re-runs both on every test run and fails if any field
 changes.
 
 ```
-amazon_de/    43 pages + expected.jsonl.gz + validated.jsonl.gz
+amazon_de/    44 pages + expected.jsonl.gz + validated.jsonl.gz
 amazon_com/    1 page  + expected.jsonl.gz + validated.jsonl.gz
 redact.py                                    run before adding a page
 ```
@@ -85,6 +85,14 @@ its fulfiller block says "Amazon" and the extractor must not read it;
 `B0BBR91FTX` is sold and shipped by ANABASIS. Their `sponsored` is `null`
 here, because a corpus page has no discovery sighting.
 
+One is a dive computer from the 2026-09-18 trial, added on 2026-10-18 for the
+delivery promise: `B082B8WMBD` opens on "Neu kaufen" at 168,00 € arriving
+22.–23. September, and its buy box also shows a "Schnellere Lieferung" row —
+another offer, 170,99 €, arriving "Morgen" — and a used offer, each with its
+own delivery block. Only the first is this record's promise, as only the first
+is its price; 28 retained pages have the second row, and no corpus page had
+it before.
+
 One caution the repository has already paid for: these pages are picked for
 diversity, which makes them a **bad basis for a frequency claim**. The
 variation matrix is on 26 of 38 here and on about a third of records from an
@@ -98,6 +106,13 @@ The pages are fetched without signing in: `isCustomerLoggedIn` is `false` and
 What Amazon does embed is a per-session id, a per-request id, per-widget
 correlation ids and its own render-service IP. `redact.py` replaces all of
 those with fixed placeholders before a page is committed.
+
+Every page also names the delivery location Amazon assigned the anonymous
+session from the request — a country ("Liefern nach Österreich") or a city
+and postcode — and since 2026-10-18 the extractor copies that line into
+`delivery.location_text`, because a delivery promise means nothing without it.
+It locates the network the crawl ran from, not a person, and it is not
+redacted: replacing it would change an extracted value.
 
 ## Adding a page
 

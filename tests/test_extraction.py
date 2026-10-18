@@ -371,6 +371,108 @@ class Seller(unittest.TestCase):
             self.assertIs(record['sponsored'], value)
 
 
+class Delivery(unittest.TestCase):
+    """The delivery promise of the selected offer, verbatim, or nothing.
+
+    The shapes are copied from retained Amazon.de pages: one option per
+    ``data-csa-c-delivery-time`` span inside a slot of the delivery block, the
+    location line beside it, and the containers of the other offers a buy box
+    can show -- a faster offer's row, a used offer's -- which must not lend
+    this offer their promise.
+    """
+    TITLE = '<div id="productTitle">Tauchcomputer</div>'
+    OPTION = ('<div id="mir-layout-DELIVERY_BLOCK-slot-{slot}">'
+              '<span data-csa-c-type="element" data-csa-c-delivery-price="{price}"'
+              ' data-csa-c-delivery-type="Lieferung" data-csa-c-delivery-time="{time}"'
+              ' data-csa-c-delivery-condition="{condition}"'
+              ' data-csa-c-delivery-cutoff="{cutoff}"> {text} </span></div>')
+    CONTAINER = ('<div id="{id}" data-csa-c-is-in-initial-active-row="{active}">'
+                 '<div id="deliveryBlockMessage"><div id="mir-layout-DELIVERY_BLOCK">'
+                 '{options}</div></div>'
+                 '<span id="contextualIngressPtLabel_deliveryShortLine">'
+                 '<span>Liefern nach Österreich</span></span></div>')
+
+    def option(self, time, price='GRATIS', slot='PRIMARY_DELIVERY_MESSAGE_LARGE',
+               condition='', cutoff='', text=None):
+        return self.OPTION.format(
+            slot=slot, price=price, time=time, condition=condition,
+            cutoff=cutoff, text=text or f'{price} Lieferung <b>{time}</b>')
+
+    def container(self, *options, id='deliveryBlockContainer', active='false'):
+        return self.CONTAINER.format(id=id, active=active,
+                                     options=''.join(options))
+
+    def extract(self, html):
+        html = self.TITLE + html
+        return PdpExtractor(DE).extract(Selector(html), html,
+                                        {'asin': 'B000000001'})
+
+    def test_both_options_are_kept_verbatim_in_page_order(self):
+        record = self.extract(self.container(
+            self.option('18. - 22. September',
+                        condition='für qualifizierte Erstbestellung',
+                        text='GRATIS Lieferung <span>18. - 22. September</span>'
+                             ' für qualifizierte Erstbestellung'),
+            self.option('Morgen, 16. September', price='schnellste',
+                        slot='SECONDARY_DELIVERY_MESSAGE_LARGE',
+                        cutoff='Bestellung innerhalb 2 Stdn. 4 Min.',
+                        text='Oder schnellste Lieferung <span>Morgen, 16. '
+                             'September</span>. Bestellung innerhalb '
+                             '<span>2 Stdn. 4 Min.</span>')))
+        self.assertEqual(record['delivery'], {
+            'options': [
+                {'slot': 'PRIMARY_DELIVERY_MESSAGE_LARGE',
+                 'text': 'GRATIS Lieferung 18. - 22. September für '
+                         'qualifizierte Erstbestellung',
+                 'time_text': '18. - 22. September', 'type_text': 'Lieferung',
+                 'price_text': 'GRATIS',
+                 'condition_text': 'für qualifizierte Erstbestellung',
+                 'cutoff_text': ''},
+                {'slot': 'SECONDARY_DELIVERY_MESSAGE_LARGE',
+                 'text': 'Oder schnellste Lieferung Morgen, 16. September. '
+                         'Bestellung innerhalb 2 Stdn. 4 Min.',
+                 'time_text': 'Morgen, 16. September', 'type_text': 'Lieferung',
+                 'price_text': 'schnellste', 'condition_text': '',
+                 'cutoff_text': 'Bestellung innerhalb 2 Stdn. 4 Min.'},
+            ],
+            'location_text': 'Liefern nach Österreich',
+        })
+        self.assertIn('delivery', record['extraction']['blocks_present'])
+
+    def test_a_page_without_a_delivery_block_has_no_promise_not_an_empty_one(self):
+        for html, why in (
+                ('', 'no delivery block at all'),
+                (self.container(), 'a container naming a location and no option'),
+                ('<span data-csa-c-delivery-time="Morgen, 16. September"></span>',
+                 'an option outside any delivery container'),
+        ):
+            record = self.extract(html)
+            self.assertEqual(record['delivery'], {}, why)
+            self.assertIn('delivery', record['extraction']['blocks_absent'], why)
+            self.assertNotIn('delivery', record['extraction']['blocks_present'], why)
+
+    def test_only_the_row_the_page_opens_with_is_read(self):
+        """A "Schnellere Lieferung" row is another offer at another price."""
+        selected = self.container(self.option('23. - 28. September'),
+                                  active='true')
+        faster = self.container(self.option('Morgen, 16. September',
+                                            price='4,99 €'))
+        for html in (selected + faster, faster + selected):
+            options = self.extract(html)['delivery']['options']
+            self.assertEqual([o['time_text'] for o in options],
+                             ['23. - 28. September'])
+
+    def test_a_used_offers_promise_is_never_read(self):
+        used = self.container(self.option('Morgen, 16. September'),
+                              id='usedDeliveryBlockContainer')
+        self.assertEqual(self.extract(used)['delivery'], {},
+                         'a page whose only promise is the used offer\'s has none')
+        record = self.extract(self.container(self.option('Mittwoch, 14. Oktober'))
+                              + used)
+        self.assertEqual([o['time_text'] for o in record['delivery']['options']],
+                         ['Mittwoch, 14. Oktober'])
+
+
 class PackageWeightFromDimensions(unittest.TestCase):
     """Amazon.de appends a non-food item's weight to its dimensions row.
 

@@ -1089,7 +1089,12 @@ price cell. In order:
    words**, its header carrying the role and the author (hard constraint ·
    buyer; preference · buyer; assumption · agent); then the ratings, the
    seller and return terms, the warranty, the light or lights, and the
-   disposition.
+   disposition. A delivery deadline is filled from the record's
+   `delivery.options`, quoted, with its `location_text` — the promise is for
+   the location Amazon gave the crawler at `fetched_at`, not the buyer's
+   address, so a promise to another country is `unknown` for the buyer, and
+   `{}` is no promise, not a late one
+   ([the field](CONTRACT.md#delivery--one-offers-promise-to-one-place-at-one-moment)).
 4. **Ratings as the marketplace displays them.** Average, count and one-star
    share from `reviews.histogram_percent`, labelled *unverified,
    marketplace-displayed, pooled across the variants Amazon merges*. Below a
