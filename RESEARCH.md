@@ -673,6 +673,16 @@ buying elsewhere — the answer there is that only
 over anyway. An absent budget goes the other way: assume no cap, say so, and let
 the ranking show prices.
 
+The buyer's confirmation settles the region they buy for, not the one the
+crawler saw. Amazon prices, offers and promises for the location it assigns
+the anonymous session, and that was Austria or Spain on most retained runs
+([measured 2026-10-18](HISTORY.md#the-crawlers-delivery-location--2026-10-18)).
+Until a run records it, read `delivery.location_text` on the collected records
+before quoting a price, a seller or an availability as the buyer's. Where it
+names another country than the brief's `delivery_region`, the report says so
+beside every such value, and a near-threshold price is read at the buyer's
+region or stays unresolved.
+
 #### How to ask
 
 One batched round, at most about four questions, each stating **why it changes
