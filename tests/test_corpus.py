@@ -165,6 +165,65 @@ class Corpus(unittest.TestCase):
         self.check_validation('amazon_com')
 
 
+class DeliveryOnSavedPages(unittest.TestCase):
+    """The delivery promise on pages whose buy box shows more than one.
+
+    The snapshot pins every page's `delivery`; these say why the values are
+    the right ones, on the pages where reading the wrong block was possible.
+    """
+
+    def page(self, asin):
+        with gzip.open(CORPUS / 'amazon_de' / f'{asin}.html.gz', 'rt',
+                       encoding='utf-8') as fh:
+            html = fh.read()
+        selector = Selector(html)
+        record = PdpExtractor(for_domain('www.amazon.de')).extract(
+            selector, html, {'asin': asin})
+        on_page = [node.attrib['data-csa-c-delivery-time']
+                   for node in selector.css('[data-csa-c-delivery-time]')]
+        return record, on_page
+
+    def times(self, record):
+        return [option['time_text'] for option in record['delivery']['options']]
+
+    def test_a_faster_offer_and_a_used_offer_lend_no_promise(self):
+        # B082B8WMBD opens on "Neu kaufen" at 168,00 €; a "Schnellere
+        # Lieferung" row is another offer at 170,99 € arriving "Morgen", and a
+        # used one arrives on the 23rd. The record's price is the first row's,
+        # and so is its promise.
+        record, on_page = self.page('B082B8WMBD')
+        self.assertEqual(record['price']['amount'], 168.0)
+        self.assertEqual(self.times(record), ['22. - 23. September'])
+        self.assertIn('Morgen, 19. September', on_page)
+        self.assertIn('Mittwoch, 23. September', on_page)
+
+    def test_accordion_head_and_subscription_copies_are_not_extra_options(self):
+        record, on_page = self.page('B0728HMWW5')
+        self.assertEqual(len(on_page), 7)
+        self.assertEqual(self.times(record),
+                         ['Donnerstag, 17. September', 'Mittwoch, 16. September'])
+        self.assertEqual([o['price_text'] for o in record['delivery']['options']],
+                         ['GRATIS', 'schnellste'])
+
+    def test_the_promise_names_the_location_it_was_made_for(self):
+        # Fetched by an anonymous session Amazon placed in Austria: the
+        # promise is for there, and a relative day stays relative.
+        record, _ = self.page('B07J2W1S6Q')
+        self.assertEqual(record['delivery']['location_text'],
+                         'Liefern nach Österreich')
+        self.assertEqual(self.times(record),
+                         ['Freitag, 18. September', 'Morgen, 16. September'])
+
+    def test_a_page_without_a_selected_offer_states_no_promise(self):
+        # A variation parent with no size chosen, and a listing with no
+        # featured offer: neither makes a promise, and neither is an empty one.
+        for asin in ('B000RW5FVA', 'B01M25SBQ5'):
+            record, on_page = self.page(asin)
+            self.assertEqual(on_page, [], asin)
+            self.assertEqual(record['delivery'], {}, asin)
+            self.assertIn('delivery', record['extraction']['blocks_absent'], asin)
+
+
 if __name__ == '__main__':
     if '--update' in sys.argv:
         # ``--output DIR`` writes the snapshots under DIR instead of in place,

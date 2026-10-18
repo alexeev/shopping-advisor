@@ -49,6 +49,11 @@ from .text import clean, decode_entities, first_text, node_text, parse_quantity
 # said about the search slot that queued the fetch -- `None` for a seeded ASIN
 # and for a page with no discovery lineage. Both are within-version under
 # CONTRACT §6: an empty value becoming filled, and a new key.
+# 6, additive (2026-10-18): `delivery`, the promise the buy box makes for its
+# selected offer, read verbatim from the delivery block's `data-csa-c-*`
+# attributes with the location line the page names. Bounded reviews met
+# buyer deadlines that no field could answer, and operators read the promise
+# off retained pages by hand. A new key, so within-version under CONTRACT §6.
 SCHEMA_VERSION = 6
 
 #: Who sells: a third-party merchant renders as a profile link or as the
@@ -62,6 +67,23 @@ SELLER_CSS = ('#sellerProfileTriggerId', '#merchant-info a', '#merchant-info')
 #: is deliberately absent from this list: a wrong seller is worse than none.
 MERCHANT_FEATURE_CSS = (
     '#merchantInfoFeature_feature_div .offer-display-feature-text-message',)
+
+#: The selected offer's delivery block. A page carries several: a used offer's
+#: in ``#usedDeliveryBlockContainer``, Subscribe & Save's in its own accordion
+#: row, abbreviated copies in the accordion heads -- and, on 28 of 1,739
+#: retained pages, a second ``#deliveryBlockContainer`` in a "Schnellere
+#: Lieferung" row that is another, dearer offer. None of those is read.
+DELIVERY_CONTAINER_CSS = '#deliveryBlockContainer'
+#: Marks the container of the accordion row the page opens with; a page
+#: without an accordion has one container and marks it ``false``.
+DELIVERY_ACTIVE_ATTR = 'data-csa-c-is-in-initial-active-row'
+#: One delivery option each: the primary message and, where Amazon offers
+#: one, the secondary "Oder schnellste Lieferung".
+DELIVERY_OPTION_CSS = '[data-csa-c-delivery-time]'
+DELIVERY_SLOT_PREFIX = 'mir-layout-DELIVERY_BLOCK-slot-'
+#: "Lieferung an <Ort> – Standort aktualisieren" / "Liefern nach Österreich":
+#: where the anonymous session was taken to be, which is what the promise is for.
+DELIVERY_LOCATION_CSS = '#contextualIngressPtLabel_deliveryShortLine'
 
 # Free-text nutrition is only trustworthy when a per-100 basis is stated
 # nearby; otherwise the number may be per serving or per pack.
@@ -167,6 +189,7 @@ class PdpExtractor:
             'availability': clean(first_text(
                 sel, '#availability span', '#availability')),
             'seller': self._seller(sel),
+            'delivery': log.run('delivery', lambda: self._delivery(sel), {}),
             'breadcrumbs': log.run('breadcrumbs', lambda: blocks.bullet_list(
                 sel, '#wayfinding-breadcrumbs_feature_div ul li a'), []),
             'package': package,
@@ -211,6 +234,51 @@ class PdpExtractor:
         if seller:
             return seller
         return clean(first_text(sel, *MERCHANT_FEATURE_CSS))
+
+    # -- delivery promise ----------------------------------------------------
+
+    def _delivery(self, sel):
+        """The delivery promise the buy box makes for its selected offer.
+
+        ``{}`` when the page makes none -- a variation parent with no size
+        chosen, a listing with no featured offer -- which is the absence of a
+        promise, never a promise of nothing. Every value is the page's text:
+        ``time_text`` stays "Morgen, 16. September" or "18. - 22. September",
+        because a date needs the fetch instant, its year and the location, and
+        deciding what the buyer can rely on is not the extractor's job.
+
+        Only the container of the row the page opens with is read (see
+        ``DELIVERY_CONTAINER_CSS``): the faster row beside it on some pages is
+        another offer at another price, and its promise is not this one's.
+        """
+        containers = sel.css(DELIVERY_CONTAINER_CSS)
+        if not containers:
+            return {}
+        active = [node for node in containers
+                  if node.attrib.get(DELIVERY_ACTIVE_ATTR) == 'true']
+        container = (active or containers)[0]
+        options = []
+        for node in container.css(DELIVERY_OPTION_CSS):
+            attrib = node.attrib
+            slot = node.xpath(
+                f'ancestor::*[starts-with(@id, "{DELIVERY_SLOT_PREFIX}")][1]/@id'
+            ).get() or ''
+            options.append({
+                'slot': slot.removeprefix(DELIVERY_SLOT_PREFIX),
+                'text': clean(node_text(node)),
+                'time_text': clean(attrib.get('data-csa-c-delivery-time')),
+                'type_text': clean(attrib.get('data-csa-c-delivery-type')),
+                'price_text': clean(attrib.get('data-csa-c-delivery-price')),
+                'condition_text': clean(
+                    attrib.get('data-csa-c-delivery-condition')),
+                'cutoff_text': clean(attrib.get('data-csa-c-delivery-cutoff')),
+            })
+        if not options:
+            return {}
+        return {
+            'options': options,
+            'location_text': clean(first_text(container, DELIVERY_LOCATION_CSS)),
+        }
 
     # -- key/value attributes ---------------------------------------------
 
