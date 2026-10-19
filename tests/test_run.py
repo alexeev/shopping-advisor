@@ -327,6 +327,29 @@ class Run(unittest.TestCase):
         self.assertEqual(
             run_module.page_metadata(self.run.directory)['B088419TTP'], entry)
 
+    def test_a_stored_page_with_a_crlf_still_matches_its_digest(self):
+        """Amazon.de leaves a CRLF after "Herstellerreferenz" in the detail
+        bullets of some pages, 166 of the 1,808 retained on 2026-10-19.
+        `read_page` opened the store in text mode, universal newlines turned
+        the CRLF into LF, and `reextract` refused 22 intact pages as not
+        matching the digest their run recorded. A page that really changed is
+        still refused: see `test_a_page_that_no_longer_matches_its_digest_is_reported`.
+        """
+        html = read_fixture(A_PDP).replace(
+            '</title>', '</title>\r\n<!-- a bare \r too -->', 1)
+        entry = self.run.save_page('B088419TTP', html)
+        path = run_module.stored_pages(self.run.directory)['B088419TTP']
+        with gzip.open(path, 'rb') as handle:
+            self.assertEqual(handle.read(), html.encode('utf-8'),
+                             'the stored bytes are not the bytes hashed')
+        self.assertEqual(run_module.read_page(path), html)
+        self.assertEqual(sha256_text(run_module.read_page(path)),
+                         entry['redacted_sha256'])
+        [(asin, record, error)] = run_module.reextract(self.run.directory)
+        self.assertEqual(asin, 'B088419TTP')
+        self.assertIsNone(error)
+        self.assertTrue(record['title'])
+
     def test_a_page_whose_redaction_fails_is_quarantined_not_stored(self):
         """Redaction used to be imported from the test corpus through
         ``sys.path`` and fall back to storing the page unredacted on any
