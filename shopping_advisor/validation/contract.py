@@ -67,7 +67,8 @@ class CategoryProfile:
     #: ``(low, high)`` for the price per kilogram / per litre, or ``None``
     #: when the category has no defensible range -- which is an honest answer
     #: and not a gap. Mounting paste spans tubes and buckets priced two orders
-    #: of magnitude apart per kilogram, so it states no band.
+    #: of magnitude apart per kilogram, so it states no band. A price per
+    #: metre is never held against it.
     price_band: tuple = None
 
 
@@ -108,6 +109,13 @@ class Validated:
     price: Value
     #: Price per kilogram or per litre, following the pack's own unit.
     price_per_base: Value
+    #: Total length the listing sells, in metres, for what is sold by length;
+    #: unknown for everything else. Beside `quantity`, never instead of it.
+    length: Value
+    #: Price per metre, from price and `length`, cross-checked against
+    #: Amazon's own "pro Meter" figure. Serialised by :meth:`as_dict` only
+    #: where the record has one of the two -- see the note there.
+    price_per_length: Value
     #: ``{nutrient key: Value}`` per 100 g; empty for anything that is not food.
     nutrition: dict
 
@@ -149,7 +157,7 @@ class Validated:
         return _reviews.signal(self.record, pattern, label, **kwargs)
 
     def as_dict(self):
-        return {
+        data = {
             'contract_version': self.contract_version,
             'schema_version': self.schema_version,
             'category_profile': self.category_profile,
@@ -183,6 +191,19 @@ class Validated:
                 value=(len(self.review_sample.value)
                        if self.review_sample.value is not None else None)),
         }
+        # ``length`` and ``price_per_length`` are serialised only where the
+        # record states a length or Amazon quotes a price per metre. Present
+        # on every line, they would move the bytes of every committed
+        # snapshot and card file, and with them the two T3 reviews, exactly
+        # as ``review_count`` would; absent where both are unknown, they move
+        # none of them, and the one record class that has them -- what is
+        # sold by the metre -- shows its price per metre in `analysis
+        # validated`. A reader takes their absence as unknown. They join
+        # every line with the next contract migration (CONTRACT §3).
+        if self.length.known or self.price_per_length.known:
+            data['length'] = self.length.as_dict()
+            data['price_per_length'] = self.price_per_length.as_dict()
+        return data
 
 
 def validate(record, profile=NEUTRAL):
@@ -201,6 +222,16 @@ def validate(record, profile=NEUTRAL):
     if per_base.status == DISPUTED:
         pricing.alternative_price(record, per_base,
                                   quantity.consensus_hint(record))
+
+    # Length is reconciled and priced beside the pack's content, on its own
+    # family of units. No category band applies: a profile's band is per
+    # kilogram or per litre.
+    length = quantity.reconcile_length(record)
+    per_length = pricing.per_length(record, length)
+    if per_length.status == DISPUTED:
+        pricing.alternative_price(
+            record, per_length, quantity.consensus_hint(record, quantity.LENGTH),
+            pack_unit='m')
 
     review = _reviews.summary(record)
 
@@ -232,6 +263,8 @@ def validate(record, profile=NEUTRAL):
         quantity=pack,
         price=pricing.price(record),
         price_per_base=per_base,
+        length=length,
+        price_per_length=per_length,
         nutrition=values,
         review_rating=review['rating'],
         review_negative_share=review['negative_share'],

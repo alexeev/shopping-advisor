@@ -61,7 +61,7 @@ disappearing, so consumers can index without guards.
 | lineage | `marketplace`, `asin`, `product_url`, `canonical_url`, `search_query`, `search_page`, `search_position`, `sponsored`, `run_id`, `locale`, `accept_language`; `sponsored` is whether the search slot that queued the fetch was a sponsored placement, as the discovery log recorded it — `null` for a seeded ASIN and for a page with no discovery lineage, never `false` by default |
 | core | `title`, `brand`, `byline_text`, `brand_url`, `price{amount,currency,text,range?}`, `unit_price{amount,unit,text}`, `rating{value,count,text,count_text}`, `availability`, `seller`, `breadcrumbs[]` |
 | delivery | `delivery{options[{slot,text,time_text,type_text,price_text,condition_text,cutoff_text}],location_text}` — the promise the buy box makes for its selected offer, verbatim, and the location it names; `{}` when the page makes none. For the crawler's anonymous location at `fetched_at`, never the buyer's address — see [below](#delivery--one-offers-promise-to-one-place-at-one-moment) |
-| package | `item_weight_*`, `package_weight_*`, `unit_count_*`, `volume_*`, `item_count`, `size_name`, `dimensions`, `total_quantity_base`, `total_quantity_unit`, `total_quantity_source`; `item_weight_origin` = `dimensions` when no Artikelgewicht row exists and the weight was read from the tail of the dimensions row ("22 x 30 x 45 cm; 1,1 Kilogramm"), absent otherwise |
+| package | `item_weight_*`, `package_weight_*`, `unit_count_*`, `volume_*`, `item_count`, `size_name`, `dimensions`, `total_quantity_base`, `total_quantity_unit`, `total_quantity_source`, `total_length_base`, `total_length_unit`, `total_length_source`; `item_weight_origin` = `dimensions` when no Artikelgewicht row exists and the weight was read from the tail of the dimensions row ("22 x 30 x 45 cm; 1,1 Kilogramm"), absent otherwise |
 | content | `feature_bullets[]`, `description`, `important_information[{heading,text}]`, `aplus{module_types,headings,text,text_length,prose,images,tables,comparison}`; `prose` is the A+ copy without table cells, and `comparison[]` each A+ comparison table as `{columns[{label,asin}], rows[[label,cell…]], self_column}` — `asin` the product a column's header links, `self_column` the index of the column that links this page's own ASIN or `null` (the page's product is not always a column, nor the first one), never inferred from position |
 | food | `ingredients{text,source}`, `allergens[]`, `nutrition{source,basis_text,per_100g,rows,derived}` |
 | attributes | `attributes{}` (canonical), `raw_tables{}` (verbatim), `attribute_sources{}` |
@@ -116,6 +116,18 @@ redirects to sign-in. **No rate may be computed from `sample`.**
 was read from — not a volume mentioned elsewhere on the page. Before v4 it was
 inferred from any volume field present, which reported a 50 ml sponge tin as
 50 g and then priced it per kilogram.
+
+`package.total_length_base` is the length a listing sells, in metres
+(`total_length_unit` is always `m`), for what is sold by length — floss,
+tape, cable. Added 2026-10-19, within schema v6 (§7). It is read only from
+the two rows a content count is filed under, `total_length_source` naming
+which: `unit_count` ("Anzahl der Einheiten: 50.0 meter"), then `item_count`
+("Stückzahl: 60.0 meter"), which is where Amazon.de takes its own "pro
+Meter" price from. Never from the dimensions row, which states the box in
+centimetres, and never from the title. It sits **beside**
+`total_quantity_base`, which keeps its grams-or-millilitres meaning: a floss
+spool has both a weight and a length, and only the second is what it is sold
+by. A key absent means the page files no length, not a length of zero.
 
 ### `delivery` — one offer's promise, to one place, at one moment
 
@@ -217,6 +229,8 @@ validated.as_dict()              # JSON-serialisable, snapshot-tested
 | `quantity` | `Value` | total pack content, in `g` or `ml` |
 | `price` | `Value` | what the listing costs |
 | `price_per_base` | `Value` | price per kilogram or per litre, following the pack's unit |
+| `length` | `Value` | the length a listing sells, in `m`, from `package.total_length_base`, reconciled by the pack-quantity rules over lengths only (§4); `unknown` for anything not sold by length. Added 2026-10-19 |
+| `price_per_length` | `Value` | price per metre, in `<currency>/m`, from price and `length`, cross-checked against Amazon's own "pro Meter" figure; no category `price_band` is applied, because a band is per kilogram or per litre. Added 2026-10-19. With `length`, **serialised by `as_dict()` only where one of the two is known**: present on every line, the pair would move every committed snapshot and card digest the two T3 reviews bind, as `review_count` would; absent where both are unknown, they move none, and a reader takes their absence as unknown. Both join every line with the next contract migration |
 | `nutrition` | `{key: Value}` | per 100 g; `{}` for anything that is not food |
 | `review_rating` | `Value` | average stars; `trusted` only when the histogram corroborates it and the rating count is not trivially small |
 | `review_negative_share` | `Value` | share of all ratings at 1–2★, from the complete histogram — the only review figure entitled to be read as a rate |
@@ -371,7 +385,25 @@ question under dispute. A bare, uncounted weight in the listing's own text may
 against Amazon's own published per-unit figure. The published figure is
 converted onto the pack's own dimension (`kg`, `100 g`, `l`, `ml`, `100 ml`)
 and **refused** when it counts pieces rather than content, or when converting
-it would need a density nobody published.
+it would need a density — or, for a price per metre against a weight, a
+weight per metre — nobody published.
+
+**Pack length and price per metre** — added 2026-10-19, within the version.
+The pack-quantity rules above, run over a family of units of their own:
+metres, where centimetres, millimetres and square metres are not one. A
+length total is confirmed by a counted statement that agrees ("3x 70m" on a
+210 m pack, "50 m (1er Pack)" in the size label), disputed when every counted
+statement disagrees, and confirmed — never contradicted — by a bare length
+when nothing claims more than one unit. One guard mass never needed: a length
+that is one side of a dimension ("2 x 3 x 0,5 m", "2,5 m x 1,5 m") states no
+pack. A length never confirms or disputes a weight, nor a weight a length.
+The price per metre is derived from price and length and cross-checked like
+the price per base unit, against Amazon's figure when it is quoted per metre;
+a per-piece figure ("pro Stück", every stick pack) is refused, and a listing
+with neither a length nor a per-metre figure has no price per metre. Like
+the price per kilogram, it is `trusted` when it agrees with Amazon's figure —
+which Amazon computes from the same content-count row, so agreement confirms
+the arithmetic, not the row (§1).
 
 **Nutrition** — a unit that cannot measure the field it populated; a number
 lifted out of the "per 100 g" phrase that describes the basis; macronutrients
@@ -517,8 +549,10 @@ May change without a bump, because no correct consumer can depend on it:
 | schema v6, additive (2026-09-18, R15's third adaptation) | `content.aplus.prose` and `content.aplus.comparison`. An A+ comparison table compares this product with others, and its cells were flattened into `content.aplus.text`, which the vendor-text search reads as this product's statement: on a retained Instinct 3 50 mm page the card showed a 40 h GPS runtime belonging to the 45 mm in a table that does not contain the 50 mm at all. `text` is unchanged; the search now reads `prose` where a record has it and the own column's rows, labelled, where the header links the page's ASIN. Records without the keys read exactly as before, so the six committed studies and the 39-page corpus values are untouched |
 | schema v6, additive (2026-09-19, bucket A of the [powerbank postmortem](HISTORY.md#postmortem-of-the-iphone-15-qi2-powerbank-review--2026-09-19)) | `seller` falls back to the merchant feature block (`#merchantInfoFeature_feature_div`) when the profile link and `#merchant-info` are absent, which is how a page Amazon sells itself names its seller; the fulfiller block beside it says who *ships* and is never read, or a third-party listing shipped by Amazon would be sold by "Amazon". `sponsored` joins the lineage group. Both within-version under §6: a value that was empty is filled, and a key is added. Measured: 10 of the 40 existing corpus pages move `seller` from `''` to `Amazon` and no other field moves; over the 64 retained powerbank records 8 (7 listings) move to `Amazon`, none moves anywhere else, and all 64 carry `sponsored` (33 true, 26 false, 5 seeds `null`). Three corpus pages added: `B0G599PS4N` sold by Amazon, `B0BJQ7F16T` sold by a third party and shipped by Amazon, `B0BBR91FTX` sold and shipped by a third party |
 | schema v6, additive (2026-10-18) | `delivery`: the buy box's promise for its selected offer, each option verbatim from its `data-csa-c-delivery-*` attributes, with the location line the page names ([§2](#delivery--one-offers-promise-to-one-place-at-one-moment)). Bounded reviews met buyer deadlines that no field could answer, and operators read the promise off retained pages by hand. A new key, and `delivery` joining `extraction.blocks_present`/`blocks_absent`, are both within the version under §6: no key, unit, status or source changes meaning, and a record without the key reads as before. Measured: on the corpus the snapshot diff is `delivery` and that block-list entry and nothing else; 40 of the 43 existing `amazon_de` pages gain a promise, the other three and the `amazon_com` page are `{}`, and no validated value moves. Over the 25 retained runs with pages, re-extracted offline, 1,306 of 1,732 records gain one (786 with one option, 520 with two), 426 are `{}`, and 7 pages are refused for a digest mismatch as before; of the run of 2026-09-19 11:16, 12 of 13. One corpus page added: `B082B8WMBD`, whose buy box shows the selected offer, a dearer "Schnellere Lieferung" offer and a used one, each with its own promise |
+| schema v6, additive (2026-10-19) | `package.total_length_base`, `total_length_unit` (`m`) and `total_length_source`: the length a listing sells, read from the content-count row Amazon.de files it under ("Anzahl der Einheiten: 50.0 meter", else "Stückzahl") and from no other row ([§2](#2-the-product-record-schema-v6)). A dental-floss bounded review on 2026-10-18 met Amazon's "0,05 € pro Meter" on 22 of 69 records with no length to check it against, and worked out the price per metre by hand. The length is a set of new keys **beside** `total_quantity_*`, not a third unit of it: §2 promises that total is grams or millilitres, and widening it would change the unit of a published number, a bump under §6 — which, through the study identity, moves every committed example's `study_id`, the bytes of every report and both T3 semantic reviews with them (INTAKE §16). One correction rides with it: a Stückzahl row stating a length is no longer read as a piece count, the rule "the value's shape decides, not the label" already applied to weights. `item_count` keeps its meaning; a value that never was a count is no longer published as one, and the total multiplied from it moves within its own unit. Measured over the 1,808 retained pages of 27 runs, read byte for byte and extracted before and after: 25 records gain a length (all floss: 24 from Anzahl der Einheiten, 1 from Stückzahl); one record, `B0FS5TTWYM`, loses `item_count: 60` and its total moves from 2,400 g (`item_weight_x_count`) to 40 g (`item_weight`); no other field of any record moves. On the corpus the snapshot diff is the five pages added and nothing else; no field of the 45 existing pages moves |
 | **contract v1** | first published validated record (R2); extended in R5 with `review_rating`, `review_negative_share` and `review_sample`, which add fields without changing any existing one. A `price.range` reads as `unknown` with the range as its evidence — it adds no field to the validated record, because "we do not know" was already expressible |
 | **contract v2** | `offer` is scoped by marketplace (T1). The field keeps its shape — a family identity and a variant signature — but the identity is no longer a bare parent ASIN, which is only unique within one Amazon site. That is a change in what a published value *means*, so it is a bump rather than an addition. The corpus regression diff touched exactly two fields on the 39 saved pages: `contract_version` on all of them, and `offer[0]` on the 27 that carry a family, which gain the (empty, because the corpus records no marketplace) host prefix. No status, value, source or note moved |
+| contract v2, additive (2026-10-19) | `Validated.length` and `Validated.price_per_length`: the length a listing sells, reconciled by the pack-quantity rules over a family of units of their own, and the price per metre cross-checked against Amazon's own figure ([§4](#4-what-the-generic-rules-check)). Both serialise only where one of them is known, so no committed snapshot, card or review digest moves. `price_per_base` keeps its meaning, and the note it carries when Amazon quotes per metre against a pack weighed in grams is reworded from "does not know how to convert" to what the conversion would need — a note's wording, within the version. `unit_price.unit` `m`/`meter`/`metre` is now converted onto a length and nothing else. Within the version under §6: keys added, no status loosens on an existing value, and the new values follow the rules `price_per_base` already follows. Measured over the same 1,808 retained pages: the 25 floss records with a length serialise both — 16 lengths `trusted`, 9 `unverified` (a pack count stated with no counted length beside it); **22 records, 19 unique ASINs, gain a `trusted` price per metre**, where none had one, every one agreeing with Amazon's within the 12 % tolerance (the widest gap 8.9 %), 13 of them on a length the page itself confirms and 9 on that agreement alone; the other 3 have no price. No `quantity` or `price_per_base` status moves on any record; on the 22 the price per kilogram stays `unverified`, as it was. Not reached: a listing filed and priced per piece that states its length only in prose — "Oral-B Essentialfloss Ungewachst 50m (Zahnseide), 4er Pack (4 X 1 Stück)" — 13 floss records (12 listings) in a title and 3 more only in bullets or description, which stay without one, because text may confirm a length and never supply it |
 
 ---
 
