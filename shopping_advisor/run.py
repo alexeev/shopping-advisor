@@ -299,10 +299,13 @@ class CrawlRun:
         text, redaction = redact_page(html)
         if redaction != APPLIED:
             self.counts['redaction_failures'] += 1
+        data = text.encode('utf-8')
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
-            with gzip.open(path, 'wt', encoding='utf-8', compresslevel=6) as fh:
-                fh.write(text)
+            # Bytes, not text mode: a text-mode writer turns "\n" into the
+            # platform's line separator, and the digest below is over `data`.
+            with gzip.open(path, 'wb', compresslevel=6) as fh:
+                fh.write(data)
         except OSError:
             self.counts['page_write_errors'] += 1
             return None
@@ -312,7 +315,7 @@ class CrawlRun:
                 # session identifiers. It answers "is this the file the
                 # manifest describes"; it is not a digest of Amazon's reply.
                 'redacted_sha256': sha256_text(text),
-                'redacted_bytes': len(text.encode('utf-8'))}
+                'redacted_bytes': len(data)}
 
     def save_page(self, asin, html, fetched_at=None, request_url='',
                   final_url='', http_status=None):
@@ -628,8 +631,15 @@ def failure_samples(directory):
 
 
 def read_page(path):
-    with gzip.open(path, 'rt', encoding='utf-8') as fh:
-        return fh.read()
+    """The stored page as the text whose digest the run recorded.
+
+    Bytes decoded, never text mode. Universal newlines turned the one CRLF
+    Amazon.de leaves after "Herstellerreferenz" into LF, and `reextract` then
+    refused intact pages as not matching their digest: 22 of the 442 retained
+    pages with a recorded digest, on 2026-10-19.
+    """
+    with gzip.open(path, 'rb') as fh:
+        return fh.read().decode('utf-8')
 
 
 # ---------------------------------------------------------------------------

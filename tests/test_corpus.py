@@ -28,10 +28,14 @@ review the diff as part of the change:
     uv run python tests/test_corpus.py --update
 """
 
+import contextlib
 import gzip
+import importlib.util
+import io
 import json
 import pathlib
 import sys
+import tempfile
 import unittest
 
 from parsel import Selector
@@ -41,6 +45,8 @@ from parsel import Selector
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
 from shopping_advisor.extraction import PdpExtractor, for_domain  # noqa: E402
+from shopping_advisor.redaction import SESSION_ID  # noqa: E402
+from shopping_advisor.run import read_page  # noqa: E402
 from shopping_advisor.validation import validate  # noqa: E402
 
 CORPUS = pathlib.Path(__file__).resolve().parent / 'corpus'
@@ -66,8 +72,9 @@ def extract_dir(name):
     records = {}
     for path in sorted((CORPUS / name).glob('*.html.gz')):
         asin = path.name[:-len('.html.gz')]
-        with gzip.open(path, 'rt', encoding='utf-8') as fh:
-            html = fh.read()
+        # The replay's reader, so a page reads here as `reextract` reads it:
+        # text mode would turn a CRLF on the page into LF.
+        html = read_page(path)
         record = extractor.extract(Selector(html), html, {'asin': asin})
         record[VOLATILE] = PLACEHOLDER
         records[asin] = record
@@ -173,9 +180,7 @@ class DeliveryOnSavedPages(unittest.TestCase):
     """
 
     def page(self, asin):
-        with gzip.open(CORPUS / 'amazon_de' / f'{asin}.html.gz', 'rt',
-                       encoding='utf-8') as fh:
-            html = fh.read()
+        html = read_page(CORPUS / 'amazon_de' / f'{asin}.html.gz')
         selector = Selector(html)
         record = PdpExtractor(for_domain('www.amazon.de')).extract(
             selector, html, {'asin': asin})
@@ -287,6 +292,30 @@ class LengthOnSavedPages(unittest.TestCase):
             self.assertEqual(validated.quantity.unit, 'g', asin)
             self.assertEqual(validated.price_per_base.unit, 'EUR/kg', asin)
             self.assertNotEqual(validated.price_per_base.status, 'trusted', asin)
+
+
+class Promotion(unittest.TestCase):
+    """`corpus/redact.py` is how a retained page enters the corpus."""
+
+    def test_a_promoted_page_keeps_its_line_endings(self):
+        """It read and wrote in text mode, so a retained page's CRLF arrived
+        in the corpus as LF: redaction is meant to be the only change, and
+        the committed page was not the page its run recorded a digest for."""
+        spec = importlib.util.spec_from_file_location(
+            'corpus_redact', CORPUS / 'redact.py')
+        redact_cli = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(redact_cli)
+        page = ("<html><title>t</title>\r\n<script>var ue_sid="
+                "'123-4567890-1234567';</script>\r</html>")
+        with tempfile.TemporaryDirectory() as tmp:
+            retained = pathlib.Path(tmp) / 'B000000000.html.gz'
+            promoted = pathlib.Path(tmp) / 'promoted.html.gz'
+            with gzip.open(retained, 'wb') as fh:
+                fh.write(page.encode('utf-8'))
+            with contextlib.redirect_stdout(io.StringIO()):
+                redact_cli.main(str(retained), str(promoted))
+            self.assertEqual(read_page(promoted),
+                             page.replace('123-4567890-1234567', SESSION_ID))
 
 
 if __name__ == '__main__':

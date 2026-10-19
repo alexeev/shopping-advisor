@@ -29,11 +29,14 @@ __all__ = ['CORRELATION_ID', 'REQUEST_ID', 'SESSION_ID', 'redact']
 
 
 def main(src, dest):
+    # Bytes in and bytes out, as the crawler's page store does. Text mode
+    # turned a retained page's CRLF into LF on the way into the corpus, so the
+    # committed page was no longer the bytes the run recorded a digest for.
     opener = gzip.open if src.endswith('.gz') else open
-    with opener(src, 'rt', encoding='utf-8') as fh:
-        html = fh.read()
-    with gzip.open(dest, 'wt', encoding='utf-8', compresslevel=9) as fh:
-        fh.write(redact(html))
+    with opener(src, 'rb') as fh:
+        html = fh.read().decode('utf-8')
+    with gzip.open(dest, 'wb', compresslevel=9) as fh:
+        fh.write(redact(html).encode('utf-8'))
     print(f'{src} -> {dest}')
 
 
