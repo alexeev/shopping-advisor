@@ -553,6 +553,7 @@ May change without a bump, because no correct consumer can depend on it:
 | **contract v1** | first published validated record (R2); extended in R5 with `review_rating`, `review_negative_share` and `review_sample`, which add fields without changing any existing one. A `price.range` reads as `unknown` with the range as its evidence — it adds no field to the validated record, because "we do not know" was already expressible |
 | **contract v2** | `offer` is scoped by marketplace (T1). The field keeps its shape — a family identity and a variant signature — but the identity is no longer a bare parent ASIN, which is only unique within one Amazon site. That is a change in what a published value *means*, so it is a bump rather than an addition. The corpus regression diff touched exactly two fields on the 39 saved pages: `contract_version` on all of them, and `offer[0]` on the 27 that carry a family, which gain the (empty, because the corpus records no marketplace) host prefix. No status, value, source or note moved |
 | contract v2, additive (2026-10-19) | `Validated.length` and `Validated.price_per_length`: the length a listing sells, reconciled by the pack-quantity rules over a family of units of their own, and the price per metre cross-checked against Amazon's own figure ([§4](#4-what-the-generic-rules-check)). Both serialise only where one of them is known, so no committed snapshot, card or review digest moves. `price_per_base` keeps its meaning, and the note it carries when Amazon quotes per metre against a pack weighed in grams is reworded from "does not know how to convert" to what the conversion would need — a note's wording, within the version. `unit_price.unit` `m`/`meter`/`metre` is now converted onto a length and nothing else. Within the version under §6: keys added, no status loosens on an existing value, and the new values follow the rules `price_per_base` already follows. Measured over the same 1,808 retained pages: the 25 floss records with a length serialise both — 16 lengths `trusted`, 9 `unverified` (a pack count stated with no counted length beside it); **22 records, 19 unique ASINs, gain a `trusted` price per metre**, where none had one, every one agreeing with Amazon's within the 12 % tolerance (the widest gap 8.9 %), 13 of them on a length the page itself confirms and 9 on that agreement alone; the other 3 have no price. No `quantity` or `price_per_base` status moves on any record; on the 22 the price per kilogram stays `unverified`, as it was. Not reached: a listing filed and priced per piece that states its length only in prose — "Oral-B Essentialfloss Ungewachst 50m (Zahnseide), 4er Pack (4 X 1 Stück)" — 13 floss records (12 listings) in a title and 3 more only in bullets or description, which stay without one, because text may confirm a length and never supply it |
+| **source ledger v1** (2026-11-24, bucket F) | the declared source ledger of [§17](#17-declared-source-ledger-v1-bucket-f-2026-11-24): manufacturer datasheets, certificates and safety notices mapped to listings by the operator's assertion and checked against the record. A new, separate contract; the evidence ledger stays v1 and nothing published changes meaning |
 
 ---
 
@@ -1381,3 +1382,34 @@ were never fetched, not which — `discovery.jsonl` and `arguments.asin` do.
 recorded, interrupted dependency, not that the partial evidence suffices for
 what the dependent concludes; that is the report's coverage paragraph and the
 review's question.
+
+## 17. Declared source ledger v1 (bucket F, 2026-11-24)
+
+Bucket F of the [powerbank postmortem](HISTORY.md#postmortem-of-the-iphone-15-qi2-powerbank-review--2026-09-19),
+built for the [car-charger review of 2026-11-24](HISTORY.md#bucket-f-the-declared-source-ledger--2026-11-24),
+whose decisive facts stood in manufacturer datasheets and on no listing. A
+bounded review has no bundle, so the [evidence ledger](#8-study-audit-contracts-t3),
+which binds claims to a study's cards, cannot hold its sources. This ledger
+needs feeds and nothing else: `study sources-check LEDGER FEED...`
+(`shopping_advisor/study/sources.py`). The evidence ledger is untouched and
+stays v1; no study id, report byte or review digest moves.
+
+| Part | Contract |
+|---|---|
+| Ledger | `source_ledger_version` 1, `id`, `marketplace`, `listings` (the listings in scope, `host:ASIN`, each once), `kinds` (the kinds in scope), `sources`, `mappings`, `lookups`. Unknown fields are refused |
+| Kinds | `manufacturer_datasheet`, `certificate`, `safety_notice`. A statement quoted from one is labelled *vendor declaration*, *certifier's record* or *notice*; a datasheet is the maker speaking about its own product and is never rendered as a measured property |
+| Source | `id`, `kind`, `publisher`, `title`, `url`, `published` (ISO date or empty), `retrieved` (ISO date), `locator`, `model` — **the model string the source names, verbatim** — `snapshot`, `statements` (`id`, `subject`, `quote`), `limits`. A `retained` snapshot carries its text and digest, and the model string and every quote must occur in it; an `unavailable` one carries its reason and its quotes are reported as unchecked text |
+| Mapping | `id`, `source`, `listing`, `quote`, `field`, `basis`: the operator's assertion that the source concerns the listing, with the model string quoted **from the record** and the JSON pointer of the record field it stands in. An empty `field` needs a `basis` and can never be more than `declared` |
+| Lookup | `listing`, `kind`, `where`, `retrieved`: a search that found nothing, with where it looked. It cannot stand beside a mapping of the same kind |
+| Status, per listing × kind in scope | `checked` — the quote occurs in the named record field; `declared` — asserted, with no record field that confirms it; `nothing_found` — a recorded lookup found nothing; `not_looked_up` — neither. Every listing × kind is reported, so an omission is visible as `not_looked_up` |
+| `same_string` | Whether the record's quote and the source's model string are the same string, reported and never decided: `PB763` in a record against a certificate for `PB763 v2` is `checked` and *not the same string* |
+| Findings | `listing_absent` (in no feed given), `field_unresolved`, `quote_absent`: a declaration the records contradict. Any finding exits 1; an unreadable or invalid ledger exits 2 |
+
+What it does not establish: that a source applies to a listing — `checked` is a
+string found where the operator said it was, and the
+[rejected automatic matching](ROADMAP.md#deferred-and-rejected-work) stays
+rejected; that a quote from an unretained source is what the source says; or
+anything about safety, compliance or suitability, which no row renders. The
+ledger is not part of a study bundle, and `verify`, `resume` and
+`validate-report` do not read it.
+

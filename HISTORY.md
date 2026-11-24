@@ -715,6 +715,46 @@ Three findings worth carrying forward:
   kind of fact that changes what "what does Amazon show for this query" means,
   and it was previously unrecordable.
 
+### Bucket F: the declared source ledger — 2026-11-24
+
+**Observation.** A bounded review of a car USB charger for continuous duty
+(unsupported category; plan `tesla-usb-car-charger-amazon-de`, three runs, 69
+responses) had hard constraints no listing answers: of 60 fetched records none
+states an operating temperature, and the only approval statement is on a
+built-in socket. The answer came from manufacturer datasheets, and the listing
+↔ datasheet mapping was a hand-written table — the state bucket F of the
+[powerbank postmortem](#postmortem-of-the-iphone-15-qi2-powerbank-review--2026-09-19)
+was planned to end. The buyer asked for it with a third kind: the
+manufacturer datasheet.
+
+**Change.** `shopping_advisor/study/sources.py` and `study sources-check`:
+[declared source ledger v1](CONTRACT.md#17-declared-source-ledger-v1-bucket-f-2026-11-24),
+kinds `manufacturer_datasheet`, `certificate`, `safety_notice`. A separate
+contract beside the T3 evidence ledger, because that one binds claims to a
+study's cards and a bounded review has no study; a new source class there
+would also have been a change to a ledger every committed bundle digests.
+Guard rails as planned: no match is inferred, the record's string and the
+source's string are shown side by side with whether they are the same string,
+and no row renders safe, compliant or suitable.
+
+**Measured effect.** The car-charger review's table became a ledger of 4
+listings × 2 kinds: 3 datasheet mappings `checked` (`67302300`, `64277`,
+`1000-0030`, each found in the record field named), 5 `not_looked_up` — one
+datasheet and all four certificate lookups, which the hand-written table had
+left as prose. All three sources are `unavailable` snapshots: the pages were
+read through delegated fetches and their text was not kept, so their quotes
+are unchecked, and the output says so. 21 tests in a new module
+(`tests/test_sources.py`), including the `PB763` / `PB763 v2` counterexample
+and a neighbouring model that must stay `not_looked_up`. The gate's floors
+moved for the new contract `source_ledger` (declared by hand) and the new
+test module (977 → 998 tests), re-recorded with this change.
+
+**Not done.** The closing measure bucket F named — the powerbank run's 18 WPC
+records and 5 recall checks as ledger entries, with PB570's yellow derived
+from `not_looked_up` — is not written; that run's sources would have to be
+re-read to retain their text. The ledger is not in any bundle (bucket G), and
+a retained snapshot is embedded text the operator pasted, not a fetched page.
+
 ### The crawler's delivery location — 2026-10-18
 
 Found while making the delivery promise an extracted field

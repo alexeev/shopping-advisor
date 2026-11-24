@@ -814,9 +814,23 @@ of the [report template](#the-bounded-review-report-template).
    publisher, access date, the exact location and the **model string each
    names**. A certificate that names a revision (`PB763 v2`) does not cover a
    listing that names none; a recall that names other serial ranges is brand
-   history, not a model signal (row 7). Until the evidence ledger has
-   certificate and safety-notice source kinds (bucket F), the listing ↔ source
-   mapping is the operator's declared assertion, in a table, labelled as such.
+   history, not a model signal (row 7). Record manufacturer datasheets,
+   certificates and safety notices in a
+   [declared source ledger](CONTRACT.md#17-declared-source-ledger-v1-bucket-f-2026-11-24)
+   under `data/sources/` and check it against the feeds; the listing ↔ source
+   mapping stays the operator's declared assertion, and the report's table is
+   the command's output, labelled as such:
+
+   ```text
+   uv run --offline --locked python -m shopping_advisor.study sources-check tests/sources/ledger.json tests/sources/records.jsonl
+   ```
+
+   Expect `2 checked, 1 declared, 1 nothing_found, 8 not_looked_up`. Retain the
+   text you quote from (`snapshot.status: retained`) — a quote from an
+   unretained source is reported as unchecked. A kind in scope that nobody
+   searched reads `not_looked_up` for every listing, which is the point.
+   Independent tests and press have no kind here; they stay in the table of
+   template item 11.
 7. **Write the report against the template, then the handoff.** A bounded
    review has no bundle, so `verify` and `resume` have nothing to read. The
    **correction-notes file** beside the report (`reports/<slug>-correction-notes.md`)
