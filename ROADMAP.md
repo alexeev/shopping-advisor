@@ -488,7 +488,10 @@ crawling is an option, never the default); manifest counts for seeds
 requested/fetched and discovered fetched/unfetched (bucket B, shipped
 2026-09-19 with R1); and two
 evidence-ledger source kinds, certificate and safety notice, with a **declared**
-model mapping the tool checks for consistency and never infers (bucket F). A
+model mapping the tool checks for consistency and never infers (bucket F,
+shipped 2026-11-24 as the [declared source ledger](CONTRACT.md#17-declared-source-ledger-v1-bucket-f-2026-11-24)
+with a third kind, the manufacturer datasheet; the powerbank run's own entries
+are [not yet written](HISTORY.md#bucket-f-the-declared-source-ledger--2026-11-24)). A
 generic fold-and-sort shelf table and automatic model-number matching were
 rejected against counterexamples from the same run — see
 [deferred and rejected work](#deferred-and-rejected-work).

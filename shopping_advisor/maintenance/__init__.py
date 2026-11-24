@@ -206,6 +206,7 @@ def _contract_versions():
     from ..study.delivery_review import DELIVERY_REVIEW_VERSION
     from ..study.session import SESSION_VERSION
     from ..study.adaptation import ADAPTATION_VERSION
+    from ..study.sources import SOURCE_LEDGER_VERSION
     from ..validation.contract import CONTRACT_VERSION
 
     return {'extraction_schema': SCHEMA_VERSION,
@@ -221,6 +222,7 @@ def _contract_versions():
             'adaptation_record': ADAPTATION_VERSION,
             'study_manifest': STUDY_MANIFEST_VERSION,
             'evidence_ledger': audit.LEDGER_VERSION,
+            'source_ledger': SOURCE_LEDGER_VERSION,
             'study_audit': audit.AUDIT_VERSION,
             'semantic_review': audit.REVIEW_VERSION}
 

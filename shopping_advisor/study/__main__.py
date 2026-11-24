@@ -26,7 +26,7 @@ import argparse
 import json
 from pathlib import Path
 from . import audit, delivery, delivery_review, gates, intake, intake_review, session
-from . import adaptation, capabilities, trial
+from . import adaptation, capabilities, sources, trial
 from .controls import catalogue
 from ..provenance import write_json_atomically
 from .bundle import artifact_digests, code_caveats
@@ -303,6 +303,26 @@ def _print_limits(rows):
               + ('; exhausted' if row['exhausted'] else '')
               + (f'; deadline {row["deadline"]} passed' if row['deadline_passed'] else '')
               + (f'; {row["mode"]}: {row["overshoot"]}' if row['overshoot'] else ''))
+
+
+def sources_check_command(args):
+    """``sources-check LEDGER FEED...`` -- declared source mappings against records."""
+    from ..analysis import feeds
+    ledger = sources.load(args.ledger)
+    records, _provenance = feeds.merge(args.feeds)
+    # Feeds normalise the marketplace host; a listing is named as it is written
+    # in reports (``www.amazon.de:ASIN``), so both sides are normalised to meet.
+    seen = {(feeds.marketplace_of(record), record['asin']): record
+            for record in records if record.get('asin')}
+    keyed = {}
+    for listing in ledger['listings']:
+        host, _, asin = listing.rpartition(':')
+        if (feeds.domain_key(host), asin) in seen:
+            keyed[listing] = seen[(feeds.domain_key(host), asin)]
+    result = sources.assess(ledger, keyed)
+    print(json.dumps(result, ensure_ascii=False, indent=2) if args.json
+          else sources.render(result))
+    return 1 if result['findings'] else 0
 
 
 def session_check_command(args):
@@ -945,6 +965,14 @@ def main(argv=None):
     ledger_check.add_argument('ledger', help=f'JSON ledger, conventionally under {session.DEFAULT_SESSION_ROOT}/')
     ledger_check.add_argument('--reference', help='ISO 8601 instant for deadlines; default reads the clock')
     ledger_check.set_defaults(handler=session_check_command)
+    source_check = commands.add_parser(
+        'sources-check',
+        help='declared source ledger (datasheet, certificate, safety notice): check each '
+             'mapping against the records and report every listing x kind')
+    source_check.add_argument('ledger', help='JSON declared source ledger')
+    source_check.add_argument('feeds', nargs='+', help='JSONL feeds holding the listings')
+    source_check.add_argument('--json', action='store_true')
+    source_check.set_defaults(handler=sources_check_command)
     authorising = commands.add_parser(
         'session-authorise', help='check one planned action against the remaining limits')
     authorising.add_argument('ledger')
